@@ -1,0 +1,26 @@
+## Interface: 100100
+## Title: HandyNotes: Loremaster
+## Notes: Keeps track of all the Loremaster achievements.
+## Notes-deDE: Behält alle "Meister der Lehren" Erfolge im Blick.
+## IconTexture: 133739
+## Version: v0.1.0-alpha
+## Author: ergloCoder
+## X-Email: erglo.coder+HNLM@gmail.com
+   
+# TODO - Get addon hosting IDs
+# X-Curse-Project-ID:
+# X-Wago-ID: 
+# X-WoWI-ID: 
+
+## X-License: GNU General Public License Version 3
+## X-Category: Achievements, Map & Minimap
+
+## DefaultState: enabled
+## RequiredDeps: HandyNotes
+# SavedVariables: HandyNotes_Loremaster
+
+# Load external libraries
+embeds.xml
+
+# Load main files
+HandyNotes_erglo_Loremaster.lua
