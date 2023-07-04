@@ -1,7 +1,7 @@
 ## Interface: 100100
-## Title: HandyNotes: Loremaster
-## Notes: Keeps track of all the Loremaster achievements.
-## Notes-deDE: Behält alle "Meister der Lehren" Erfolge im Blick.
+## Title: HandyNotes: Loremaster (Dragonflight)
+## Notes: Keeps track of all the "Loremaster of the Dragon Isles" achievements.
+## Notes-deDE: Behält alle "Meister der Lehren der Dracheninseln" Erfolge im Blick.
 ## IconTexture: 133739
 ## Version: v0.1.0-alpha
 ## Author: ergloCoder
@@ -17,10 +17,11 @@
 
 ## DefaultState: enabled
 ## RequiredDeps: HandyNotes
-# SavedVariables: HandyNotes_Loremaster
+## SavedVariables: HN_LM09_DB
 
 # Load external libraries
 embeds.xml
 
 # Load main files
-HandyNotes_erglo_Loremaster.lua
+options.lua
+HandyNotes_LM09_Dragonflight.lua
