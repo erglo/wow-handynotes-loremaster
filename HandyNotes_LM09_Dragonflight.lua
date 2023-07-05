@@ -30,6 +30,7 @@
 local AddonID, ns = ...
 
 local HandyNotes = _G.HandyNotes
+local utils = ns.utils
 
 -- local ExpansionInfo = {
 --     ["ID"] = LE_EXPANSION_DRAGONFLIGHT,  -- 9
@@ -41,7 +42,8 @@ local HandyNotes = _G.HandyNotes
 local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("HNLM-DF", "AceConsole-3.0")
 
 function HandyNotesPlugin:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("HN_LM09_DB")
+    ns.db = LibStub("AceDB-3.0"):New("HN_LM09_DB")
+    -- ns.var = HN_LM09_DB
 
     ns.options = ns.pluginInfo.options(self)
 
@@ -54,6 +56,20 @@ function HandyNotesPlugin:OnEnable()
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
     HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
     self:Print(YELLOW_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title), "is enabled")
+
+    -- Test utils
+    -- local achievementInfo = utils.achieve.GetWrappedAchievementInfo(16398)
+    -- -- if not ns.db.continents then
+    -- --     ns.db.continents = {}
+    -- -- end
+    -- -- if not ns.db.continents[DRAGON_ISLES_MAP_ID] then
+    -- --     ns.db.continents[DRAGON_ISLES_MAP_ID] = {}
+    -- -- end
+    -- ns.var.achievements = {}
+    -- ns.var.achievements[achievementInfo.achievementID] = utils.achieve.GetAchievementCriteriaInfoList(achievementInfo.achievementID)
+    -- -- local includeCompleted = true
+    -- local numCriteriaTotal, numCriteriaCompleted = utils.achieve.GetWrappedAchievementNumCriteria(achievementInfo.id, includeCompleted)
+    -- self:Print(achievementInfo.id, achievementInfo.name, format("%d/%d", numCriteriaCompleted, numCriteriaTotal))
 end
 
 function HandyNotesPlugin:OnDisable()
@@ -75,8 +91,8 @@ end
 -- in is a continent, and the return values are coords of subzone maps.
 --
 local function PointsDataIterator(state, value)
+    if not state then return end
     HandyNotesPlugin:Print("args -->", state, value)
-    if not value then return end
     -- local coord, v = next(t, prev)
     -- while coord do
     --     if v and (db.completed or not completedQuests[v[1]]) then
@@ -97,7 +113,8 @@ end
 --> REF.: <World of Warcraft\_retail_\Interface\AddOns\HandyNotes\HandyNotes.lua>
 --
 function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
-    return PointsDataIterator, "WM-"..tostring(WorldMapFrame and WorldMapFrame:IsShown()), WorldMapFrame and WorldMapFrame:GetMapID()
+    local isWorldMapShown = WorldMapFrame and WorldMapFrame:IsShown()
+    return PointsDataIterator, isWorldMapShown, WorldMapFrame and WorldMapFrame:GetMapID()
 end
 
 -- Standard functions you can provide optionally:

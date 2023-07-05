@@ -21,6 +21,7 @@
 
 # Load external libraries
 embeds.xml
+utils/achievements.lua
 
 # Load main files
 options.lua

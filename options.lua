@@ -76,9 +76,9 @@ ns.pluginInfo.options = function(optionsHandler)
                         type = "toggle",
                         name = "Show on Continents",
                         desc = "Toggle icons in continent view.",
-                        get = function(info, k)
-                            return db.enabledPlugins[k]
-                        end,
+                        -- get = function(info, k)
+                        --     return db.enabledPlugins[k]
+                        -- end,
                         order = 30,
                     },
                     show_in_zones = {
