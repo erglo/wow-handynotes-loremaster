@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---[[ HandyNotes: Loremaster (Dragonflight) ]]--
+--[[ HandyNotes: Loremaster ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
@@ -39,9 +39,10 @@ local AddonID, ns = ...
 local util = ns.util
 
 local format = string.format
-local tContains = tContains
+local tostring = tostring
+-- local tContains = tContains
 -- local tDeleteItem = tDeleteItem
-local tInsert = table.insert
+-- local tInsert = table.insert
 -- local strjoin = strjoin
 local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) end
 -- ACHIEVEMENT_COLOR, ACHIEVEMENT_COMPLETE_COLOR, ACHIEVEMENT_INCOMPLETE_COLOR, CAMPAIGN_COMPLETE_COLOR

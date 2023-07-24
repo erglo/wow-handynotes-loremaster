@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---[[ HandyNotes: Loremaster (Dragonflight) - Options ]]--
+--[[ HandyNotes: Loremaster - Options ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
@@ -41,7 +41,7 @@ ns.pluginInfo.options = function(optionsHandler)
     -- local db = optionsHandler.db
     return {                                                                  --> TODO - L10n
         type = 'group',
-        name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster (Dragonflight)"
+        name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
         desc = ns.pluginInfo.description,
         -- handler = optionsHandler,
         args = {

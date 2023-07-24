@@ -1,9 +1,9 @@
 ## Interface: 100105
-## Title: HandyNotes: Loremaster (Dragonflight)
-## Notes: Keeps track of all the "Loremaster of the Dragon Isles" achievements.
-## Notes-deDE: Behält alle "Meister der Lehren der Dracheninseln" Erfolge im Blick.
+## Title: HandyNotes: Loremaster
+## Notes: Helps you keep track of all the Loremaster and story quests achievements.
+## Notes-deDE: Hilft euch alle "Meister der Lehren" Erfolge und Geschichtsquests im Blick zu behalten.
 ## IconTexture: 133739
-## Version: v0.1.0-alpha
+## Version: v0.2.0-alpha
 ## Author: ergloCoder
 ## X-Email: erglo.coder+HNLM@gmail.com
    
@@ -25,5 +25,5 @@ embeds.xml
 utils/achievements.lua
 
 # Load main files
-options.lua
-HandyNotes_LM09_Dragonflight.lua
+Options.lua
+Core.lua
