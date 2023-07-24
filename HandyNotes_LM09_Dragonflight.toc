@@ -1,4 +1,4 @@
-## Interface: 100100
+## Interface: 100105
 ## Title: HandyNotes: Loremaster (Dragonflight)
 ## Notes: Keeps track of all the "Loremaster of the Dragon Isles" achievements.
 ## Notes-deDE: Behält alle "Meister der Lehren der Dracheninseln" Erfolge im Blick.
@@ -13,13 +13,14 @@
 # X-WoWI-ID: 
 
 ## X-License: GNU General Public License Version 3
-## X-Category: Achievements, Map & Minimap
+## X-Category: Quests, Achievements, Map & Minimap
 
 ## DefaultState: enabled
 ## RequiredDeps: HandyNotes
-## SavedVariables: HN_LM09_DB
+## OptionalDeps: Ace3
+## SavedVariables: LoremasterDB
 
-# Load external libraries
+# Load embedded (external) libraries
 embeds.xml
 utils/achievements.lua
 

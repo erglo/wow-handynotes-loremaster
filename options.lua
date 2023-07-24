@@ -37,7 +37,6 @@ ns.pluginInfo.icon = GetAddOnMetadata(AddonID, "IconTexture") or GetAddOnMetadat
 ns.pluginInfo.version = GetAddOnMetadata(AddonID, "Version")
 ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale) or GetAddOnMetadata(AddonID, "Notes")
 ns.pluginInfo.optionsID = select(2, strsplit("_", AddonID))  --> "LM09"
-
 ns.pluginInfo.options = function(optionsHandler)
     -- local db = optionsHandler.db
     return {                                                                  --> TODO - L10n

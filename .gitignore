@@ -1,5 +1,6 @@
 .vscode
 .synkron.syncdb
+libs
 
 # Local packaging test
 .release
