@@ -32,7 +32,8 @@
 -- REF.: <https://www.townlong-yak.com/framexml/live/GlobalStrings.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/TableUtil.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
--- REF.: <https://www.townlong-yak.com/framexml/live/QuestMapFrame.lua#1871>
+-- REF.: <https://www.townlong-yak.com/framexml/live/QuestMapFrame.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
 -- (see also the function comments section for more reference)
 --
 --------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ local util = ns.util
 
 local format = string.format
 local tostring = tostring
--- local tContains = tContains
+local tContains = tContains
 -- local tDeleteItem = tDeleteItem
 local tInsert = table.insert
 -- local strjoin = strjoin
@@ -52,10 +53,13 @@ local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) e
 -- QUEST_OBJECTIVE_HIGHLIGHT_FONT_COLOR, QUEST_OBJECTIVE_DISABLED_HIGHLIGHT_FONT_COLOR
 -- local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 -- local C_QuestLog_GetZoneStoryInfo = C_QuestLog.GetZoneStoryInfo
--- local QuestUtils_GetQuestName = QuestUtils_GetQuestName
--- local GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
+local C_QuestLine_GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
+local QuestUtils_GetQuestName = QuestUtils_GetQuestName
 local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
+local GetQuestFactionGroup = GetQuestFactionGroup
 
+local playerFactionGroup = UnitFactionGroup("player")
+-- PLAYER_FACTION_GROUP
 
 -- REF.: AceAddon:GetAddon(name, silent)
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
@@ -63,18 +67,30 @@ local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceCons
 -- local L = LibStub('AceLocale-3.0'):GetLocale(ADDON_NAME)
 local L = {
     -- WoW global strings
-    STATUS_ENABLED = VIDEO_OPTIONS_ENABLED,
-    STATUS_DISABLED = VIDEO_OPTIONS_DISABLED,
-    STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
-    STORY_STATUS_FORMAT = QUEST_STORY_STATUS,
-    QUEST_LINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:0|t %s",
-    -- STORY_PROGRESS = STORY_PROGRESS,
-    -- STORY_CHAPTERS_FORMAT = STORY_CHAPTERS,
-    -- STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s |TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:0|t",
-    STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s |A:achievementcompare-GreenCheckmark:0:0|a",
+    OPTION_STATUS_DISABLED = VIDEO_OPTIONS_DISABLED,
+    OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED,
+    OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
+
+    QUEST_LINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s",
+    QUEST_LINE_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
+    QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
+    QUEST_LINE_CHAPTER_CURRENT_FORMAT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s",
+
+    QUEST_NAME_ALLIANCE_FORMAT = "%s |A:questlog-questtypeicon-alliance:0:0:0:-1|a",
+    QUEST_NAME_HORDE_FORMAT = "%s |A:questlog-questtypeicon-horde:0:0:0:-1|a",
+
+    STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a",
     STORY_NAME_INCOMPLETE_FORMAT = "|T%d:16:16:0:0|t %s",
     STORY_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
     STORY_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
+    STORY_STATUS_FORMAT = QUEST_STORY_STATUS,
+
+    -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
+    ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
+    ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
+    -- "questlog-questtypeicon-story"
+    -- "CampaignAvailableQuestIcon"
+    -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
 
     -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
     -- ITEM_REQ_REPUTATION = "Requires %s - %s";
@@ -82,21 +98,19 @@ local L = {
     -- ITEM_REQ_SPECIALIZATION = "Requires: %s";
     -- ITEM_REQ_ALLIANCE = "Alliance Only";
     -- ITEM_REQ_HORDE = "Horde Only";
-    ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
-    ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
+    -- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
+    -- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
     -- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
-    -- ACHIEVEMENT_UNLOCKED_CHAT_MSG = "Erfolg errungen: %s";
     -- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
     -- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
     -- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
     -- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
-    -- CONTENT_TRACKING_ACHIEVEMENT_FORMAT = "Erfolg: \"%s\"";
     -- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
     OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT,  --> "- %s"
     -- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
     -- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
     -- CONTINENT = "Kontinent";
-    ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
+    -- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
 
     -- Custom strings
     HIDE_WITH_2KEY_COMBO = "<Click %s+%s to hide>",
@@ -122,12 +136,12 @@ function HandyNotesPlugin:OnEnable()
     self.slash_commands = {"lm", "loremaster"}
     for i, command in ipairs(self.slash_commands) do
         self:RegisterChatCommand(command, "ProcessSlashCommands")
-    end 
+    end
 
     -- Register this addon to HandyNotes as plugin
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
     HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
-    self:Printf(L.STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.STATUS_ENABLED)
+    self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_ENABLED)
 
     -- Test utils
     -- local achievementInfo = util.achieve.GetWrappedAchievementInfo(16398)
@@ -140,8 +154,8 @@ function HandyNotesPlugin:OnEnable()
     -- ns.var.achievements = {}
     -- ns.var.achievements[achievementInfo.achievementID] = util.achieve.GetAchievementCriteriaInfoList(achievementInfo.achievementID)
     -- -- local includeCompleted = true
-    -- local numCriteriaTotal, numCriteriaCompleted = util.achieve.GetWrappedAchievementNumCriteria(achievementInfo.id, includeCompleted)
-    -- self:Print(achievementInfo.id, achievementInfo.name, format("%d/%d", numCriteriaCompleted, numCriteriaTotal))
+    -- local numCriteriaTotal, numCriteriaCompleted = util.achieve.GetWrappedAchievementNumCriteria(achievementInfo.achievementID, includeCompleted)
+    -- self:Print(achievementInfo.achievementID, achievementInfo.name, format("%d/%d", numCriteriaCompleted, numCriteriaTotal))
 end
 
 function HandyNotesPlugin:OnDisable()
@@ -150,7 +164,7 @@ function HandyNotesPlugin:OnDisable()
         self:UnregisterChatCommand(command)
     end
 
-    self:Printf(L.STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.STATUS_DISABLED)
+    self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_DISABLED)
 end
 
 -- Standard functions you can provide optionally:
@@ -193,14 +207,14 @@ end
 local function GameTooltip_AddZoneStoryName(tooltip, mapID, isComplete, icon)
     local mapInfo = C_Map.GetMapInfo(mapID)
     if isComplete then
-        GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
+        -- GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
+        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name), ACHIEVEMENT_COLOR)
     else
-        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_SUBTITLE_COLOR)
+        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_STAGE_COLOR)
     end
 end
 
 local function GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
-    GameTooltip_AddBlankLineToTooltip(tooltip)
     local wrapLine = false
     for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
         -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
@@ -219,19 +233,68 @@ local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
     local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
     if storyAchievementID then
         local achievementInfo = GetCompleteAchievementInfo(storyAchievementID)
-        GameTooltip_AddDisabledLine(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name), false)
         -- print("> mapID:", mapID, "storyMapID:", storyMapID, mapID == storyMapID)
         -- print("> completed:", achievementInfo.completed)
         -- print("> icon:", achievementInfo.icon)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         GameTooltip_AddZoneStoryName(tooltip, storyMapID, achievementInfo.completed, achievementInfo.icon)
         GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+        GameTooltip_AddDisabledLine(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name), false)
         if (not achievementInfo.completed or IsShiftKeyDown()) then
+            -- GameTooltip_AddBlankLineToTooltip(tooltip)
             GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
         end
     else
         -- GameTooltip_AddDisabledLine(tooltip, "> No results.")
         print("> No results.")
+    end
+end
+
+-- local function GetNumQuestLineQuests(questLineID)
+--     local questList = C_QuestLine_GetQuestLineQuests(questLineID)
+--     return #questList
+-- end
+
+local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+local QuestNameFactionGroupFormat = {
+    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_ALLIANCE_FORMAT,
+    [QuestFactionGroupID.Horde] = L.QUEST_NAME_HORDE_FORMAT,
+    [QuestFactionGroupID.Neutral] = "%s",
+}
+-- -- REF.: <https://www.townlong-yak.com/framexml/live/SharedColorConstants.lua>
+-- QUEST_FACTION_COLORS = {
+--     [1] = PLAYER_FACTION_COLOR_ALLIANCE,
+-- 	[2] = PLAYER_FACTION_COLOR_HORDE,
+-- 	[3] = FACTION_YELLOW_COLOR,
+-- };
+
+-- Filter given quest by faction group (1 == Alliance, 2 == Horde)
+local function PlayerMatchesQuestFactionGroup(questFactionGroup)
+    return tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup)
+end
+
+local function GameTooltip_AddQuestLineChapters(tooltip, questLineInfo)
+    local wrapLine = false
+    local quests = C_QuestLine_GetQuestLineQuests(questLineInfo.questLineID)
+    for i, questID in ipairs(quests) do
+        local questFactionGroup = GetQuestFactionGroup(questID) or 3
+        if PlayerMatchesQuestFactionGroup(questFactionGroup) then
+            local questName = QuestUtils_GetQuestName(questID)
+            local questTitle = QuestNameFactionGroupFormat[questFactionGroup]:format(questName)
+            local questCompleted = C_QuestLog.IsComplete(questID) or C_QuestLog.IsQuestFlaggedCompleted(questID)
+            -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, questCompleted, isOnQuest)
+            -- print("quest faction:", i, questColor:WrapTextInColorCode(questFactionGroup))
+            -- questTitle = tostring(i).." "..questTitle
+            if tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup) then
+                if questCompleted then
+                    GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_CHAPTER_COMPLETED_FORMAT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
+                elseif (questID == questLineInfo.questID) then
+                    GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine)
+                else
+                    GameTooltip_AddHighlightLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(questTitle), wrapLine)
+                end
+            end
+        end
     end
 end
 
@@ -276,35 +339,6 @@ end
 },
 ]]
 
--- local function GetNumQuestLineQuests(questLineID)
---     local questList = C_QuestLine.GetQuestLineQuests(questLineID)
---     return #questList
--- end
-
---     local quests = GetQuestLineQuests(questLineInfo.questLineID)
---     local questsProcessed = {}
---     -- table.sort(quests)
---     for i, questID in ipairs(quests) do
---         if tContains(questsProcessed, questID) then break end
---         local questName = QuestUtils_GetQuestName(questID)
---         -- local questCompleted = C_QuestLog.IsComplete(questID)
---         local questCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
---         -- local isOnQuest = C_QuestLog.IsOnQuest(questID)
---         -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, questCompleted, isOnQuest)
---         if questCompleted then
---             GameTooltip_AddInstructionLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
---         elseif (questID == questLineInfo.questID) then
---             GameTooltip_AddColoredLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName), YELLOW_FONT_COLOR)
---         else
---             GameTooltip_AddDisabledLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
---         end
---         tInsert(questsProcessed, questID)
---         -- GameTooltip:Show()
---     end
--- -- end)
--- if not pin.mapID then
-    -- pin.mapID = pin:GetMap():GetMapID()
-
 function HandyNotesPlugin:OnEnter(pin)
     -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
     -- REF.: <https://www.townlong-yak.com/framexml/live/GameTooltip.lua>
@@ -324,11 +358,12 @@ function HandyNotesPlugin:OnEnter(pin)
         -- GameTooltip_AddHighlightLine(tooltip, questLineInfo.questLineName)
         GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
         GameTooltip_AddDisabledLine(tooltip, format("> L:%d \"%s\"", questLineInfo.questLineID, questLineInfo.questLineName))
+        GameTooltip_AddQuestLineChapters(tooltip, questLineInfo)
         if questLineInfo.isCampaign then
             GameTooltip_AddDisabledLine(tooltip, format("> > isCampaign: %s %s", tostring(questLineInfo.isCampaign), tostring(C_CampaignInfo.IsCampaignQuest(pin.questID))))
         end
-        GameTooltip_AddZoneStoryProgress(tooltip, pin.mapID)
     end
+    GameTooltip_AddZoneStoryProgress(tooltip, pin.mapID)
     GameTooltip:Show()
 end
 HandyNotesPlugin.OnMouseEnter = HandyNotesPlugin.OnEnter
@@ -473,7 +508,6 @@ end
 --------------------------------------------------------------------------------
 
 GetQuestExpansion(questID)
-GetQuestFactionGroup(questID)
 GetQuestLink(questID)
 GetQuestUiMapID(questID)
 IsBreadcrumbQuest(questID)
