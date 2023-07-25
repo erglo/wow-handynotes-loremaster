@@ -39,7 +39,7 @@
 --------------------------------------------------------------------------------
 
 local AddonID, ns = ...
-local util = ns.util
+local utils = ns.utils
 
 local format = string.format
 local tostring = tostring
@@ -57,9 +57,6 @@ local C_QuestLine_GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
 local QuestUtils_GetQuestName = QuestUtils_GetQuestName
 local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
 local GetQuestFactionGroup = GetQuestFactionGroup
-
-local playerFactionGroup = UnitFactionGroup("player")
--- PLAYER_FACTION_GROUP
 
 -- REF.: AceAddon:GetAddon(name, silent)
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
@@ -121,7 +118,35 @@ local L = {
 
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
 
------- Main --------------------------------------------------------------------
+----- Utilities ----------------------------------------------------------------
+
+local DEV_MODE = false
+
+local function debug_print(...)
+    if DEV_MODE then
+        print(YELLOW("LM-DBG:"), ...)
+    end
+end
+
+----- Faction Groups ----------
+
+local playerFactionGroup = UnitFactionGroup("player")
+
+-- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
+local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+
+local QuestNameFactionGroupFormat = {
+    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_ALLIANCE_FORMAT,
+    [QuestFactionGroupID.Horde] = L.QUEST_NAME_HORDE_FORMAT,
+    [QuestFactionGroupID.Neutral] = "%s",
+}
+
+-- Filter given quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])
+local function PlayerMatchesQuestFactionGroup(questFactionGroup)
+    return tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup)
+end
+
+----- Main ---------------------------------------------------------------------
 
 function HandyNotesPlugin:OnInitialize()
     -- Load options database and settings
@@ -144,7 +169,7 @@ function HandyNotesPlugin:OnEnable()
     self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_ENABLED)
 
     -- Test utils
-    -- local achievementInfo = util.achieve.GetWrappedAchievementInfo(16398)
+    -- local achievementInfo = utils.achieve.GetWrappedAchievementInfo(16398)
     -- -- if not ns.db.continents then
     -- --     ns.db.continents = {}
     -- -- end
@@ -152,9 +177,9 @@ function HandyNotesPlugin:OnEnable()
     -- --     ns.db.continents[DRAGON_ISLES_MAP_ID] = {}
     -- -- end
     -- ns.var.achievements = {}
-    -- ns.var.achievements[achievementInfo.achievementID] = util.achieve.GetAchievementCriteriaInfoList(achievementInfo.achievementID)
+    -- ns.var.achievements[achievementInfo.achievementID] = utils.achieve.GetAchievementCriteriaInfoList(achievementInfo.achievementID)
     -- -- local includeCompleted = true
-    -- local numCriteriaTotal, numCriteriaCompleted = util.achieve.GetWrappedAchievementNumCriteria(achievementInfo.achievementID, includeCompleted)
+    -- local numCriteriaTotal, numCriteriaCompleted = utils.achieve.GetWrappedAchievementNumCriteria(achievementInfo.achievementID, includeCompleted)
     -- self:Print(achievementInfo.achievementID, achievementInfo.name, format("%d/%d", numCriteriaCompleted, numCriteriaTotal))
 end
 
@@ -185,14 +210,15 @@ end
 --     local info = {}
 -- end
 
+
 local function GetCompleteAchievementInfo(achievementID)
-    local info = util.achieve.GetWrappedAchievementInfo(achievementID)
-    info.numCriteria = util.achieve.GetWrappedAchievementNumCriteria(achievementID)
+    local info = utils.achieve.GetWrappedAchievementInfo(achievementID)
+    info.numCriteria = utils.achieve.GetWrappedAchievementNumCriteria(achievementID)
     info.numCompleted = 0
     info.criteriaList = {}
     do
         for criteriaIndex=1, info.numCriteria do
-            local criteriaInfo = util.achieve.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
+            local criteriaInfo = utils.achieve.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
                 if criteriaInfo.completed then
                     info.numCompleted = info.numCompleted + 1
@@ -204,31 +230,20 @@ local function GetCompleteAchievementInfo(achievementID)
     return info
 end
 
--- local function GameTooltip_AddZoneStoryName(tooltip, mapID, isComplete, icon)
---     local mapInfo = C_Map.GetMapInfo(mapID)
---     if isComplete then
---         -- GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
---         GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name), ACHIEVEMENT_COLOR)
---     else
---         GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_STAGE_COLOR)
---     end
--- end
+local LocalUtils = {}
 
--- local function GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
---     local wrapLine = false
---     for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
---         -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
---         -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
---         if criteriaInfo.completed then
---             GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
---         else
---             GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
---         end
---     end
--- end
+-- In debug mode show additional infos ie. questIDs, achievementIDs, etc. or
+-- show a blank line instead in normal mode.
+function LocalUtils.AddDebugLineToTooltip(tooltip, text, wrap, leftOffset)
+    if DEV_MODE then
+        GameTooltip_AddDisabledLine(tooltip, text, wrap or false, leftOffset)
+    else
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+    end
+end
 
-local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
-    -- print(format("Checking zone (%s) for stories...", mapID or "n/a"))
+function LocalUtils.AddZoneStoryDetailsToTooltip(tooltip, mapID)
+    debug_print(format("Checking zone (%s) for stories...", mapID or "n/a"))
     local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
     if storyAchievementID then
         local achievementInfo = GetCompleteAchievementInfo(storyAchievementID)
@@ -239,14 +254,13 @@ local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
         GameTooltip_AddColoredLine(tooltip, StoryNameTemplate:format(achievementInfo.icon, mapInfo.name), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
         -- Add chapter status
         GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
-        GameTooltip_AddDisabledLine(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name), false)
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
+        LocalUtils.AddDebugLineToTooltip(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name))
         -- Add chapter list
         if (not achievementInfo.completed or IsShiftKeyDown()) then
             local wrapLine = false
             for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
                 -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
-                -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+                debug_print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
                 if criteriaInfo.completed then
                     GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
                 else
@@ -255,8 +269,7 @@ local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
             end
         end
     else
-        -- GameTooltip_AddDisabledLine(tooltip, "> No results.")
-        print("> No results.")
+        debug_print("> No results.")
     end
 end
 
@@ -265,25 +278,7 @@ end
 --     return #questList
 -- end
 
-local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
-local QuestNameFactionGroupFormat = {
-    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_ALLIANCE_FORMAT,
-    [QuestFactionGroupID.Horde] = L.QUEST_NAME_HORDE_FORMAT,
-    [QuestFactionGroupID.Neutral] = "%s",
-}
--- -- REF.: <https://www.townlong-yak.com/framexml/live/SharedColorConstants.lua>
--- QUEST_FACTION_COLORS = {
---     [1] = PLAYER_FACTION_COLOR_ALLIANCE,
--- 	[2] = PLAYER_FACTION_COLOR_HORDE,
--- 	[3] = FACTION_YELLOW_COLOR,
--- };
-
--- Filter given quest by faction group (1 == Alliance, 2 == Horde)
-local function PlayerMatchesQuestFactionGroup(questFactionGroup)
-    return tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup)
-end
-
-local function GameTooltip_AddQuestLineChapters(tooltip, questLineInfo)
+function LocalUtils.AddQuestLineDetailsToTooltip(tooltip, questLineInfo)
     local wrapLine = false
     local quests = C_QuestLine_GetQuestLineQuests(questLineInfo.questLineID)
     for i, questID in ipairs(quests) do
@@ -359,21 +354,20 @@ function HandyNotesPlugin:OnEnter(pin)
     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
     GameTooltip_AddColoredDoubleLine(tooltip, " ", self.name, NORMAL_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
     QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
-    -- GameTooltip_AddInstructionLine(tooltip, format(L.HIDE_WITH_2KEY_COMBO, ALT_KEY_TEXT, KEY_BUTTON1))  -- SHIFT_KEY_TEXT
-    GameTooltip_AddDisabledLine(tooltip, format("> Q:%d - %s", pin.questID, pin.pinTemplate))
+    LocalUtils.AddDebugLineToTooltip(tooltip, format("> Q:%d - %s", pin.questID, pin.pinTemplate))
     local questLineInfo = GetQuestLineInfoByPin(pin)
     if questLineInfo then
-        print("pin:", pin.mapID, pin:GetMap():GetMapID(), YELLOW(pin.questType))
+        debug_print("pin:", pin.mapID, pin:GetMap():GetMapID(), YELLOW(pin.questType))
         GameTooltip_AddBlankLineToTooltip(tooltip)
-        -- GameTooltip_AddHighlightLine(tooltip, questLineInfo.questLineName)
+        -- Add quest line header
         GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
-        GameTooltip_AddDisabledLine(tooltip, format("> L:%d \"%s\"", questLineInfo.questLineID, questLineInfo.questLineName))
-        GameTooltip_AddQuestLineChapters(tooltip, questLineInfo)
+        LocalUtils.AddDebugLineToTooltip(tooltip, format("> L:%d \"%s\"", questLineInfo.questLineID, questLineInfo.questLineName))
+        LocalUtils.AddQuestLineDetailsToTooltip(tooltip, questLineInfo)
         if questLineInfo.isCampaign then
-            GameTooltip_AddDisabledLine(tooltip, format("> > isCampaign: %s %s", tostring(questLineInfo.isCampaign), tostring(C_CampaignInfo.IsCampaignQuest(pin.questID))))
+            LocalUtils.AddDebugLineToTooltip(tooltip, format("> > isCampaign: %s %s", tostring(questLineInfo.isCampaign), tostring(C_CampaignInfo.IsCampaignQuest(pin.questID))))
         end
     end
-    GameTooltip_AddZoneStoryProgress(tooltip, pin.mapID)
+    LocalUtils.AddZoneStoryDetailsToTooltip(tooltip, pin.mapID)
     GameTooltip:Show()
 end
 HandyNotesPlugin.OnMouseEnter = HandyNotesPlugin.OnEnter
@@ -400,21 +394,21 @@ end
 function HandyNotesPlugin:RegisterHooks()
     -- Active Quests  --> TODO - Needed ???
     if not self:IsHooked(QuestPinMixin, "OnMouseEnter") then
-        -- print(YELLOW("Hooking active quests..."))
+        debug_print(YELLOW("Hooking active quests..."))
         self:SecureHook(QuestPinMixin, "OnMouseEnter")
         self:SecureHook(QuestPinMixin, "OnClick", function(pin, mouseButton)
             if IsAltKeyDown() then
-                print("Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
+                debug_print("Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
             end
         end)
     end
     -- Storyline Quests
     if not self:IsHooked(StorylineQuestPinMixin, "OnMouseEnter") then
-        -- print(YELLOW("Hooking storyline quests..."))
+        debug_print(YELLOW("Hooking storyline quests..."))
         self:SecureHook(StorylineQuestPinMixin, "OnMouseEnter")
         self:SecureHook(StorylineQuestPinMixin, "OnClick", function(pin, mouseButton)
             if IsAltKeyDown() then
-                print("Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
+                debug_print("Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
             end
         end)
     end
@@ -434,9 +428,7 @@ end
 ----- Required functions for HandyNotes ----------------------------------------
 --------------------------------------------------------------------------------
 
-
 -- points[<mapfile>] = { [<coordinates>] = { <quest ID>, <item name>, <notes> } }
-
 
 -- An iterator function that will loop over and return 5 values
 -- (coord, uiMapID, iconpath, scale, alpha)
@@ -446,7 +438,7 @@ end
 --
 local function PointsDataIterator(state, value)
     if not state then return end
-    HandyNotesPlugin:Print("args -->", state, value)
+    debug_print("HN args -->", state, value)
     -- local coord, v = next(t, prev)
     -- while coord do
     --     if v and (db.completed or not completedQuests[v[1]]) then
@@ -464,8 +456,8 @@ end
 ---@return any state  Arg 1 to pass into iter() on the initial iteration
 ---@return any value  Arg 2 to pass into iter() on the initial iteration
 --
---> REF.: <World of Warcraft\_retail_\Interface\AddOns\HandyNotes\HandyNotes.lua>
---> REF.: <FrameXML/Blizzard_SharedMapDataProviders/QuestDataProvider.lua>
+-- REF.: <World of Warcraft\_retail_\Interface\AddOns\HandyNotes\HandyNotes.lua><br>
+-- REF.: <FrameXML/Blizzard_SharedMapDataProviders/QuestDataProvider.lua>
 --
 function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
     if WorldMapFrame then
@@ -481,6 +473,7 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
     end
     return PointsDataIterator
 end
+
 --------------------------------------------------------------------------------
 ----- Slash Commands (requires: AceConsole) ------------------------------------
 --------------------------------------------------------------------------------
