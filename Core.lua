@@ -204,45 +204,55 @@ local function GetCompleteAchievementInfo(achievementID)
     return info
 end
 
-local function GameTooltip_AddZoneStoryName(tooltip, mapID, isComplete, icon)
-    local mapInfo = C_Map.GetMapInfo(mapID)
-    if isComplete then
-        -- GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
-        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name), ACHIEVEMENT_COLOR)
-    else
-        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_STAGE_COLOR)
-    end
-end
+-- local function GameTooltip_AddZoneStoryName(tooltip, mapID, isComplete, icon)
+--     local mapInfo = C_Map.GetMapInfo(mapID)
+--     if isComplete then
+--         -- GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
+--         GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name), ACHIEVEMENT_COLOR)
+--     else
+--         GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_STAGE_COLOR)
+--     end
+-- end
 
-local function GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
-    local wrapLine = false
-    for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
-        -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
-        -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
-        if criteriaInfo.completed then
-            GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
-        else
-            GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
-        end
-    end
-end
+-- local function GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
+--     local wrapLine = false
+--     for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
+--         -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+--         -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+--         if criteriaInfo.completed then
+--             GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
+--         else
+--             GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
+--         end
+--     end
+-- end
 
 local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
-    print(format("Checking zone (%s) for stories...", mapID or "n/a"))
-    -- Check and add zone stories
+    -- print(format("Checking zone (%s) for stories...", mapID or "n/a"))
     local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
     if storyAchievementID then
         local achievementInfo = GetCompleteAchievementInfo(storyAchievementID)
-        -- print("> mapID:", mapID, "storyMapID:", storyMapID, mapID == storyMapID)
-        -- print("> completed:", achievementInfo.completed)
-        -- print("> icon:", achievementInfo.icon)
         GameTooltip_AddBlankLineToTooltip(tooltip)
-        GameTooltip_AddZoneStoryName(tooltip, storyMapID, achievementInfo.completed, achievementInfo.icon)
+        -- Add zone story name
+        local mapInfo = C_Map.GetMapInfo(storyMapID)
+        local StoryNameTemplate = achievementInfo.completed and L.STORY_NAME_COMPLETE_FORMAT or L.STORY_NAME_INCOMPLETE_FORMAT
+        GameTooltip_AddColoredLine(tooltip, StoryNameTemplate:format(achievementInfo.icon, mapInfo.name), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
+        -- Add chapter status
         GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
         GameTooltip_AddDisabledLine(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name), false)
+        -- GameTooltip_AddBlankLineToTooltip(tooltip)
+        -- Add chapter list
         if (not achievementInfo.completed or IsShiftKeyDown()) then
-            -- GameTooltip_AddBlankLineToTooltip(tooltip)
-            GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
+            local wrapLine = false
+            for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
+                -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+                if criteriaInfo.completed then
+                    GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
+                else
+                    GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
+                end
+            end
         end
     else
         -- GameTooltip_AddDisabledLine(tooltip, "> No results.")
