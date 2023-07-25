@@ -31,6 +31,8 @@
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/UITimerDocumentation.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/GlobalStrings.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/TableUtil.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/QuestMapFrame.lua#1871>
 -- (see also the function comments section for more reference)
 --
 --------------------------------------------------------------------------------
@@ -42,15 +44,16 @@ local format = string.format
 local tostring = tostring
 -- local tContains = tContains
 -- local tDeleteItem = tDeleteItem
--- local tInsert = table.insert
+local tInsert = table.insert
 -- local strjoin = strjoin
 local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) end
 -- ACHIEVEMENT_COLOR, ACHIEVEMENT_COMPLETE_COLOR, ACHIEVEMENT_INCOMPLETE_COLOR, CAMPAIGN_COMPLETE_COLOR
 -- QUEST_OBJECTIVE_FONT_COLOR, QUEST_OBJECTIVE_DISABLED_FONT_COLOR
 -- QUEST_OBJECTIVE_HIGHLIGHT_FONT_COLOR, QUEST_OBJECTIVE_DISABLED_HIGHLIGHT_FONT_COLOR
 -- local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
-local QuestUtils_GetQuestName = QuestUtils_GetQuestName
-local GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
+-- local C_QuestLog_GetZoneStoryInfo = C_QuestLog.GetZoneStoryInfo
+-- local QuestUtils_GetQuestName = QuestUtils_GetQuestName
+-- local GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
 local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
 
 
@@ -62,11 +65,18 @@ local L = {
     -- WoW global strings
     STATUS_ENABLED = VIDEO_OPTIONS_ENABLED,
     STATUS_DISABLED = VIDEO_OPTIONS_DISABLED,
-    STATUS_FORMATSTRING = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
-    STATUS_STORY_FORMATSTRING = QUEST_STORY_STATUS,
-    -- STORY_CHAPTERS = "%d/%d Kapitel";
-    -- STORY_PROGRESS = "Geschichtsfortschritt";
-    REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
+    STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
+    STORY_STATUS_FORMAT = QUEST_STORY_STATUS,
+    QUEST_LINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:0|t %s",
+    -- STORY_PROGRESS = STORY_PROGRESS,
+    -- STORY_CHAPTERS_FORMAT = STORY_CHAPTERS,
+    -- STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s |TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:0|t",
+    STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s |A:achievementcompare-GreenCheckmark:0:0|a",
+    STORY_NAME_INCOMPLETE_FORMAT = "|T%d:16:16:0:0|t %s",
+    STORY_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
+    STORY_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
+
+    -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
     -- ITEM_REQ_REPUTATION = "Requires %s - %s";
     -- ITEM_REQ_SKILL = "Requires %s";
     -- ITEM_REQ_SPECIALIZATION = "Requires: %s";
@@ -82,7 +92,7 @@ local L = {
     -- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
     -- CONTENT_TRACKING_ACHIEVEMENT_FORMAT = "Erfolg: \"%s\"";
     -- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
-    OBJECTIVE_FORMATSTRING = CONTENT_TRACKING_OBJECTIVE_FORMAT,  --> "- %s"
+    OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT,  --> "- %s"
     -- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
     -- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
     -- CONTINENT = "Kontinent";
@@ -117,7 +127,7 @@ function HandyNotesPlugin:OnEnable()
     -- Register this addon to HandyNotes as plugin
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
     HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
-    self:Printf(L.STATUS_FORMATSTRING, YELLOW(ns.pluginInfo.title), L.STATUS_ENABLED)
+    self:Printf(L.STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.STATUS_ENABLED)
 
     -- Test utils
     -- local achievementInfo = util.achieve.GetWrappedAchievementInfo(16398)
@@ -140,7 +150,7 @@ function HandyNotesPlugin:OnDisable()
         self:UnregisterChatCommand(command)
     end
 
-    self:Printf(STATUS_FORMATSTRING, YELLOW(ns.pluginInfo.title), L.STATUS_DISABLED)
+    self:Printf(L.STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.STATUS_DISABLED)
 end
 
 -- Standard functions you can provide optionally:
@@ -151,6 +161,79 @@ end
 -- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
 --     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 
+
+----- Tooltip Utilities ----------
+
+-- local QuestLineCache = {}
+-- QuestLineCache.includeNumCompletedCriteria = true
+-- QuestLineCache.data = {}
+-- QuestLineCache.Add = function(self, questLineID)
+--     local info = {}
+-- end
+
+local function GetCompleteAchievementInfo(achievementID)
+    local info = util.achieve.GetWrappedAchievementInfo(achievementID)
+    info.numCriteria = util.achieve.GetWrappedAchievementNumCriteria(achievementID)
+    info.numCompleted = 0
+    info.criteriaList = {}
+    do
+        for criteriaIndex=1, info.numCriteria do
+            local criteriaInfo = util.achieve.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
+            if criteriaInfo then
+                if criteriaInfo.completed then
+                    info.numCompleted = info.numCompleted + 1
+                end
+                tInsert(info.criteriaList, criteriaInfo)
+            end
+        end
+    end
+    return info
+end
+
+local function GameTooltip_AddZoneStoryName(tooltip, mapID, isComplete, icon)
+    local mapInfo = C_Map.GetMapInfo(mapID)
+    if isComplete then
+        GameTooltip_AddDisabledLine(tooltip, L.STORY_NAME_COMPLETE_FORMAT:format(icon, mapInfo.name))
+    else
+        GameTooltip_AddColoredLine(tooltip, L.STORY_NAME_INCOMPLETE_FORMAT:format(icon, mapInfo.name), SCENARIO_SUBTITLE_COLOR)
+    end
+end
+
+local function GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
+    GameTooltip_AddBlankLineToTooltip(tooltip)
+    local wrapLine = false
+    for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
+        -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+        -- print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+        if criteriaInfo.completed then
+            GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
+        else
+            GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
+        end
+    end
+end
+
+local function GameTooltip_AddZoneStoryProgress(tooltip, mapID)
+    print(format("Checking zone (%s) for stories...", mapID or "n/a"))
+    -- Check and add zone stories
+    local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
+    if storyAchievementID then
+        local achievementInfo = GetCompleteAchievementInfo(storyAchievementID)
+        GameTooltip_AddDisabledLine(tooltip, format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name), false)
+        -- print("> mapID:", mapID, "storyMapID:", storyMapID, mapID == storyMapID)
+        -- print("> completed:", achievementInfo.completed)
+        -- print("> icon:", achievementInfo.icon)
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        GameTooltip_AddZoneStoryName(tooltip, storyMapID, achievementInfo.completed, achievementInfo.icon)
+        GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+        if (not achievementInfo.completed or IsShiftKeyDown()) then
+            GameTooltip_AddZoneStoryChapters(tooltip, achievementInfo)
+        end
+    else
+        -- GameTooltip_AddDisabledLine(tooltip, "> No results.")
+        print("> No results.")
+    end
+end
 
 ----- Hooks ----------
 
@@ -165,39 +248,62 @@ end
 
 local function GetQuestLineInfoByPin(self)
     -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLineInfoDocumentation.lua>
-    local mapID = self:GetMap():GetMapID()
+    local mapID = self.mapID or self:GetMap():GetMapID()
 	-- local mapInfo = C_Map.GetMapInfo(mapID)
     local questLineInfo = C_QuestLine.GetQuestLineInfo(self.questID, mapID)
     return questLineInfo
 end
--- C_QuestLog.IsWorldQuest(questID)
-    -- self.worldQuest = true;
-    -- local tagInfo = C_QuestLog.GetQuestTagInfo(self.questID);
-    -- local quality = tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common;
-    -- local color = WORLD_QUEST_QUALITY_COLORS[quality].color;
--- C_QuestLog.IsQuestCalling(self.questID)
--- C_QuestLog.IsThreatQuest(questID)
--- C_QuestLog.GetQuestType(questID) == Enum.QuestTag.CombatAlly)
--- AVAILABLE_QUEST, QUEST_WATCH_QUEST_READY
--- local percent = math.floor((numFulfilled/numRequired) * 100);
--- GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
 
---[[ Icons
-
-if C_QuestLog.IsQuestCalling(self.questID) then
-    self.Texture:SetAtlas("Quest-DailyCampaign-Available", false);
-elseif C_QuestLog.IsImportantQuest(self.questID) then
-    self.Texture:SetAtlas("importantavailablequesticon", false);
-elseif taskInfo.isDaily then
-    self.Texture:SetAtlas("QuestDaily", false);
-elseif taskInfo.isQuestStart then
-    self.Texture:SetAtlas("QuestNormal", false);
-else
-    self.Texture:SetAtlas("QuestBonusObjective", false);
-end
-
-
+--[[
+{
+    Name = "QuestLineInfo",
+    Type = "Structure",
+    Fields =
+    {
+        { Name = "questLineName", Type = "cstring", Nilable = false },
+        { Name = "questName", Type = "cstring", Nilable = false },
+        { Name = "questLineID", Type = "number", Nilable = false },
+        { Name = "questID", Type = "number", Nilable = false },
+        { Name = "x", Type = "number", Nilable = false },
+        { Name = "y", Type = "number", Nilable = false },
+        { Name = "isHidden", Type = "bool", Nilable = false },
+        { Name = "isLegendary", Type = "bool", Nilable = false },
+        { Name = "isDaily", Type = "bool", Nilable = false },
+        { Name = "isCampaign", Type = "bool", Nilable = false },
+        { Name = "isImportant", Type = "bool", Nilable = false },
+        { Name = "floorLocation", Type = "QuestLineFloorLocation", Nilable = false },
+    },
+},
 ]]
+
+-- local function GetNumQuestLineQuests(questLineID)
+--     local questList = C_QuestLine.GetQuestLineQuests(questLineID)
+--     return #questList
+-- end
+
+--     local quests = GetQuestLineQuests(questLineInfo.questLineID)
+--     local questsProcessed = {}
+--     -- table.sort(quests)
+--     for i, questID in ipairs(quests) do
+--         if tContains(questsProcessed, questID) then break end
+--         local questName = QuestUtils_GetQuestName(questID)
+--         -- local questCompleted = C_QuestLog.IsComplete(questID)
+--         local questCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+--         -- local isOnQuest = C_QuestLog.IsOnQuest(questID)
+--         -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, questCompleted, isOnQuest)
+--         if questCompleted then
+--             GameTooltip_AddInstructionLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
+--         elseif (questID == questLineInfo.questID) then
+--             GameTooltip_AddColoredLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName), YELLOW_FONT_COLOR)
+--         else
+--             GameTooltip_AddDisabledLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
+--         end
+--         tInsert(questsProcessed, questID)
+--         -- GameTooltip:Show()
+--     end
+-- -- end)
+-- if not pin.mapID then
+    -- pin.mapID = pin:GetMap():GetMapID()
 
 function HandyNotesPlugin:OnEnter(pin)
     -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
@@ -209,50 +315,19 @@ function HandyNotesPlugin:OnEnter(pin)
     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
     GameTooltip_AddColoredDoubleLine(tooltip, " ", self.name, NORMAL_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
     QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
-    GameTooltip_AddInstructionLine(tooltip, format(L.HIDE_WITH_2KEY_COMBO, ALT_KEY_TEXT, KEY_BUTTON1))  -- SHIFT_KEY_TEXT
-    GameTooltip_AddDisabledLine(tooltip, format("#%d - %s", pin.questID, pin.pinTemplate))
+    -- GameTooltip_AddInstructionLine(tooltip, format(L.HIDE_WITH_2KEY_COMBO, ALT_KEY_TEXT, KEY_BUTTON1))  -- SHIFT_KEY_TEXT
+    GameTooltip_AddDisabledLine(tooltip, format("> Q:%d - %s", pin.questID, pin.pinTemplate))
     local questLineInfo = GetQuestLineInfoByPin(pin)
     if questLineInfo then
+        print("pin:", pin.mapID, pin:GetMap():GetMapID(), YELLOW(pin.questType))
         GameTooltip_AddBlankLineToTooltip(tooltip)
-        GameTooltip_AddNormalLine(tooltip, format("%s (#%d)", questLineInfo.questLineName, questLineInfo.questLineID))
-        if IsShiftKeyDown() then
-            -- -- C_Timer.After(0.1, function()
-            --     local quests = GetQuestLineQuests(questLineInfo.questLineID)
-            --     local questsProcessed = {}
-            --     -- table.sort(quests)
-            --     for i, questID in ipairs(quests) do
-            --         if tContains(questsProcessed, questID) then break end
-            --         local questName = QuestUtils_GetQuestName(questID)
-            --         -- local questCompleted = C_QuestLog.IsComplete(questID)
-            --         local questCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
-            --         -- local isOnQuest = C_QuestLog.IsOnQuest(questID)
-            --         -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, questCompleted, isOnQuest)
-            --         if questCompleted then
-            --             GameTooltip_AddInstructionLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
-            --         elseif (questID == questLineInfo.questID) then
-            --             GameTooltip_AddColoredLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName), YELLOW_FONT_COLOR)
-            --         else
-            --             GameTooltip_AddDisabledLine(tooltip, L.OBJECTIVE_FORMATSTRING:format(questName))
-            --         end
-            --         tInsert(questsProcessed, questID)
-            --         -- GameTooltip:Show()
-            --     end
-            -- -- end)
-            -- if not pin.mapID then
-            --     pin.mapID = pin:GetMap():GetMapID()
-            -- end
-            GameTooltip_AddDisabledLine(tooltip, format("Checking zone (%s) for stories...", pin.mapID or "n/a"))
-            local achievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(pin.mapID)
-            if storyMapID then
-                GameTooltip_AddDisabledLine(tooltip, format("mapID: %s, %s, %s", pin.mapID, storyMapID, tostring(pin.mapID == storyMapID)))
-            end
-            if achievementID then
-                local achievementInfo = util.achieve.GetWrappedAchievementInfo(achievementID)
-                GameTooltip_AddNormalLine(tooltip, format("%s (%s) > %s", achievementInfo.name, achievementID, tostring(achievementInfo.completed)))
-            else
-                GameTooltip_AddDisabledLine(tooltip, "> No results.")
-            end
+        -- GameTooltip_AddHighlightLine(tooltip, questLineInfo.questLineName)
+        GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
+        GameTooltip_AddDisabledLine(tooltip, format("> L:%d \"%s\"", questLineInfo.questLineID, questLineInfo.questLineName))
+        if questLineInfo.isCampaign then
+            GameTooltip_AddDisabledLine(tooltip, format("> > isCampaign: %s %s", tostring(questLineInfo.isCampaign), tostring(C_CampaignInfo.IsCampaignQuest(pin.questID))))
         end
+        GameTooltip_AddZoneStoryProgress(tooltip, pin.mapID)
     end
     GameTooltip:Show()
 end
@@ -280,7 +355,7 @@ end
 function HandyNotesPlugin:RegisterHooks()
     -- Active Quests  --> TODO - Needed ???
     if not self:IsHooked(QuestPinMixin, "OnMouseEnter") then
-        print(YELLOW("Hooking active quests..."))
+        -- print(YELLOW("Hooking active quests..."))
         self:SecureHook(QuestPinMixin, "OnMouseEnter")
         self:SecureHook(QuestPinMixin, "OnClick", function(pin, mouseButton)
             if IsAltKeyDown() then
@@ -290,7 +365,7 @@ function HandyNotesPlugin:RegisterHooks()
     end
     -- Storyline Quests
     if not self:IsHooked(StorylineQuestPinMixin, "OnMouseEnter") then
-        print(YELLOW("Hooking storyline quests..."))
+        -- print(YELLOW("Hooking storyline quests..."))
         self:SecureHook(StorylineQuestPinMixin, "OnMouseEnter")
         self:SecureHook(StorylineQuestPinMixin, "OnClick", function(pin, mouseButton)
             if IsAltKeyDown() then
@@ -381,7 +456,7 @@ function HandyNotesPlugin:ProcessSlashCommands(input)
         --     print(format(" '/%s <%s>'", command, YELLOW("arg")))
         -- end
         for arg_name, arg_description in pairs(arg_list) do
-            self:Print(" ", L.OBJECTIVE_FORMATSTRING:format(YELLOW(arg_name..":")), arg_description)
+            self:Print(" ", L.OBJECTIVE_FORMAT:format(YELLOW(arg_name..":")), arg_description)
         end
     end
     if (input == "version") then
@@ -397,7 +472,37 @@ end
 --[[ Tests
 --------------------------------------------------------------------------------
 
+GetQuestExpansion(questID)
+GetQuestFactionGroup(questID)
+GetQuestLink(questID)
+GetQuestUiMapID(questID)
+IsBreadcrumbQuest(questID)
+IsQuestSequenced(questID)
+IsStoryQuest(questID)
+C_QuestLog.GetQuestDifficultyLevel(questID)  --> 60
+C_QuestLog.GetQuestTagInfo(questID)  --> QuestTagInfo table
+C_QuestLog.GetQuestType(questID)  --> Enum.QuestTag
 
+-- local tagInfo = C_QuestLog.GetQuestTagInfo(self.questID);
+-- local quality = tagInfo and tagInfo.quality or Enum.WorldQuestQuality.Common;
+
+-- local percent = math.floor((numFulfilled/numRequired) * 100);                --> TODO - Add progress percentage ???
+-- GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
+
+REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/WarCampaignDocumentation.lua>
+C_CampaignInfo.IsCampaignQuest(questID)
+C_CampaignInfo.GetCampaignID(questID)
+C_CampaignInfo.GetAvailableCampaigns()  --> list of campaignIDs
+
+C_QuestLog.GetNextWaypoint(questID)  --> mapID, x, y
+C_QuestLog.GetNextWaypointForMap(questID, uiMapID)  --> x, y
+C_QuestLog.GetNextWaypointText(questID)  --> waypointText
+
+C_QuestLine.GetAvailableQuestLines(uiMapID)  --> questLines
+C_QuestLine.GetQuestLineInfo(questID, uiMapID)  --> questLineInfo
+C_QuestLine.GetQuestLineQuests(questLineID)  --> questIDs
+C_QuestLine.IsComplete(questLineID)  --> isComplete
+C_QuestLine.RequestQuestLinesForMap(uiMapID)
 
 ]]
 --@end-do-not-package@
