@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Basic caching system for quest lines, zone stories and their quests.
 * Quest line check for story line quests.
 * Story check for each zone.
 * World map hooks for storyline quests.
