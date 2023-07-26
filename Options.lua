@@ -29,7 +29,6 @@ local AddonID, ns = ...
 ns.currentLocale = GetLocale()
 local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 local CreateAtlasMarkup = CreateAtlasMarkup
-local HandyNotes = _G.HandyNotes
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -136,11 +135,11 @@ ns.pluginInfo.options = function(optionsHandler)
     }
 end
 
-function List_Plugins()
-    for pluginName, pluginHandler in pairs(HandyNotes.plugins) do
-		print(pluginName == pluginHandler.name, pluginName, "-->", pluginHandler.name)
-	end
-end
+-- function List_Plugins()
+--     for pluginName, pluginHandler in pairs(HandyNotes.plugins) do
+-- 		print(pluginName == pluginHandler.name, pluginName, "-->", pluginHandler.name)
+-- 	end
+-- end
 
 -- Achievement IDs
 local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585
