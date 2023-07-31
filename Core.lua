@@ -149,8 +149,7 @@ debug.print = function(self, ...)
         if t.debug then
             print(YELLOW(prefix.."_"..t.debug_prefix), select(2, ...))
         end
-    end
-    if self.isActive then
+    elseif self.isActive then
         print(YELLOW(prefix..":"), ...)
     end
 end
@@ -194,20 +193,6 @@ function HandyNotesPlugin:OnEnable()
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
     HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
     self:Printf(L.OPTION_STATUS_READY_FORMAT, YELLOW(ns.pluginInfo.title))
-
-    -- Test utils
-    -- local achievementInfo = utils.achieve.GetWrappedAchievementInfo(16398)
-    -- -- if not ns.db.continents then
-    -- --     ns.db.continents = {}
-    -- -- end
-    -- -- if not ns.db.continents[DRAGON_ISLES_MAP_ID] then
-    -- --     ns.db.continents[DRAGON_ISLES_MAP_ID] = {}
-    -- -- end
-    -- ns.var.achievements = {}
-    -- ns.var.achievements[achievementInfo.achievementID] = utils.achieve.GetAchievementCriteriaInfoList(achievementInfo.achievementID)
-    -- -- local includeCompleted = true
-    -- local numCriteriaTotal, numCriteriaCompleted = utils.achieve.GetWrappedAchievementNumCriteria(achievementInfo.achievementID, includeCompleted)
-    -- self:Print(achievementInfo.achievementID, achievementInfo.name, format("%d/%d", numCriteriaCompleted, numCriteriaTotal))
 end
 
 function HandyNotesPlugin:OnDisable()
@@ -230,16 +215,10 @@ end
 
 ----- Tooltip Utilities ----------
 
--- local QuestLineCache = {}
--- QuestLineCache.includeNumCompletedCriteria = true
--- QuestLineCache.data = {}
--- QuestLineCache.Add = function(self, questLineID)
---     local info = {}
--- end
-
 local ZoneStoryCache = {}
 ZoneStoryCache.debug = false
-ZoneStoryCache.meta = {}  --> [mapID] = {storyAchievementID, storyMapInfo}
+ZoneStoryCache.debug_prefix = "ZS-CACHE:"
+ZoneStoryCache.meta = {}  --> {[mapID] = {storyAchievementID, storyMapInfo}, ...}
 ZoneStoryCache.achievements = {}  --> achievementInfo + .criteriaList
 ZoneStoryCache.GetZoneStoryInfo = function(self, mapID, prepareCache)
     if not self.meta[mapID] then
@@ -276,93 +255,88 @@ ZoneStoryCache.GetAchievementInfo = function(self, achievementID)
     return self.achievements[achievementID]
 end
 
-local LocalUtils = {}
--- LocalUtils.processedStoryQuests = {}
-LocalUtils.cachedQuestLineInfos = {}
-LocalUtils.cachedQuestLineQuests = {}
-
--- function LocalUtils:GetStoryHeaderMapID()
---     return QuestScrollFrame and QuestMapFrame:GetParent():GetMapID() or 0
--- end
-
---[[
--- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLineInfoDocumentation.lua>
-{
-    Name = "QuestLineInfo",
-    Type = "Structure",
-    Fields =
-    {
-        { Name = "questLineName", Type = "cstring", Nilable = false },
-        { Name = "questName", Type = "cstring", Nilable = false },
-        { Name = "questLineID", Type = "number", Nilable = false },
-        { Name = "questID", Type = "number", Nilable = false },
-        { Name = "x", Type = "number", Nilable = false },
-        { Name = "y", Type = "number", Nilable = false },
-        { Name = "isHidden", Type = "bool", Nilable = false },
-        { Name = "isLegendary", Type = "bool", Nilable = false },
-        { Name = "isDaily", Type = "bool", Nilable = false },
-        { Name = "isCampaign", Type = "bool", Nilable = false },
-        { Name = "isImportant", Type = "bool", Nilable = false },
-        { Name = "floorLocation", Type = "QuestLineFloorLocation", Nilable = false },
-    },
-},
-]]
-
-function LocalUtils:GetAvailableQuestLines(mapID)
-    -- debug:print(YELLOW("Retrieving available quest lines..."))
-    -- Get new dat
-    if not self.cachedQuestLineInfos[mapID] then
-        local questLines = C_QuestLine.GetAvailableQuestLines(mapID)
-        if questLines then
-            -- Cache data
-            self.cachedQuestLineInfos[mapID] = {}
-            self.cachedQuestLineInfos[mapID] = questLines
-            -- debug:print(format("> Adding %d QLs to %d", #questLines, mapID))
-        else
-            debug:print("> No QLs available for", mapID)
-        end
-        return questLines
+local QuestCache = {}
+QuestCache.debug = false
+QuestCache.debug_prefix = "Quest-CACHE:"
+-- Structure: { [questLineID] = {questID1, questID2, ...}, ... }
+QuestCache.GetQuestLineQuests = function(self, questLineID, prepareCache)
+    -- print(">",  questLineID, prepareCache)
+    if not ns.db.questLineQuests then
+        ns.db.questLineQuests = {}
+        debug:print(self, "Initialized 'questLineQuests' DB")
     end
-    -- Get from cache
-    local questLines = self.cachedQuestLineInfos[mapID]
-    -- debug:print(format("> Got %d cached QLs from %d", #questLines, mapID))
-    return questLines
+    if not ns.db.questLineQuests[questLineID] then
+        local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+        if (not questIDs or #questIDs == 0) then return end
+        ns.db.questLineQuests[questLineID] = questIDs
+        debug:print(self, format("> Adding %d QL |4quest:quests; to %d", #questIDs, questLineID))
+        -- return questIDs
+    end
+    if not prepareCache then
+        local questIDs = ns.db.questLineQuests[questLineID]
+        debug:print(format("> Returning %d QL |4quest:quests; for %d", #questIDs, questLineID))
+        return questIDs
+    end
 end
 
-function LocalUtils:GetQuestLineInfoByPin(pin)
+local QuestLineCache = {}
+QuestLineCache.debug = false
+QuestLineCache.debug_prefix = "QL-CACHE:"
+-- Structure: { [mapID] = {questLineInfo1, questLineInfo2, ...}, ... }
+QuestLineCache.GetAvailableQuestLines = function(self, mapID, prepareCache)
+    if not ns.db.questLineInfos then
+        ns.db.questLineInfos = {}
+        debug:print(self, "Initialized 'questLineInfos' DB")
+    end
+    if not ns.db.questLineInfos[mapID] then
+        local questLines = C_QuestLine.GetAvailableQuestLines(mapID)
+        if (not questLines or #questLines == 0) then return end
+        ns.db.questLineInfos[mapID] = questLines
+        debug:print(self, format("> Adding %d |4QuestLine:QuestLines; to %d", #questLines, mapID))
+        if prepareCache then
+            for i, questLineInfo in ipairs(questLines) do
+                QuestCache:GetQuestLineQuests(questLineInfo.questLineID, prepareCache)
+            end
+        end
+    end
+    if not prepareCache then
+        local questLines = ns.db.questLineInfos[mapID]
+        debug:print(self, format("Returning %d |4QuestLine:QuestLines; for %d", #questLines, mapID))
+        return questLines
+    end
+end
+QuestLineCache.AddSingleQuestLine = function(self, mapID, questLineInfo)
+    if not ns.db.questLineInfos[mapID] then
+        ns.db.questLineInfos[mapID] = {}
+    end
+    debug:print(self, format("Adding %d to %d", questLineInfo.questLineID, mapID))
+    tInsert(ns.db.questLineInfos[mapID], questLineInfo)
+end
+QuestLineCache.GetQuestLineInfoByPin = function(self, pin)
     -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLineInfoDocumentation.lua>
     -- debug:print(YELLOW("Fetching single quest line info..."))
     local mapID = pin.mapID or pin:GetMap():GetMapID()
-    local questLines = LocalUtils:GetAvailableQuestLines(mapID)
+    local questLines = self:GetAvailableQuestLines(mapID)
     if questLines then
         -- Try cache look-up first
         for i, questLineInfo in ipairs(questLines) do
             if (questLineInfo.questID == pin.questID) then
-                -- debug:print("> Found cached QL info:", questLineInfo.questLineID, questLineInfo.questLineName)
+                debug:print(self, "> Found cached QL:", questLineInfo.questLineID, questLineInfo.questLineName)
                 return questLineInfo
             end
         end
         -- Try get new info
         local questLineInfo = C_QuestLine.GetQuestLineInfo(pin.questID, mapID)
         if questLineInfo then
-            -- debug:print("> Got new QL info:", questLineInfo.questLineID and questLineInfo.questLineName)
+            debug:print("> Got new QL:", questLineInfo.questLineID and questLineInfo.questLineName)
+            self:AddSingleQuestLine(mapID, questLineInfo)
             return questLineInfo
         end
     end
 end
 
--- function LocalUtils:GetQuestLineQuests(questLineID)
---     debug:print(YELLOW("Retrieving QL quests..."))
---     if not self.cachedQuestLineQuests[questLineID] then
---         local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
---         self.cachedQuestLineQuests[questLineID] = questIDs
---         debug:print(format("> Adding %d QL quests to %d", #questIDs, questLineID))
---         return questIDs
---     end
---     local questIDs = self.cachedQuestLineQuests[questLineID]
---     debug:print(format("> Returning %d cached QL quests from %d", #questIDs, questLineID))
---     return questIDs
--- end
+
+local LocalUtils = {}
 
 function LocalUtils:GetQuestName(questID)
     -- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
@@ -387,7 +361,7 @@ end
 
 function LocalUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local mapID = pin.mapID or pin:GetMap():GetMapID()
-    debug:print(format("Checking zone (%s) for stories...", mapID or "n/a"))
+    -- debug:print(format("Checking zone (%s) for stories...", mapID or "n/a"))
     local storyAchievementID, storyMapInfo = ZoneStoryCache:GetZoneStoryInfo(mapID)
 
     if not storyAchievementID then return false; end
@@ -429,17 +403,14 @@ end
 -- end
 
 function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
-    local questLineInfo = self:GetQuestLineInfoByPin(pin)
+    local questLineInfo = QuestLineCache:GetQuestLineInfoByPin(pin)
     if not questLineInfo then return false end
-    -- Add quest line header
-    -- GameTooltip_AddBlankLineToTooltip(tooltip)
+    -- Quest line header
     GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
-    -- Add chapters
+    -- Chapters
     local wrapLine = false
-    local questIDs = C_QuestLine.GetQuestLineQuests(questLineInfo.questLineID)
-    -- if TableIsEmpty(questIDs) then return end
+    local questIDs = QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
     local numQuestIDs = #questIDs
-    -- print("QuestLineQuests:", numQuestIDs)
     self:AddDebugLineToTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, numQuestIDs)})
     local previousQuestName = ''
     for i, questID in ipairs(questIDs) do
@@ -453,22 +424,25 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
         if PlayerMatchesQuestFactionGroup(questFactionGroup) then
             -- local questName = QuestUtils_GetQuestName(questID)
             local questName = self:GetQuestName(questID)
-            if questName == '' then                                             --> FIXME - Why sometimes no quest names?
+            if DEV_MODE and questName == '' then                                             --> FIXME - Why sometimes no quest names?
                 print("questName:", questID, HaveQuestData(questID))
             end
             -- if (questName ~= '' and previousQuestName ~= '') and (questName == previousQuestName) then break end     --> FIXME - Double Names, other class/start ???
             -- previousQuestName = questName
             local questTitle = QuestNameFactionGroupFormat[questFactionGroup]:format(questName)
-            local questCompleted = C_QuestLog.IsComplete(questID) or C_QuestLog.IsQuestFlaggedCompleted(questID)
-            -- if tContains(self.processedStoryQuests, questID) then questTitle = "> "..questTitle; end
+            -- local isQuestCompleted = C_QuestLog.IsComplete(questID) or C_QuestLog.IsQuestFlaggedCompleted(questID)
+            local isActiveQuest = C_QuestLog.IsComplete(questID)
+            local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 
-            -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, questCompleted, isOnQuest)
+            -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, isQuestCompleted, isOnQuest)
             -- debug:print("quest faction:", i, questID, questFactionGroup)
             if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%05d|r %s", questID, questTitle) end
             -- if tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup) then
-            if questCompleted then
+            if isQuestCompleted then
                 GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_CHAPTER_COMPLETED_FORMAT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
             elseif (questID == questLineInfo.questID) then
+                GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine)
+            elseif isActiveQuest then
                 GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine)
             else
                 GameTooltip_AddHighlightLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(questTitle), wrapLine)
@@ -495,28 +469,6 @@ end
 --     -- "BonusObjectivePinTemplate", "ThreatObjectivePinTemplate"
 -- end
 
---[[
-{
-    Name = "QuestLineInfo",
-    Type = "Structure",
-    Fields =
-    {
-        { Name = "questLineName", Type = "cstring", Nilable = false },
-        { Name = "questName", Type = "cstring", Nilable = false },
-        { Name = "questLineID", Type = "number", Nilable = false },
-        { Name = "questID", Type = "number", Nilable = false },
-        { Name = "x", Type = "number", Nilable = false },
-        { Name = "y", Type = "number", Nilable = false },
-        { Name = "isHidden", Type = "bool", Nilable = false },
-        { Name = "isLegendary", Type = "bool", Nilable = false },
-        { Name = "isDaily", Type = "bool", Nilable = false },
-        { Name = "isCampaign", Type = "bool", Nilable = false },
-        { Name = "isImportant", Type = "bool", Nilable = false },
-        { Name = "floorLocation", Type = "QuestLineFloorLocation", Nilable = false },
-    },
-},
-]]
-
 local function Hook_OnEnter(pin)
     -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
     -- REF.: <https://www.townlong-yak.com/framexml/live/GameTooltip.lua>
@@ -525,12 +477,15 @@ local function Hook_OnEnter(pin)
     if not ShouldHookQuestPin(pin) then return end
 
     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
-    local questTypeText = not DEV_MODE and GRAY(pin.questType or "?") or " "
+    local questTypeText = DEV_MODE and GRAY(pin.questType or "?") or " "
     GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, NORMAL_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
     if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then
         -- Ignore QuestPinTemplate aka. active quests since they do show the quest type by default
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
-        if (pin.questType ~= "Legendary") then GameTooltip_AddBlankLineToTooltip(tooltip) end
+        -- print("Displaying quest type", pin.questType)
+        if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
+    else
+        pin.pinTemplate = pin.pinTemplate or "Active"
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
     debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
@@ -639,8 +594,8 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
         -- Tests
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
             -- Update data cache for current zone
-            LocalUtils:GetAvailableQuestLines(mapID)
             ZoneStoryCache:GetZoneStoryInfo(mapID, true)
+            QuestLineCache:GetAvailableQuestLines(mapID, true)
         end
         -- local questsOnMap = C_QuestLog.GetQuestsOnMap(mapID)
         -- -- local doesMapShowTaskObjectives = C_TaskQuest.DoesMapShowTaskQuestObjectives(mapID)
