@@ -42,13 +42,10 @@
 
 local AddonID, ns = ...
 local utils = ns.utils
+local db
 
-local format = string.format
-local tostring = tostring
-local tContains = tContains
--- local tDeleteItem = tDeleteItem
-local tInsert = table.insert
--- local strjoin = strjoin
+local format, tostring = string.format, tostring
+local tContains, tInsert = tContains, table.insert
 
 -- local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 -- local C_QuestLog_GetZoneStoryInfo = C_QuestLog.GetZoneStoryInfo
@@ -88,7 +85,8 @@ local L = {
     STORY_STATUS_FORMAT = QUEST_STORY_STATUS,
     STORY_SEE_CHAPTERS_KEY_FORMAT = "Hold %s to see chapters",
 
-    QUEST_IS_CAMPAIGN_QUEST_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
+    CAMPAIGN_QUEST_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
+    CAMPAIGN_QUEST_LINE_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign.",
 
     -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
     ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
@@ -147,7 +145,7 @@ debug.print = function(self, ...)
     if type(...) == "table" then
         local t = ...
         if t.debug then
-            print(YELLOW(prefix.."_"..t.debug_prefix), select(2, ...))
+            print(YELLOW(prefix.." "..t.debug_prefix), select(2, ...))
         end
     elseif self.isActive then
         print(YELLOW(prefix..":"), ...)
@@ -178,6 +176,9 @@ function HandyNotesPlugin:OnInitialize()
     -- Load options database and settings
     ns.options = ns.pluginInfo.options(self)
     ns.db = LibStub("AceDB-3.0"):New("LoremasterDB")                            --> TODO - Add default options
+    -- ns.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+    --> Available AceDB subtables: char, realm, class, race, faction, factionrealm, profile, and global
+    db = ns.db.profile
 
     self:RegisterHooks()
 end
@@ -215,11 +216,30 @@ end
 
 ----- Tooltip Utilities ----------
 
+-- local BaseCache = {}
+-- setmetatable(BaseCache, {
+--     __index = function (self, key)
+--         local keyString = tostring(key)
+--         return self[keyString]
+--     end,
+--     __newindex = function(self, key, value)
+--         local keyString = tostring(key)
+--         self[keyString] = value
+--     end}
+-- )
+
+
+local DBUtil = {}
+DBUtil.debug = false
+DBUtil.debug_prefix = GREEN("DB:")
+
 local ZoneStoryCache = {}
 ZoneStoryCache.debug = false
 ZoneStoryCache.debug_prefix = "ZS-CACHE:"
 ZoneStoryCache.meta = {}  --> {[mapID] = {storyAchievementID, storyMapInfo}, ...}
 ZoneStoryCache.achievements = {}  --> achievementInfo + .criteriaList
+-- setmetatable(ZoneStoryCache.meta, BaseCache)
+-- setmetatable(ZoneStoryCache.achievements, BaseCache)
 ZoneStoryCache.GetZoneStoryInfo = function(self, mapID, prepareCache)
     if not self.meta[mapID] then
         local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
@@ -258,23 +278,24 @@ end
 local QuestCache = {}
 QuestCache.debug = false
 QuestCache.debug_prefix = "Quest-CACHE:"
--- Structure: { [questLineID] = {questID1, questID2, ...}, ... }
+QuestCache.questLineQuests = {}  --> Structure: { [questLineID] = {questID1, questID2, ...}, ... }
+-- setmetatable(QuestCache.questLineQuests, BaseCache)
 QuestCache.GetQuestLineQuests = function(self, questLineID, prepareCache)
     -- print(">",  questLineID, prepareCache)
-    if not ns.db.questLineQuests then
-        ns.db.questLineQuests = {}
+    if not self.questLineQuests then
+        self.questLineQuests = {}
         debug:print(self, "Initialized 'questLineQuests' DB")
     end
-    if not ns.db.questLineQuests[questLineID] then
+    if not self.questLineQuests[questLineID] then
         local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
         if (not questIDs or #questIDs == 0) then return end
-        ns.db.questLineQuests[questLineID] = questIDs
+        self.questLineQuests[questLineID] = questIDs
         debug:print(self, format("> Adding %d QL |4quest:quests; to %d", #questIDs, questLineID))
         -- return questIDs
     end
     if not prepareCache then
-        local questIDs = ns.db.questLineQuests[questLineID]
-        debug:print(format("> Returning %d QL |4quest:quests; for %d", #questIDs, questLineID))
+        local questIDs = self.questLineQuests[questLineID]
+        debug:print(self, format("> Returning %d QL |4quest:quests; for %d", #questIDs, questLineID))
         return questIDs
     end
 end
@@ -282,59 +303,129 @@ end
 local QuestLineCache = {}
 QuestLineCache.debug = false
 QuestLineCache.debug_prefix = "QL-CACHE:"
--- Structure: { [mapID] = {questLineInfo1, questLineInfo2, ...}, ... }
+QuestLineCache.questLineInfos = {}  --> Structure: { ["mapID"] = {questLineInfo1, questLineInfo2, ...}, ... }
+-- setmetatable(QuestLineCache.questLineInfos, BaseCache)
+
 QuestLineCache.GetAvailableQuestLines = function(self, mapID, prepareCache)
-    if not ns.db.questLineInfos then
-        ns.db.questLineInfos = {}
-        debug:print(self, "Initialized 'questLineInfos' DB")
-    end
-    if not ns.db.questLineInfos[mapID] then
-        local questLines = C_QuestLine.GetAvailableQuestLines(mapID)
-        if (not questLines or #questLines == 0) then return end
-        ns.db.questLineInfos[mapID] = questLines
-        debug:print(self, format("> Adding %d |4QuestLine:QuestLines; to %d", #questLines, mapID))
+    DBUtil:CheckInitCategory("questLines")
+    if not self.questLineInfos[mapID] then
+        local questLineInfos = C_QuestLine.GetAvailableQuestLines(mapID)
+        if not TableHasAnyEntries(questLineInfos) then
+            -- Also check database
+            local questLineDataQuestIDs = DBUtil:GetSavedQuestLinesForMap(mapID)
+            for i, questID in ipairs(questLineDataQuestIDs) do
+                local questLineInfo = self:GetQuestLineInfo(questID, mapID)
+                tInsert(questLineInfos, questLineInfo)
+            end
+        end
+        if not TableHasAnyEntries(questLineInfos) then return end  --> Still no infos
+        self.questLineInfos[mapID] = questLineInfos
+        debug:print(self, format("> Adding %d |4QuestLine:QuestLines; to %d", #questLineInfos, mapID))
         if prepareCache then
-            for i, questLineInfo in ipairs(questLines) do
-                QuestCache:GetQuestLineQuests(questLineInfo.questLineID, prepareCache)
+            for i, questLineInfo in ipairs(questLineInfos) do
+                local quests = QuestCache:GetQuestLineQuests(questLineInfo.questLineID, false)
+                -- Also save IDs in the database
+                DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
             end
         end
     end
+
     if not prepareCache then
-        local questLines = ns.db.questLineInfos[mapID]
-        debug:print(self, format("Returning %d |4QuestLine:QuestLines; for %d", #questLines, mapID))
-        return questLines
+        local questLineInfos = self.questLineInfos[mapID]
+        debug:print(self, format("Returning %d |4QuestLine:QuestLines; for %d", #questLineInfos, mapID))
+        return questLineInfos
     end
 end
 QuestLineCache.AddSingleQuestLine = function(self, mapID, questLineInfo)
-    if not ns.db.questLineInfos[mapID] then
-        ns.db.questLineInfos[mapID] = {}
+    if not self.questLineInfos[mapID] then
+        self.questLineInfos[mapID] = {}
     end
     debug:print(self, format("Adding %d to %d", questLineInfo.questLineID, mapID))
-    tInsert(ns.db.questLineInfos[mapID], questLineInfo)
+    tInsert(self.questLineInfos[mapID], questLineInfo)
+    -- Also save IDs in the database
+    DBUtil:SaveSingleQuestLine(questLineInfo, mapID)
 end
 QuestLineCache.GetQuestLineInfoByPin = function(self, pin)
     -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLineInfoDocumentation.lua>
-    -- debug:print(YELLOW("Fetching single quest line info..."))
     local mapID = pin.mapID or pin:GetMap():GetMapID()
-    local questLines = self:GetAvailableQuestLines(mapID)
-    if questLines then
+    local questLineInfos = self:GetAvailableQuestLines(mapID)
+    if questLineInfos then
         -- Try cache look-up first
-        for i, questLineInfo in ipairs(questLines) do
+        for i, questLineInfo in ipairs(questLineInfos) do
             if (questLineInfo.questID == pin.questID) then
                 debug:print(self, "> Found cached QL:", questLineInfo.questLineID, questLineInfo.questLineName)
                 return questLineInfo
             end
         end
-        -- Try get new info
-        local questLineInfo = C_QuestLine.GetQuestLineInfo(pin.questID, mapID)
-        if questLineInfo then
-            debug:print("> Got new QL:", questLineInfo.questLineID and questLineInfo.questLineName)
-            self:AddSingleQuestLine(mapID, questLineInfo)
-            return questLineInfo
+    end
+    -- Try get new info
+    local questLineInfo = self:GetQuestLineInfo(pin.questID, mapID)
+    if not questLineInfo then
+        -- Try database look-up
+        local questLineMapID = DBUtil:GetSavedQuestLineMapForQuest(pin.questID)
+        if not questLineMapID then return end
+        questLineInfo = self:GetQuestLineInfo(pin.questID, questLineMapID)
+    end
+    if questLineInfo then
+        debug:print(self, "> Got new QL:", questLineInfo.questLineID and questLineInfo.questLineName)
+        self:AddSingleQuestLine(mapID, questLineInfo)
+        return questLineInfo
+    end
+end
+QuestLineCache.GetQuestLineInfo = function(self, questID, mapID)
+    return C_QuestLine.GetQuestLineInfo(questID, mapID)
+end
+
+----- Database utilities ----------
+
+function DBUtil:CheckInitCategory(categoryName)
+    if not db[categoryName] then
+        -- Save { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
+        db[categoryName] = {}
+        setmetatable(db[categoryName], BaseCache)
+        debug:print(self, "Initialized DB:", categoryName)
+    end
+end
+
+function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
+    local questIDs = quests or QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
+    -- Structure: { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
+    if not db.questLines[questLineInfo.questLineID] then
+        db.questLines[questLineInfo.questLineID] = {
+            questID = questLineInfo.questID,
+            mapIDs = {mapID},
+            quests = questIDs,
+        }
+        debug:print(self, "Saved QL:", questLineInfo.questLineID, questLineInfo.questLineName)
+
+    elseif not tContains(db.questLines[questLineInfo.questLineID].mapIDs, mapID) then
+        tInsert(db.questLines[questLineInfo.questLineID].mapIDs, mapID)
+        debug:print(self, "Added mapID to QL:", mapID, questLineInfo.questLineID)
+    end
+end
+function DBUtil:GetSavedQuestLinesForMap(mapID)
+    local infos = {}
+    for questLineID, questLineData in pairs(db.questLines) do
+        if tContains(questLineData.mapIDs, mapID) then
+            tInsert(infos, questLineData.questID)
+        end
+    end
+    if TableHasAnyEntries(infos) then debug:print(DBUtil, format("Loaded %d |4QuestLine:QuestLines; for %d", #infos, mapID)) end
+
+    return infos
+end
+function DBUtil:GetSavedQuestLineMapForQuest(questID)
+    for questLineID, questLineData in pairs(db.questLines) do
+        if tContains(questLineData.quests, questID) then
+            local mapID = questLineData.mapIDs[1]
+            debug:print(self, "Found map for quest:", mapID)
+
+            return mapID
         end
     end
 end
 
+----- Common utilities ----------
 
 local LocalUtils = {}
 
@@ -372,7 +463,7 @@ function LocalUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     GameTooltip_AddColoredLine(tooltip, StoryNameTemplate:format(achievementInfo.icon, storyMapInfo.name), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
     -- Add chapter status
     GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
-    self:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)}) --, addBlankLine=false})  --  not IsShiftKeyDown())
+    self:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
     -- Add chapter list
     if IsShiftKeyDown() then
     -- if (not achievementInfo.completed or IsShiftKeyDown()) then
@@ -438,14 +529,15 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
             -- debug:print("quest faction:", i, questID, questFactionGroup)
             if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%05d|r %s", questID, questTitle) end
             -- if tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questFactionGroup) then
+            local leftOffset = 0
             if isQuestCompleted then
-                GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_CHAPTER_COMPLETED_FORMAT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
+                GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_CHAPTER_COMPLETED_FORMAT:format(questTitle), GREEN_FONT_COLOR, wrapLine, leftOffset)
             elseif (questID == questLineInfo.questID) then
-                GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine)
+                GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine, leftOffset)
             elseif isActiveQuest then
-                GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine)
+                GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine, leftOffset)
             else
-                GameTooltip_AddHighlightLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(questTitle), wrapLine)
+                GameTooltip_AddHighlightLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(questTitle), wrapLine, leftOffset)
             end
         end
     end
@@ -478,6 +570,7 @@ local function Hook_OnEnter(pin)
 
     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
     local questTypeText = DEV_MODE and GRAY(pin.questType or "?") or " "
+    GameTooltip_AddBlankLineToTooltip(tooltip)
     GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, NORMAL_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
     if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then
         -- Ignore QuestPinTemplate aka. active quests since they do show the quest type by default
@@ -498,7 +591,8 @@ local function Hook_OnEnter(pin)
         if campaignInfo then
             if (hasStory or hasQuestLine) then GameTooltip_AddBlankLineToTooltip(tooltip); end
             LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> > isCampaign: %d %s", campaignInfo.isWarCampaign, campaignInfo.description)}) --, devModeOnly=true})
-            GameTooltip_AddNormalLine(tooltip, L.QUEST_IS_CAMPAIGN_QUEST_FORMAT:format(SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
+            local textFormat = hasQuestLine and L.CAMPAIGN_QUEST_LINE_FORMAT or L.CAMPAIGN_QUEST_FORMAT
+            GameTooltip_AddNormalLine(tooltip, format(textFormat, SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
         end
     end
     GameTooltip:Show()
@@ -585,9 +679,10 @@ end
 --
 function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
     if minimap then return PointsDataIterator end  -- minimap lis currently not used
-    debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID or nil, "minimap:", minimap or nil)
+    debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "minimap:", minimap)
 
     if WorldMapFrame then
+        -- print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "minimap:", minimap)
         local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
         local mapInfo = C_Map.GetMapInfo(mapID)
