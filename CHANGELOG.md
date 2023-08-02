@@ -8,9 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* Basic caching system for quest lines, zone stories and their quests.
-* Quest line check for story line quests.
-* Story check for each zone.
-* World map hooks for storyline quests.
-* New slash commands: `/lm`, `/loremaster`
-* Basic file structure for a HandyNotes plugin using Ace3.
+- Meta files for packaging w/o releasing.
+- Basic caching system for quest lines, zone stories and their quests.
+- Quest line check for story line quests.
+- Story check for each zone.
+- World map hooks for storyline quests.
+- New slash commands: `/lm`, `/loremaster`
+- Basic file structure for a HandyNotes plugin using Ace3.

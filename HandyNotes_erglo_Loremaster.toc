@@ -3,9 +3,10 @@
 ## Notes: Helps you keep track of all the Loremaster and story quests achievements.
 ## Notes-deDE: Hilft euch alle "Meister der Lehren" Erfolge und Geschichtsquests im Blick zu behalten.
 ## IconTexture: 133739  # 940858 # 4549128 # 4549134 # 2101967
-## Version: v0.2.0-alpha
+## Version: v0.1.0-alpha
 ## Author: ergloCoder
 ## X-Email: erglo.coder+HNLM@gmail.com
+## X-Website: https://github.com/erglo/wow-handynotes-loremaster
    
 # TODO - Get addon hosting IDs
 # X-Curse-Project-ID:
@@ -13,7 +14,7 @@
 # X-WoWI-ID: 
 
 ## X-License: GNU General Public License Version 3
-## X-Category: Quests, Achievements, Map & Minimap
+## X-Category: Map & Minimap, Plugins, Achievements, Quests & Leveling, Tooltip
 
 ## DefaultState: enabled
 ## RequiredDeps: HandyNotes
