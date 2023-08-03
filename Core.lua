@@ -84,6 +84,7 @@ local L = {
     STORY_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
     STORY_STATUS_FORMAT = QUEST_STORY_STATUS,
     STORY_SEE_CHAPTERS_KEY_FORMAT = "Hold %s to see chapters",
+    STORY_SEE_CHAPTERS_KEY_HOVER_FORMAT = "Hold %s and hover icon to see chapters",
 
     CAMPAIGN_QUEST_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
     CAMPAIGN_QUEST_LINE_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign.",
@@ -235,6 +236,10 @@ end
 local DBUtil = {}
 DBUtil.debug = false
 DBUtil.debug_prefix = GREEN("DB:")
+
+local LocalZoneStoryUtils = {}
+LocalZoneStoryUtils.debug = false
+LocalZoneStoryUtils.debug_prefix = "ZS:"
 
 local ZoneStoryCache = {}
 ZoneStoryCache.debug = false
@@ -489,7 +494,7 @@ function LocalUtils:AddQuestInfoToPin(pin)
     questInfo.pinMapID = pin.mapID
     questInfo.isActiveMap = (activeMapID == questInfo.pinMapID)
     questInfo.isQuestMap = (questInfo.questMapID == questInfo.pinMapID)
-    questInfo.hasZoneStoryInfo = (C_QuestLog.GetZoneStoryInfo(activeMapID) ~= nil)
+    questInfo.hasZoneStoryInfo = (C_QuestLog.GetZoneStoryInfo(questInfo.pinMapID) ~= nil)
     questInfo.hasQuestLineInfo = (C_QuestLine.GetQuestLineInfo(questID, questInfo.questMapID) ~= nil)
 
     pin.questInfo = questInfo
@@ -518,41 +523,49 @@ function LocalUtils:AddDebugLineToTooltip(tooltip, debugInfo)
     end
 end
 
-function LocalUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
-    local mapID = pin.mapID or pin:GetMap():GetMapID()
-    -- debug:print(format("Checking zone (%s) for stories...", mapID or "n/a"))
-    local storyAchievementID, storyMapInfo = ZoneStoryCache:GetZoneStoryInfo(mapID)
+function LocalZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+    debug:print(self, format("Checking zone (%s) for stories...", pin.mapID or "n/a"))
 
-    if not storyAchievementID then return false; end
-
-    local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
-    -- Add zone story name
-    local StoryNameTemplate = achievementInfo.completed and L.STORY_NAME_COMPLETE_FORMAT or L.STORY_NAME_INCOMPLETE_FORMAT
-    GameTooltip_AddColoredLine(tooltip, StoryNameTemplate:format(achievementInfo.icon, storyMapInfo.name), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
-    -- Add chapter status
-    GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
-    self:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
-    -- Add chapter list
-    if IsShiftKeyDown() then
-    -- if (not achievementInfo.completed or IsShiftKeyDown()) then
-        local wrapLine = false
-        for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
-            -- tInsert(self.processedStoryQuests, criteriaInfo.assetID or criteriaInfo.criteriaID)
-            -- criteriaInfo.criteriaString = format("%d %d %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
-            -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
-            if debug.showChapterIDsInTooltip then criteriaInfo.criteriaString = format("|cff808080%05d|r %s", criteriaInfo.assetID, criteriaInfo.criteriaString) end
-            if criteriaInfo.completed then
-                GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), GREEN_FONT_COLOR, wrapLine)
-            else
-                GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaInfo.criteriaString), wrapLine)
-            end
-        end
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
-    else
-        GameTooltip_AddInstructionLine(tooltip, L.STORY_SEE_CHAPTERS_KEY_FORMAT:format(GREEN(SHIFT_KEY)))
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
+    local storyAchievementID, storyMapInfo = ZoneStoryCache:GetZoneStoryInfo(pin.mapID)
+    if not storyAchievementID then
+        debug:print(self, "> Nothing found.")
+        return false
     end
 
+    local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
+    -- Zone story name
+    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_COMPLETE_FORMAT or L.STORY_NAME_INCOMPLETE_FORMAT
+    local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
+    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
+    -- Chapter status
+    GameTooltip_AddHighlightLine(tooltip, L.STORY_STATUS_FORMAT:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+    -- Chapter list
+    if IsShiftKeyDown() then
+        local wrapLine = false
+        local criteriaName
+        for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
+            criteriaName = criteriaInfo.criteriaString
+            -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+            if debug.showChapterIDsInTooltip then
+                if (not criteriaInfo.assetID or criteriaInfo.assetID == 0) then
+                    criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
+                else
+                    criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                end
+            end
+            if criteriaInfo.completed then
+                GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
+            else
+                GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaName), wrapLine)
+            end
+        end
+    else
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_SEE_CHAPTERS_KEY_FORMAT or L.STORY_SEE_CHAPTERS_KEY_HOVER_FORMAT
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
+    end
+
+    debug:print(self, format("> Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
     return true
 end
 
@@ -641,33 +654,47 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if (pin.pinTemplate ~= LocalUtils.StorylineQuestPinTemplate) then return end
 
+    -- Extend quest meta data
+    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+    pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not pin.isPreviousPin then
+        -- Only update (once) when hovering a different quest pin
+        LocalUtils:AddQuestInfoToPin(pin)
+    end
+
     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
-    local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-    GameTooltip_AddBlankLineToTooltip(tooltip)
-    GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, GRAY_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
-    if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then
-        -- Ignore QuestPinTemplate aka. active quests since they do show the quest type by default
-        QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
-        -- print("Displaying quest type", pin.questType)
-        if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
-    else
-        pin.pinTemplate = pin.pinTemplate or "Active"
+    -- Addon name
+    if ShouldShowPluginName(pin) then
+        local questTypeText = DEV_MODE and tostring(pin.questType) or " "
+        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, GRAY_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
-    debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
-    local hasStory = LocalUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
-    local hasQuestLine = LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
-    local isCampaign = C_CampaignInfo.IsCampaignQuest(pin.questID)
-    if isCampaign then
-        local campaignID = C_CampaignInfo.GetCampaignID(pin.questID)
-        local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
-        if campaignInfo then
-            if (hasStory or hasQuestLine) then GameTooltip_AddBlankLineToTooltip(tooltip); end
-            LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> > isCampaign: %d %s", campaignInfo.isWarCampaign, campaignInfo.description)}) --, devModeOnly=true})
-            local textFormat = hasQuestLine and L.CAMPAIGN_QUEST_LINE_FORMAT or L.CAMPAIGN_QUEST_FORMAT
-            GameTooltip_AddNormalLine(tooltip, format(textFormat, SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
-        end
+
+    if pin.questType then                                                       --> TODO - Enhance, eg. isBounty, etc.
+        QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
+        -- if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
     end
+
+    -- debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
+    if (DEV_MODE and IsShiftKeyDown() and IsControlKeyDown()) then
+        LocalUtils:AddDebugQuestInfoLineToTooltip(tooltip, pin)
+        GameTooltip:Show()
+        return
+    end
+    if pin.questInfo.hasZoneStoryInfo then                                      --> TODO - Optimize info retrieval to load only once (!)
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        LocalZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+    end
+    if pin.questInfo.hasQuestLineInfo then
+        --> TODO - Optimize info retrieval to load only once (!)
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
+    end
+    -- if pin.questInfo.isCampaign then
+    --     GameTooltip_AddBlankLineToTooltip(tooltip)
+    --     LocalUtils:AddCampaignDetailsTooltip(tooltip, pin)  -- , hasStory, hasQuestLine)
+    -- end
+
     GameTooltip:Show()
 end
 
@@ -696,8 +723,8 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
 
     -- Extend quest meta data
     pin.mapID = pin.mapID or pin:GetMap():GetMapID()
-    -- pin.mapID = pin:GetMap():GetMapID()  -- always get currently active map
-    if not (pin.questInfo and pin.questInfo.questID == pin.questID) then
+    pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not pin.isPreviousPin then
         -- Only update (once) when hovering a different quest pin
         LocalUtils:AddQuestInfoToPin(pin)
     end
@@ -717,15 +744,14 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         if tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
         tooltip:AddLine(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN)
     end
-    if DEV_MODE and IsShiftKeyDown() then
+    if (DEV_MODE and IsShiftKeyDown() and IsControlKeyDown()) then
         LocalUtils:AddDebugQuestInfoLineToTooltip(tooltip, pin)
         GameTooltip:Show()
         return
     end
-    if pin.questInfo.hasZoneStoryInfo then
-        --> TODO - Optimize info retrieval to load only once (!)
+    if pin.questInfo.hasZoneStoryInfo then                                      --> TODO - Optimize info retrieval to load only once (!)
         GameTooltip_AddBlankLineToTooltip(tooltip)
-        LocalUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        LocalZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
     if pin.questInfo.hasQuestLineInfo then
         --> TODO - Optimize info retrieval to load only once (!)
@@ -907,6 +933,8 @@ function FrameStackTooltip_OnDisplaySizeChanged(self)
 end
 
 C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
+
+local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questID);
 
 REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/WarCampaignDocumentation.lua>
 C_CampaignInfo.GetAvailableCampaigns() : campaignIDs
