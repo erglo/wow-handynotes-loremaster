@@ -628,6 +628,40 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     return true
 end
 
+----- Campaign ----------
+
+function LocalUtils:AddCampaignDetailsTooltip(tooltip, pin, hasStory, hasQuestLine)
+    local campaignID = C_CampaignInfo.GetCampaignID(pin.questID)
+    local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+    if campaignInfo then
+        if (hasStory or hasQuestLine) then GameTooltip_AddBlankLineToTooltip(tooltip); end
+        local textFormat = hasQuestLine and L.CAMPAIGN_QUEST_LINE_FORMAT or L.CAMPAIGN_QUEST_FORMAT
+        GameTooltip_AddNormalLine(tooltip, format(textFormat, SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
+        LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> > isCampaign: %d %s", campaignInfo.isWarCampaign, campaignInfo.description)}) --, devModeOnly=true})
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        if campaignInfo.description then
+            GameTooltip_AddNormalLine(tooltip, QUEST_DESCRIPTION)
+            GameTooltip_AddHighlightLine(tooltip, campaignInfo.description)
+        end
+        -- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
+        -- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
+        -- QUEST_PROGRESS_NEEDED = "Fortschritt: %1$d";
+    end
+end
+
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/WarCampaignDocumentation.lua>
+-- C_CampaignInfo.GetAvailableCampaigns() : campaignIDs
+-- C_CampaignInfo.GetCampaignChapterInfo(campaignChapterID) : campaignChapterInfo
+-- C_CampaignInfo.GetCampaignID(questID) : campaignID
+-- C_CampaignInfo.GetCampaignInfo(campaignID) : campaignInfo
+-- C_CampaignInfo.GetChapterIDs(campaignID) : chapterIDs
+-- C_CampaignInfo.GetCurrentChapterID(campaignID) : currentChapterID
+-- C_CampaignInfo.GetFailureReason(campaignID) : failureReason
+-- C_CampaignInfo.GetState(campaignID) : state
+-- C_CampaignInfo.IsCampaignQuest(questID) : isCampaignQuest
+-- C_CampaignInfo.UsesNormalQuestIcons(campaignID) : useNormalQuestIcons
+-- C_LoreText.RequestLoreTextForCampaignID(campaignID)
+
 ----- Hooks ----------
 
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
@@ -690,10 +724,10 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    -- if pin.questInfo.isCampaign then
-    --     GameTooltip_AddBlankLineToTooltip(tooltip)
-    --     LocalUtils:AddCampaignDetailsTooltip(tooltip, pin)  -- , hasStory, hasQuestLine)
-    -- end
+    if pin.questInfo.isCampaign then
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        LocalUtils:AddCampaignDetailsTooltip(tooltip, pin)  -- , hasStory, hasQuestLine)
+    end
 
     GameTooltip:Show()
 end
@@ -758,10 +792,10 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    -- if pin.questInfo.isCampaign then
-    --     GameTooltip_AddBlankLineToTooltip(tooltip)
-    --     LocalUtils:AddCampaignDetailsTooltip(tooltip, pin)  -- , hasStory, hasQuestLine)
-    -- end
+    if pin.questInfo.isCampaign then
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        LocalUtils:AddCampaignDetailsTooltip(tooltip, pin)  -- , hasStory, hasQuestLine)
+    end
 
     GameTooltip:Show()
 end
@@ -935,19 +969,6 @@ end
 C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
 
 local title, factionID, capped = C_TaskQuest.GetQuestInfoByQuestID(questID);
-
-REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/WarCampaignDocumentation.lua>
-C_CampaignInfo.GetAvailableCampaigns() : campaignIDs
-C_CampaignInfo.GetCampaignChapterInfo(campaignChapterID) : campaignChapterInfo
-C_CampaignInfo.GetCampaignID(questID) : campaignID
-C_CampaignInfo.GetCampaignInfo(campaignID) : campaignInfo
-C_CampaignInfo.GetChapterIDs(campaignID) : chapterIDs
-C_CampaignInfo.GetCurrentChapterID(campaignID) : currentChapterID
-C_CampaignInfo.GetFailureReason(campaignID) : failureReason
-C_CampaignInfo.GetState(campaignID) : state
-C_CampaignInfo.IsCampaignQuest(questID) : isCampaignQuest
-C_CampaignInfo.UsesNormalQuestIcons(campaignID) : useNormalQuestIcons
-C_LoreText.RequestLoreTextForCampaignID(campaignID)
 
 CAMPAIGN_AVAILABLE_QUESTLINE = "Setzt die Kampagne fort, indem Ihr die Quest \"%s\" in %s annehmt.";
 CAMPAIGN_LORE_BUTTON_HELPTIP = "Klickt auf das Geschichtsbuch, um die bisherige Geschichte zu lesen...";
