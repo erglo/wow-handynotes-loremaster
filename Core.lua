@@ -539,6 +539,9 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         return false
     end
 
+    -- Category name
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
+
     local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
     -- Zone story name
     local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_COMPLETE_FORMAT or L.STORY_NAME_INCOMPLETE_FORMAT
@@ -583,7 +586,12 @@ end
 
 function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     local questLineInfo = QuestLineCache:GetQuestLineInfoByPin(pin)
+
     if not questLineInfo then return false end
+
+    -- Category name
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)  --> Questreihe, Questline
+
     -- Quest line header
     GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
     -- Chapters
@@ -658,8 +666,8 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
 
     if not campaignInfo then return end
 
-    -- -- Category name
-    -- GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
+    -- Category name
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
 
     -- Show hint that quest (line) is part of this campaign
     if DEV_MODE or showHintOnly then
