@@ -1,7 +1,3 @@
-(A) 2023-08-04 Add availability and completion check for campaigns @Campaign +pinTooltip
 (C) Continent view @availability_check +map
-(C) Add navigation to pin @navigation +map +quests +questPin
-Show active QLs in worldmap button @worldmap_button +map +quests +button
-
-x 2023-08-04 (A) Change in Zone Story mapID to active map @ZoneStory +pinTooltip
-x 2023-08-04 Compare `assetIDs` with `questIDs` @HNLM +achievement +quests pri:B
+(D) Show active QLs in worldmap button @worldmap_button +map +quests +button
+(E) Add navigation to pin @navigation +map +quests +questPin
