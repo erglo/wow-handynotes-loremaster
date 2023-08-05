@@ -66,37 +66,34 @@ local L = {
     OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED,
     OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
     OPTION_STATUS_READY_FORMAT = LFG_READY_CHECK_PLAYER_IS_READY,  -- "%s is ready.";,
-    -- BLIZZARD_STORE_PRODUCT_IS_READY = "Your %s is Ready!";
 
-    QUEST_LINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s",
-    QUEST_LINE_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
-    QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
-    QUEST_LINE_CHAPTER_CURRENT_FORMAT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s",
+    QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a",
+    QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a",
+    QUEST_NAME_FORMAT_NEUTRAL = "%s",
+    -- QUEST_TYPE_NAME_FORMAT_TRIVIAL = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r";
 
-    QUEST_NAME_ALLIANCE_FORMAT = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a",
-    QUEST_NAME_HORDE_FORMAT = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a",
-    QUEST_NAME_NEUTRAL_FORMAT = "%s",
-    -- QUEST_TYPE_TRIVIAL_NAME_FORMAT = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r";
+    STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a",
+    STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s",
+    STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see chapters",
+    STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see chapters",
 
-    STORY_NAME_COMPLETE_FORMAT = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a",
-    STORY_NAME_INCOMPLETE_FORMAT = "|T%d:16:16:0:0|t %s",
-    STORY_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
-    STORY_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
-    STORY_SEE_CHAPTERS_KEY_FORMAT = "Hold %s to see chapters",
-    STORY_SEE_CHAPTERS_KEY_HOVER_FORMAT = "Hold %s and hover icon to see chapters",
+    QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s",
+    QUESTLINE_PROGRESS_FORMAT = "|"..string.gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1),
 
-    CAMPAIGN_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s",
+    CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a",
+    CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s",
+    -- CAMPAIGN_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s",
     CAMPAIGN_PROGRESS_FORMAT = "|"..string.gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1),
-    CAMPAIGN_TYPE_QUEST_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
-    CAMPAIGN_TYPE_QUEST_LINE_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign.",
-    CAMPAIGN_DESCRIPTION_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
-    CAMPAIGN_CHAPTER_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
-    CAMPAIGN_CHAPTER_NOT_COMPLETED_FORMAT = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
-    CAMPAIGN_CHAPTER_CURRENT_FORMAT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s",
+    CAMPAIGN_TYPE_FORMAT_QUEST = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
+    CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign.",
+
+    CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
+    CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
+    CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s",
 
     -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
-    ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
-    ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
+    -- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
+    -- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
     -- "questlog-questtypeicon-story"
     -- "CampaignAvailableQuestIcon"
     -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
@@ -115,14 +112,14 @@ local L = {
     -- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
     -- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
     -- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
-    OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT,  --> "- %s"
+    OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT,  -- "- %s"
     -- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
     -- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
     -- CONTINENT = "Kontinent";
     -- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
+    -- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
 
     -- Custom strings
-    HIDE_WITH_2KEY_COMBO = "<Click %s+%s to hide>",
     SLASHCMD_USAGE = "Usage:",
 }
 -- "achievementcompare-GreenCheckmark"
@@ -170,9 +167,9 @@ local playerFactionGroup = UnitFactionGroup("player")
 local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
 
 local QuestNameFactionGroupFormat = {
-    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_ALLIANCE_FORMAT,
-    [QuestFactionGroupID.Horde] = L.QUEST_NAME_HORDE_FORMAT,
-    [QuestFactionGroupID.Neutral] = "%s",
+    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
+    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
+    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
 }
 
 -- Filter given quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])
@@ -203,6 +200,8 @@ function HandyNotesPlugin:OnEnable()
     -- Register this addon to HandyNotes as plugin
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
     HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
+
+    -- self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_ENABLED)
     self:Printf(L.OPTION_STATUS_READY_FORMAT, YELLOW(ns.pluginInfo.title))
 end
 
@@ -547,7 +546,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
     -- Zone story name
-    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_COMPLETE_FORMAT or L.STORY_NAME_INCOMPLETE_FORMAT
+    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
     local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
     GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
     -- Chapter status
@@ -562,19 +561,19 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
             if debug.showChapterIDsInTooltip then
                 if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
-                    criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
+                    criteriaName = format("|cffcc1919%03d %d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
                 else
-                    criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                    criteriaName = format("|cff808080%03d %d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
                 end
             end
             if criteriaInfo.completed then
-                GameTooltip_AddColoredLine(tooltip, L.STORY_CHAPTER_COMPLETED_FORMAT:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
+                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
             else
-                GameTooltip_AddHighlightLine(tooltip, L.STORY_CHAPTER_NOT_COMPLETED_FORMAT:format(criteriaName), wrapLine)
+                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), wrapLine)
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_SEE_CHAPTERS_KEY_FORMAT or L.STORY_SEE_CHAPTERS_KEY_HOVER_FORMAT
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -600,11 +599,15 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID
 
     if not questLineInfo then return false end
 
+    pin.questInfo.currentQuestLineID = questLineInfo.questLineID
+    -- Note: This is later needed for the currentChapterID in quest campaigns. The
+    -- actual `C_CampaignInfo.GetCurrentChapterID(campaignID)` refers only to the currently active quest campaigns.
+
     -- Category name
     GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)  --> Questreihe, Questline
 
     -- Quest line header
-    GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
+    GameTooltip_AddColoredLine(tooltip, L.QUESTLINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
     -- Chapters
     local wrapLine = false
     local questIDs = QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
@@ -628,20 +631,20 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID
             local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
             -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, isQuestCompleted, isOnQuest)
             -- debug:print("quest faction:", i, questID, questFactionGroup)
-            if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%05d|r %s", questID, questTitle) end
+            if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%d|r %s", questID, questTitle) end
             local leftOffset = 0
             if not StringIsEmpty(questName) then
                 if isQuestCompleted then
-                    GameTooltip_AddColoredLine(tooltip, L.QUEST_LINE_CHAPTER_COMPLETED_FORMAT:format(questTitle), GREEN_FONT_COLOR, wrapLine, leftOffset)
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine, leftOffset)
                 elseif (questID == questLineInfo.questID) then
-                    GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine, leftOffset)
+                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine, leftOffset)
                 elseif isActiveQuest then
-                    GameTooltip_AddNormalLine(tooltip, L.QUEST_LINE_CHAPTER_CURRENT_FORMAT:format(questTitle), wrapLine, leftOffset)
+                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine, leftOffset)
                 else
-                    GameTooltip_AddHighlightLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(questTitle), wrapLine, leftOffset)
+                    GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine, leftOffset)
                 end
             else
-                GameTooltip_AddErrorLine(tooltip, L.QUEST_LINE_CHAPTER_NOT_COMPLETED_FORMAT:format(RETRIEVING_DATA), SCENARIO_STAGE_COLOR, wrapLine, leftOffset)
+                GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(RETRIEVING_DATA), SCENARIO_STAGE_COLOR, wrapLine, leftOffset)
             end
         end
     end
@@ -654,19 +657,18 @@ end
 -- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/CampaignChapter.lua>
 
 local CampaignUtils = {}
-CampaignUtils.debug = true
+CampaignUtils.debug = false
 CampaignUtils.debug_prefix = "CP:"
 CampaignUtils.wrap_chapterName = false
-CampaignUtils.wrap_description = true
-CampaignUtils.leftOffset_description = 18
+CampaignUtils.leftOffset_description = 16
 CampaignUtils.GetCampaignInfo = function(self, campaignID)  -- Extend default results from `C_CampaignInfo.GetCampaignInfo`
     local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
     if not campaignInfo then return end
 
     campaignInfo.campaignState = C_CampaignInfo.GetState(campaignID)  --> Enum.CampaignState
-    campaignInfo.isCompleted = campaignInfo.campaignState == Enum.CampaignState.Complete     --> TODO - Needed ??? Quest doesn't appear on map when complete
+    campaignInfo.isComplete = campaignInfo.campaignState == Enum.CampaignState.Complete
     campaignInfo.chapterIDs = C_CampaignInfo.GetChapterIDs(campaignID)
-    campaignInfo.currentChapterID = C_CampaignInfo.GetCurrentChapterID(campaignID)
+    campaignInfo.currentChapterID = C_CampaignInfo.GetCurrentChapterID(campaignID)  --> This refers to the currently active quest campaign only (!)
     campaignInfo.numChaptersTotal = #campaignInfo.chapterIDs
     campaignInfo.numChaptersCompleted = 0
     for i, chapterID in ipairs(campaignInfo.chapterIDs) do
@@ -694,36 +696,47 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     -- Category name
     GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
 
+    -- -- Show hint that quest (line) is part of this campaign
+    -- if DEV_MODE or showHintOnly then
+    --     local hintTextFormat = pin.questInfo.hasQuestLineInfo and L.CAMPAIGN_TYPE_FORMAT_QUESTLINE or L.CAMPAIGN_TYPE_FORMAT_QUEST
+    --     GameTooltip_AddNormalLine(tooltip, format(hintTextFormat, SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
+    --     LocalUtils:AddDebugLineToTooltip(tooltip, {addBlankLine=debug.isActive})
+
+    --     -- return
+    -- end
+
     -- Campaign header - name + progress
-    GameTooltip_AddColoredLine(tooltip, L.CAMPAIGN_NAME_FORMAT:format(campaignInfo.name), CAMPAIGN_COMPLETE_COLOR)  -- SCENARIO_STAGE_COLOR)
+    local campaignNameTemplate = campaignInfo.isComplete and L.CAMPAIGN_NAME_FORMAT_COMPLETE or L.CAMPAIGN_NAME_FORMAT_INCOMPLETE
+    GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_COMPLETE_COLOR)  -- SCENARIO_STAGE_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_PROGRESS_FORMAT:format(campaignInfo.numChaptersCompleted, campaignInfo.numChaptersTotal))
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> C:%d, state: %d, isWarCampaign: %d|n> > currentChapterID: %d", campaignID, campaignInfo.campaignState, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
     -- Campaign chapters
     for i, chapterID in ipairs(campaignInfo.chapterIDs) do
         local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(chapterID)
         local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
-        if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%04d|r %s", chapterID, chapterName) end
+        local currentChapterID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
+        if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
         if chapterInfo then
-            local chapterIsComplete = chapterInfo.isComplete or C_QuestLine.IsComplete(chapterID)
+            local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
             if chapterIsComplete then
-                GameTooltip_AddColoredLine(tooltip, L.CAMPAIGN_CHAPTER_COMPLETED_FORMAT:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
-            elseif (chapterID == campaignInfo.currentChapterID) then
-                -- Note: Works on active quest only (!)
-                GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_CHAPTER_CURRENT_FORMAT:format(chapterName), self.wrap_chapterName)
+                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
+            elseif (chapterID == currentChapterID) then
+                GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName), self.wrap_chapterName)
             else
-                GameTooltip_AddHighlightLine(tooltip, L.CAMPAIGN_CHAPTER_NOT_COMPLETED_FORMAT:format(chapterName), self.wrap_chapterName)
+                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
             end
             if DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
-                GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_DESCRIPTION_FORMAT:format(chapterInfo.description), self.wrap_description, self.leftOffset_description)
+                GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
             end
         end
     end
-    -- Campaign description
-    if not StringIsEmpty(campaignInfo.description) then                         --> TODO - Make optional in settings
-        GameTooltip_AddNormalLine(tooltip, QUEST_DESCRIPTION, self.wrap_description, self.leftOffset_description)
-        GameTooltip_AddHighlightLine(tooltip, L.CAMPAIGN_DESCRIPTION_FORMAT:format(campaignInfo.description), self.wrap_description, self.leftOffset_description)
+
+    if DEV_MODE and not StringIsEmpty(campaignInfo.description) then
+        -- Campaign description
+        GameTooltip_AddDisabledLine(tooltip, QUEST_DESCRIPTION, false)
+        GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(campaignInfo.description), true)
         if campaignInfo.isWarCampaign then
-            GameTooltip_AddHighlightLine(tooltip, L.CAMPAIGN_DESCRIPTION_FORMAT:format(WAR_CAMPAIGN), self.wrap_description, self.leftOffset_description)
+            GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(WAR_CAMPAIGN), false)
         end
     end
 end
@@ -731,14 +744,7 @@ end
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/WarCampaignDocumentation.lua>
 -- C_CampaignInfo.GetAvailableCampaigns() : campaignIDs
 -- C_CampaignInfo.UsesNormalQuestIcons(campaignID) : useNormalQuestIcons
-
 -- C_CampaignInfo.GetFailureReason(campaignID) : failureReason
-
--- CAMPAIGN_PROGRESS_CHAPTERS = "Kampagne: |cffffd200%1$d/%2$d Kapitel|r";
--- CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP = "|cffffd200Kampagnenfortschritt|n|cffffffff%1$d/%2$d Kapiteln|r|n|n";
--- TRACKER_FILTER_LABEL = "Anzeigen";
--- TRACKER_FILTER_COMPLETED_QUESTS = "Abgeschlossene Quests";
--- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
 
 ----- Hooks ----------
 
@@ -794,12 +800,12 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         return
     end
     if pin.questInfo.hasZoneStoryInfo then                                      --> TODO - Optimize info retrieval to load only once (!)
-        GameTooltip_AddBlankLineToTooltip(tooltip)
+        -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
     if pin.questInfo.hasQuestLineInfo then
         --> TODO - Optimize info retrieval to load only once (!)
-        GameTooltip_AddBlankLineToTooltip(tooltip)
+        if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
     if pin.questInfo.isCampaign then
@@ -823,7 +829,6 @@ end
 --         GameTooltip_AddQuest(tooltip, pin.questID)
 --     else
 --         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
---         GameTooltip_AddInstructionLine(tooltip, format(L.HIDE_WITH_2KEY_COMBO, ALT_KEY_TEXT, KEY_BUTTON1))  -- SHIFT_KEY_TEXT
 --         GameTooltip_AddDisabledLine(tooltip, format("#%d - %s", pin.questID, pin.pinTemplate))
 --     end
 --     GameTooltip:Show()
@@ -854,7 +859,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
     end
     if pin.questInfo.isReadyForTurnIn then
-        if tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
+        -- if tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
         tooltip:AddLine(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN)
     end
     if (DEV_MODE and IsShiftKeyDown() and IsControlKeyDown()) then
@@ -868,7 +873,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
     if pin.questInfo.hasQuestLineInfo then
         --> TODO - Optimize info retrieval to load only once (!)
-        GameTooltip_AddBlankLineToTooltip(tooltip)
+        if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
     if pin.questInfo.isCampaign then

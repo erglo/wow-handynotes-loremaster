@@ -1,3 +1,5 @@
-(C) Continent view @availability_check +map
-(D) Show active QLs in worldmap button @worldmap_button +map +quests +button
-(E) Add navigation to pin @navigation +map +quests +questPin
+(C) Continent view @availabilityCheck +map
+(D) Show active QLs in world map button @questLines +map +button
+(E) Add navigation to pin @navigation +map +pin
+Add entry to Campaign Tracker @campaign +tracker
+Track minimap pins @hooks +minimap +pin
