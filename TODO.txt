@@ -1,3 +1,5 @@
+(B) Add tags to quest/chapter names @tags +tooltip
+(B) Refine questline data retrieval @questLines +data
 (C) Continent view @availabilityCheck +map
 (D) Show active QLs in world map button @questLines +map +button
 (E) Add navigation to pin @navigation +map +pin

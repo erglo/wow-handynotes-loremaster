@@ -27,7 +27,6 @@
 -- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/master/HandyNotes.lua>
 --
 -- World of Warcraft API reference:
--- REF.: <https://wowpedia.fandom.com/wiki/API_C_AddOns.GetAddOnMetadata>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/UITimerDocumentation.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/GlobalStrings.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/TableUtil.lua>
@@ -42,100 +41,113 @@
 
 local AddonID, ns = ...
 local utils = ns.utils
-local db
-
-local format, tostring = string.format, tostring
-local tContains, tInsert = tContains, table.insert
-
--- local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
--- local C_QuestLog_GetZoneStoryInfo = C_QuestLog.GetZoneStoryInfo
--- local C_QuestLine_GetQuestLineQuests = C_QuestLine.GetQuestLineQuests
-local QuestUtils_GetQuestName = QuestUtils_GetQuestName
-local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
-local GetQuestFactionGroup = GetQuestFactionGroup
-
------ Load addons ----------
 
 -- REF.: AceAddon:GetAddon(name, silent)
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
+
 local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
+
+--------------------------------------------------------------------------------
+----- Utilities ----------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim,string.gsub
+local tContains, tInsert = tContains, table.insert
+
+local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
+local QuestUtils_GetQuestName = QuestUtils_GetQuestName
+local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
+local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
+local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
+local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
+local C_Map = C_Map  -- C_TaskQuest
+
+local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) end
+local GRAY = function(txt) return GRAY_FONT_COLOR:WrapTextInColorCode(txt) end
+local GREEN = function(txt) return FACTION_GREEN_COLOR:WrapTextInColorCode(txt) end
+local RED = function(txt) return RED_FONT_COLOR:WrapTextInColorCode(txt) end
+
+local function StringIsEmpty(str)
+	return str == nil or strlen(str) == 0
+end
+
+-- local function tCount(tbl)
+-- 	local n = #tbl or 0
+-- 	if (n == 0) then
+-- 		for _ in pairs(tbl) do
+-- 			n = n + 1
+-- 		end
+-- 	end
+-- 	return n
+-- end
+
 -- local L = LibStub('AceLocale-3.0'):GetLocale(ADDON_NAME)
-local L = {
-    -- WoW global strings
-    OPTION_STATUS_DISABLED = VIDEO_OPTIONS_DISABLED,
-    OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED,
-    OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING,
-    OPTION_STATUS_READY_FORMAT = LFG_READY_CHECK_PLAYER_IS_READY,  -- "%s is ready.";,
+-- local L = LibStub("AceLocale-3.0"):GetLocale("HandyNotes", true)
+local L = {}
+-- WoW global strings
+L.OPTION_STATUS_DISABLED = VIDEO_OPTIONS_DISABLED
+L.OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED
+L.OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
+L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready."
 
-    QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a",
-    QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a",
-    QUEST_NAME_FORMAT_NEUTRAL = "%s",
-    -- QUEST_TYPE_NAME_FORMAT_TRIVIAL = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r";
+L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a"
+L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
+L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
+-- QUEST_TYPE_NAME_FORMAT_TRIVIAL = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r"
 
-    STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a",
-    STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s",
-    STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see chapters",
-    STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see chapters",
+L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
+L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
+L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see chapters"
+L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see chapters"
 
-    QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s",
-    QUESTLINE_PROGRESS_FORMAT = "|"..string.gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1),
+L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
+L.QUESTLINE_PROGRESS_FORMAT = "|"..string_gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1)
 
-    CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a",
-    CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s",
-    -- CAMPAIGN_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s",
-    CAMPAIGN_PROGRESS_FORMAT = "|"..string.gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1),
-    CAMPAIGN_TYPE_FORMAT_QUEST = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign.",
-    CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign.",
+L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
+L.CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s"
+L.CAMPAIGN_PROGRESS_FORMAT = "|"..string_gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1)
+L.CAMPAIGN_TYPE_FORMAT_QUEST = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign."
+L.CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign."
 
-    CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s",
-    CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s",
-    CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s",
+L.CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s"
+L.CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
+L.CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s"
 
-    -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
-    -- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
-    -- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
-    -- "questlog-questtypeicon-story"
-    -- "CampaignAvailableQuestIcon"
-    -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
+-- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
+-- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
+-- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
+-- "questlog-questtypeicon-story"
+-- "CampaignAvailableQuestIcon"
+-- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
 
-    -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
-    -- ITEM_REQ_REPUTATION = "Requires %s - %s";
-    -- ITEM_REQ_SKILL = "Requires %s";
-    -- ITEM_REQ_SPECIALIZATION = "Requires: %s";
-    -- ITEM_REQ_ALLIANCE = "Alliance Only";
-    -- ITEM_REQ_HORDE = "Horde Only";
-    -- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
-    -- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
-    -- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
-    -- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
-    -- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
-    -- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
-    -- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
-    -- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
-    OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT,  -- "- %s"
-    -- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
-    -- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
-    -- CONTINENT = "Kontinent";
-    -- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
-    -- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
+-- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
+-- ITEM_REQ_REPUTATION = "Requires %s - %s";
+-- ITEM_REQ_SKILL = "Requires %s";
+-- ITEM_REQ_SPECIALIZATION = "Requires: %s";
+-- ITEM_REQ_ALLIANCE = "Alliance Only";
+-- ITEM_REQ_HORDE = "Horde Only";
+-- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
+-- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
+-- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
+-- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
+-- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
+-- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
+-- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
+-- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
+L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
+-- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
+-- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
+-- CONTINENT = "Kontinent";
+-- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
+-- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
 
-    -- Custom strings
-    SLASHCMD_USAGE = "Usage:",
-}
+-- Custom strings
+L.SLASHCMD_USAGE = "Usage:"
+
 -- "achievementcompare-GreenCheckmark"
 -- "achievementcompare-YellowCheckmark"
 
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
-
------ Utilities ----------------------------------------------------------------
-
------ Colors -----
-
-local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) end
-local GRAY = function(txt) return GRAY_FONT_COLOR:WrapTextInColorCode(txt) end
--- local LGRAY = function(txt) return LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(txt) end
-local GREEN = function(txt) return FACTION_GREEN_COLOR:WrapTextInColorCode(txt) end  -- ACTIONBAR_HOTKEY_FONT_COLOR
-local RED = function(txt) return RED_FONT_COLOR:WrapTextInColorCode(txt) end
 
 ----- Debugging -----
 
@@ -181,16 +193,28 @@ end
 
 function HandyNotesPlugin:OnInitialize()
     -- Load options database and settings
-    ns.options = ns.pluginInfo.options(self)
-    ns.db = LibStub("AceDB-3.0"):New("LoremasterDB")                            --> TODO - Add default options
-    -- ns.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-    --> Available AceDB subtables: char, realm, class, race, faction, factionrealm, profile, and global
-    db = ns.db.profile
+    self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
+    self.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
+    self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
+    self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
+    --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, profile, and global
+    ns.db = self.db.profile
+    self.options = ns.pluginInfo.options(self)
 
-    self:RegisterHooks()
+    -- ns.db.enabled = self.options.args.isEnabled.get()
+
+    -- Needed for a separate config window
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options, true)
+
+    self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 end
 
 function HandyNotesPlugin:OnEnable()
+    if not ns.db.enabled then
+        self:Disable()
+        return
+    end
+
     -- Using AceConsole for slash commands                                      --> TODO - Keep slash commands ???
     self.slash_commands = {"lm", "loremaster"}
     for i, command in ipairs(self.slash_commands) do
@@ -199,10 +223,10 @@ function HandyNotesPlugin:OnEnable()
 
     -- Register this addon to HandyNotes as plugin
     -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
-    HandyNotes:RegisterPluginDB(AddonID, self, ns.options)
+    HandyNotes:RegisterPluginDB(AddonID, self, self.options)
 
     -- self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_ENABLED)
-    self:Printf(L.OPTION_STATUS_READY_FORMAT, YELLOW(ns.pluginInfo.title))
+    self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
 end
 
 function HandyNotesPlugin:OnDisable()
@@ -214,6 +238,11 @@ function HandyNotesPlugin:OnDisable()
     self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_DISABLED)
 end
 
+function HandyNotesPlugin:OnProfileChanged(event, database, newProfileKey)
+    ns.db = database.profile
+    -- self.options = ns.pluginInfo.options(db)
+end
+
 -- Standard functions you can provide optionally:
 -- pluginHandler:OnEnter(uiMapID/mapFile, coord)
 --     Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
@@ -223,20 +252,7 @@ end
 --     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 
 
------ Tooltip Utilities ----------
-
--- local BaseCache = {}
--- setmetatable(BaseCache, {
---     __index = function (self, key)
---         local keyString = tostring(key)
---         return self[keyString]
---     end,
---     __newindex = function(self, key, value)
---         local keyString = tostring(key)
---         self[keyString] = value
---     end}
--- )
-
+----- Tooltip Data Handler ----------
 
 local DBUtil = {}
 DBUtil.debug = false
@@ -392,10 +408,10 @@ end
 ----- Database utilities ----------
 
 function DBUtil:CheckInitCategory(categoryName)
-    if not db[categoryName] then
+    if not ns.db[categoryName] then
         -- Save { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-        db[categoryName] = {}
-        setmetatable(db[categoryName], BaseCache)
+        ns.db[categoryName] = {}
+        setmetatable(ns.db[categoryName], BaseCache)
         debug:print(self, "Initialized DB:", categoryName)
     end
 end
@@ -403,22 +419,22 @@ end
 function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
     local questIDs = quests or QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
     -- Structure: { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-    if not db.questLines[questLineInfo.questLineID] then
-        db.questLines[questLineInfo.questLineID] = {
+    if not ns.db.questLines[questLineInfo.questLineID] then
+        ns.db.questLines[questLineInfo.questLineID] = {
             questID = questLineInfo.questID,
             mapIDs = {mapID},
             quests = questIDs,
         }
         debug:print(self, "Saved QL:", questLineInfo.questLineID, questLineInfo.questLineName)
 
-    elseif not tContains(db.questLines[questLineInfo.questLineID].mapIDs, mapID) then
-        tInsert(db.questLines[questLineInfo.questLineID].mapIDs, mapID)
+    elseif not tContains(ns.db.questLines[questLineInfo.questLineID].mapIDs, mapID) then
+        tInsert(ns.db.questLines[questLineInfo.questLineID].mapIDs, mapID)
         debug:print(self, "Added mapID to QL:", mapID, questLineInfo.questLineID)
     end
 end
 function DBUtil:GetSavedQuestLinesForMap(mapID)
     local infos = {}
-    for questLineID, questLineData in pairs(db.questLines) do
+    for questLineID, questLineData in pairs(ns.db.questLines) do
         if tContains(questLineData.mapIDs, mapID) then
             tInsert(infos, questLineData.questID)
         end
@@ -428,7 +444,7 @@ function DBUtil:GetSavedQuestLinesForMap(mapID)
     return infos
 end
 function DBUtil:GetSavedQuestLineMapForQuest(questID)
-    for questLineID, questLineData in pairs(db.questLines) do
+    for questLineID, questLineData in pairs(ns.db.questLines) do
         if tContains(questLineData.quests, questID) then
             local mapID = questLineData.mapIDs[1]
             debug:print(self, "Found map for quest:", mapID)
@@ -442,17 +458,17 @@ end
 
 local LocalUtils = {}
 
-function StringIsEmpty(str)
-	return str == nil or strlen(str) == 0
-end
+LocalUtils.QuestPinTemplate = "QuestPinTemplate"
+LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 
 function LocalUtils:GetQuestName(questID)
     -- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
     -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
 	if not HaveQuestData(questID) then
-		C_QuestLog.RequestLoadQuestByID(questID);
+		C_QuestLog.RequestLoadQuestByID(questID)
 	end
-	return QuestUtils_GetQuestName(questID);
+
+	return QuestUtils_GetQuestName(questID)
 end
 
 -- Determine different quest details
@@ -462,9 +478,9 @@ function LocalUtils:AddQuestInfoToPin(pin)
         questID = questID,
         questName = self:GetQuestName(questID),
         questMapID = GetQuestUiMapID(questID),
-        questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
+        -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
         questExpansionID = GetQuestExpansion(questID),
-        questFactionGroup = GetQuestFactionGroup(questID),
+        questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral,
         hasPOIInfo = QuestHasPOIInfo(questID),  -- QuestPOIGetIconInfo(questID)
         isAccountQuest = C_QuestLog.IsAccountQuest(questID),
         isBounty = C_QuestLog.IsQuestBounty(questID),
@@ -620,17 +636,17 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID
             GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining), wrapLine)
             return
         end
-        local questFactionGroup = GetQuestFactionGroup(questID) or 3
-        if PlayerMatchesQuestFactionGroup(questFactionGroup) then
+        -- local questFactionGroup = GetQuestFactionGroup(questID) or 3
+        if PlayerMatchesQuestFactionGroup(pin.questInfo.questFactionGroup) then
             local questName = self:GetQuestName(questID)
             -- if DEV_MODE and questName == '' then                                             --> FIXME - Why sometimes no quest names?
             --     print("questName:", questID, HaveQuestData(questID))
             -- end
-            local questTitle = QuestNameFactionGroupFormat[questFactionGroup]:format(questName)
+            local questTitle = QuestNameFactionGroupFormat[pin.questInfo.questFactionGroup]:format(questName)
             local isActiveQuest = C_QuestLog.IsComplete(questID)
             local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
             -- print("quest:", questID, questLineInfo.questID, questID == questLineInfo.questID, isQuestCompleted, isOnQuest)
-            -- debug:print("quest faction:", i, questID, questFactionGroup)
+            -- debug:print("quest faction:", i, questID, pin.questInfo.questFactionGroup)
             if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%d|r %s", questID, questTitle) end
             local leftOffset = 0
             if not StringIsEmpty(questName) then
@@ -746,14 +762,13 @@ end
 -- C_CampaignInfo.UsesNormalQuestIcons(campaignID) : useNormalQuestIcons
 -- C_CampaignInfo.GetFailureReason(campaignID) : failureReason
 
------ Hooks ----------
+--------------------------------------------------------------------------------
+----- Hooking Functions --------------------------------------------------------
+--------------------------------------------------------------------------------
 
-LocalUtils.QuestPinTemplate = "QuestPinTemplate"
-LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
-
-local function ShouldHookQuestPin(pin)
-    return tContains({LocalUtils.StorylineQuestPinTemplate, LocalUtils.QuestPinTemplate}, pin.pinTemplate)
-end
+-- local function ShouldHookQuestPin(pin)
+--     return tContains({LocalUtils.StorylineQuestPinTemplate, LocalUtils.QuestPinTemplate}, pin.pinTemplate)
+-- end
 
 -- local function ShouldHookWorldQuestPin(pin)
 --     return pin.pinTemplate ~= WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
@@ -1015,7 +1030,9 @@ function HandyNotesPlugin:ProcessSlashCommands(input)
         self:Print(ns.pluginInfo.version)
     end
     if (input == "config") then
-        Settings.OpenToCategory(HandyNotes.name)
+        -- Settings.OpenToCategory(HandyNotes.name)
+        -- LibStub("AceConfigDialog-3.0"):Open("HandyNotes")
+        LibStub("AceConfigDialog-3.0"):Open(AddonID)
     end
 end
 
@@ -1024,9 +1041,8 @@ end
 --[[ Tests
 --------------------------------------------------------------------------------
 
-GetQuestExpansion(questID)
 GetQuestLink(questID)
-GetQuestUiMapID(questID)
+
 C_QuestLog.GetQuestDifficultyLevel(questID)  --> 60
 C_QuestLog.GetQuestTagInfo(questID)  --> QuestTagInfo table
 C_QuestLog.GetQuestType(questID)  --> Enum.QuestTag
