@@ -42,16 +42,7 @@
 local AddonID, ns = ...
 local utils = ns.utils
 
--- REF.: AceAddon:GetAddon(name, silent)
-local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
-
-local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
-
---------------------------------------------------------------------------------
------ Utilities ----------------------------------------------------------------
---------------------------------------------------------------------------------
-
-local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim,string.gsub
+local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert = tContains, table.insert
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
@@ -61,6 +52,13 @@ local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGr
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
 local C_Map = C_Map  -- C_TaskQuest
+
+local GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR = GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR
+
+local CATEGORY_NAME_COLOR = GRAY_FONT_COLOR
+local ZONE_STORY_HEADER_COLOR = ACHIEVEMENT_COLOR
+local QUESTLINE_HEADER_COLOR = SCENARIO_STAGE_COLOR
+local CAMPAIGN_HEADER_COLOR = CAMPAIGN_COMPLETE_COLOR
 
 local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) end
 local GRAY = function(txt) return GRAY_FONT_COLOR:WrapTextInColorCode(txt) end
@@ -191,56 +189,104 @@ end
 
 ----- Main ---------------------------------------------------------------------
 
+-- REF.: AceAddon:GetAddon(name, silent)
+local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
+
+local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
+--> AceConsole is used for chat frame related functions, eg. printing or slash commands 
+
 function HandyNotesPlugin:OnInitialize()
     -- Load options database and settings
     self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
     self.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
     self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
     self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
+
     --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, profile, and global
     ns.db = self.db.profile
-    self.options = ns.pluginInfo.options(self)
+    self.options = ns.pluginInfo.options()                                      --> TODO - Remove locale table after creating locale files
 
-    -- ns.db.enabled = self.options.args.isEnabled.get()
+    -- Using                                      --> TODO - Keep slash commands ???
+    self.slash_commands = {"lm", "loremaster"}
+    self.hasRegisteredSlashCommands = false
 
-    -- Needed for a separate config window
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options, true)
+    -- Register options to Ace3 for a standalone config window
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)
+
+    -- Register this addon to HandyNotes as a plugin
+    HandyNotes:RegisterPluginDB(AddonID, self, self.options)
+    ns.db.enabled = HandyNotes.db.profile.enabledPlugins[AddonID] or self.options.args.enabled
+
+    -- self:SetEnabledState
+    ns.cprint = function(s, ...) self:Print(...) end
+    ns.cprintf = function(s, ...) self:Printf(...) end
 
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 end
 
 function HandyNotesPlugin:OnEnable()
-    if not ns.db.enabled then
-        self:Disable()
-        return
-    end
+    if not ns.db.enabled then return end
 
-    -- Using AceConsole for slash commands                                      --> TODO - Keep slash commands ???
-    self.slash_commands = {"lm", "loremaster"}
-    for i, command in ipairs(self.slash_commands) do
+    for i, command in ipairs(self.slash_commands) do                            --> TODO - Keep slash commands ???
         self:RegisterChatCommand(command, "ProcessSlashCommands")
     end
+    self.hasRegisteredSlashCommands = true
 
-    -- Register this addon to HandyNotes as plugin
-    -- REF.: HandyNotes:RegisterPluginDB(pluginName, pluginHandler, optionsTable)
-    HandyNotes:RegisterPluginDB(AddonID, self, self.options)
-
-    -- self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_ENABLED)
     self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
 end
 
 function HandyNotesPlugin:OnDisable()
-    -- Using AceConsole for slash commands                                      --> TODO - Keep slash commands ???
-    for i, command in ipairs(self.slash_commands) do
-        self:UnregisterChatCommand(command)
+    if self.hasRegisteredSlashCommands then
+        for i, command in ipairs(self.slash_commands) do
+            self:UnregisterChatCommand(command)
+        end
     end
+    self.hasRegisteredSlashCommands = false
+
+    --> TODO - Add unhooking
 
     self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_DISABLED)
 end
 
+-- ns.OnEnable = HandyNotesPlugin.OnEnable
+-- ns.OnDisable = HandyNotesPlugin.OnDisable
+
 function HandyNotesPlugin:OnProfileChanged(event, database, newProfileKey)
+    if DEV_MODE then print("OnProfileChanged:", event, newProfileKey) end
     ns.db = database.profile
-    -- self.options = ns.pluginInfo.options(db)
+end
+
+----- Slash Commands ----------
+
+local arg_list = {
+    version = "Display addon version",
+    config = "Display settings",
+}
+
+function HandyNotesPlugin:ProcessSlashCommands(msg)
+    -- Process the slash command ('input' contains whatever follows the slash command)
+    -- Registered in :OnEnable()
+    local input = strtrim(msg)
+
+    if (input == "help") then
+        -- Print usage message to chat
+        self:Print(L.SLASHCMD_USAGE, format(" '/%s <%s>'", self.slash_commands[1], YELLOW("arg")), "|",
+                                     format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg")))
+        -- for arg_name, arg_description in pairs(arg_list) do
+        --     self:Print(" ", L.OBJECTIVE_FORMAT:format(YELLOW(arg_name..":")), arg_description)
+        -- end
+
+    elseif (input == "version") then
+        self:Print(ns.pluginInfo.version)
+
+    elseif (input == "config") then
+        Settings.OpenToCategory(HandyNotes.name)
+        -- LibStub("AceConfigDialog-3.0"):Open("HandyNotes")
+
+    else
+        LibStub("AceConfigDialog-3.0"):Open(AddonID)
+
+    end
 end
 
 -- Standard functions you can provide optionally:
@@ -558,13 +604,13 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
 
     local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
     -- Zone story name
     local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
     local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
-    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ACHIEVEMENT_COLOR)  -- SCENARIO_STAGE_COLOR)
+    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR)
     -- Chapter status
     GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
@@ -620,10 +666,10 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID
     -- actual `C_CampaignInfo.GetCurrentChapterID(campaignID)` refers only to the currently active quest campaigns.
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)  --> Questreihe, Questline
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_QUESTS, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)  --> Questreihe, Questline
 
     -- Quest line header
-    GameTooltip_AddColoredLine(tooltip, L.QUESTLINE_NAME_FORMAT:format(questLineInfo.questLineName), SCENARIO_STAGE_COLOR)
+    GameTooltip_AddColoredLine(tooltip, L.QUESTLINE_NAME_FORMAT:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR)
     -- Chapters
     local wrapLine = false
     local questIDs = QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
@@ -660,7 +706,7 @@ function LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID
                     GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine, leftOffset)
                 end
             else
-                GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(RETRIEVING_DATA), SCENARIO_STAGE_COLOR, wrapLine, leftOffset)
+                GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(RETRIEVING_DATA), wrapLine, leftOffset)
             end
         end
     end
@@ -710,7 +756,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     end
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, GRAY_FONT_COLOR, GRAY_FONT_COLOR)
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
 
     -- -- Show hint that quest (line) is part of this campaign
     -- if DEV_MODE or showHintOnly then
@@ -723,7 +769,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
 
     -- Campaign header - name + progress
     local campaignNameTemplate = campaignInfo.isComplete and L.CAMPAIGN_NAME_FORMAT_COMPLETE or L.CAMPAIGN_NAME_FORMAT_INCOMPLETE
-    GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_COMPLETE_COLOR)  -- SCENARIO_STAGE_COLOR)
+    GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_HEADER_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_PROGRESS_FORMAT:format(campaignInfo.numChaptersCompleted, campaignInfo.numChaptersTotal))
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> C:%d, state: %d, isWarCampaign: %d|n> > currentChapterID: %d", campaignID, campaignInfo.campaignState, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
     -- Campaign chapters
@@ -776,7 +822,9 @@ end
 -- end
 
 local function ShouldShowPluginName(pin)
-    return (pin.questInfo.isReadyForTurnIn or pin.questType or IsShiftKeyDown() or pin.questInfo.isCampaign or DEV_MODE)
+    return (pin.questInfo.isReadyForTurnIn or pin.questType or IsShiftKeyDown()
+            or pin.questInfo.hasQuestLineInfo or pin.questInfo.isCampaign
+            or DEV_MODE)
 end
 
 -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
@@ -799,7 +847,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Addon name
     if ShouldShowPluginName(pin) then
         local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, GRAY_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
+        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
@@ -839,7 +887,7 @@ end
 
 --     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
 --     -- GameTooltip_AddBlankLineToTooltip(tooltip)
---     GameTooltip_AddColoredDoubleLine(tooltip, " ", HandyNotesPlugin.name, NORMAL_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
+--     GameTooltip_AddColoredDoubleLine(tooltip, " ", HandyNotesPlugin.name, NORMAL_FONT_COLOR, CATEGORY_NAME_COLOR, nil, nil)
 --     if IsShiftKeyDown() then
 --         GameTooltip_AddQuest(tooltip, pin.questID)
 --     else
@@ -866,7 +914,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Addon name
     if ShouldShowPluginName(pin) then
         local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, GRAY_FONT_COLOR, GRAY_FONT_COLOR, nil, nil)
+        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
@@ -1001,39 +1049,6 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
         return PointsDataIterator, isWorldMapShown, mapID
     end
     return PointsDataIterator
-end
-
---------------------------------------------------------------------------------
------ Slash Commands (requires: AceConsole) ------------------------------------
---------------------------------------------------------------------------------
-
-local arg_list = {
-    version = "Display addon version",
-    config = "Display settings",
-}
-
-function HandyNotesPlugin:ProcessSlashCommands(input)
-    -- Process the slash command ('input' contains whatever follows the slash command)
-    -- Registered in :OnEnable()
-    if (input == '') then
-        -- Print usage message to chat
-        self:Print(L.SLASHCMD_USAGE, format(" '/%s <%s>'", self.slash_commands[1], YELLOW("arg")), "|",
-                                     format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg")))
-        -- for i, command in ipairs(self.slash_commands) do
-        --     print(format(" '/%s <%s>'", command, YELLOW("arg")))
-        -- end
-        for arg_name, arg_description in pairs(arg_list) do
-            self:Print(" ", L.OBJECTIVE_FORMAT:format(YELLOW(arg_name..":")), arg_description)
-        end
-    end
-    if (input == "version") then
-        self:Print(ns.pluginInfo.version)
-    end
-    if (input == "config") then
-        -- Settings.OpenToCategory(HandyNotes.name)
-        -- LibStub("AceConfigDialog-3.0"):Open("HandyNotes")
-        LibStub("AceConfigDialog-3.0"):Open(AddonID)
-    end
 end
 
 --@do-not-package@
