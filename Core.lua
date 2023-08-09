@@ -203,7 +203,8 @@ function HandyNotesPlugin:OnInitialize()
     self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
 
     --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, profile, and global
-    ns.db = self.db.profile
+    ns.db = self.db.profile  --> All characters using the same profile share this database.
+    ns.dataDB = self.db.global  --> All characters on the same account share this database.
     self.options = ns.pluginInfo.options()                                      --> TODO - Remove locale table after creating locale files
 
     -- Using                                      --> TODO - Keep slash commands ???
@@ -454,10 +455,10 @@ end
 ----- Database utilities ----------
 
 function DBUtil:CheckInitCategory(categoryName)
-    if not ns.db[categoryName] then
+    if not ns.dataDB[categoryName] then
         -- Save { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-        ns.db[categoryName] = {}
-        setmetatable(ns.db[categoryName], BaseCache)
+        ns.dataDB[categoryName] = {}
+        setmetatable(ns.dataDB[categoryName], BaseCache)
         debug:print(self, "Initialized DB:", categoryName)
     end
 end
@@ -465,22 +466,22 @@ end
 function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
     local questIDs = quests or QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
     -- Structure: { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-    if not ns.db.questLines[questLineInfo.questLineID] then
-        ns.db.questLines[questLineInfo.questLineID] = {
+    if not ns.dataDB.questLines[questLineInfo.questLineID] then
+        ns.dataDB.questLines[questLineInfo.questLineID] = {
             questID = questLineInfo.questID,
             mapIDs = {mapID},
             quests = questIDs,
         }
         debug:print(self, "Saved QL:", questLineInfo.questLineID, questLineInfo.questLineName)
 
-    elseif not tContains(ns.db.questLines[questLineInfo.questLineID].mapIDs, mapID) then
-        tInsert(ns.db.questLines[questLineInfo.questLineID].mapIDs, mapID)
+    elseif not tContains(ns.dataDB.questLines[questLineInfo.questLineID].mapIDs, mapID) then
+        tInsert(ns.dataDB.questLines[questLineInfo.questLineID].mapIDs, mapID)
         debug:print(self, "Added mapID to QL:", mapID, questLineInfo.questLineID)
     end
 end
 function DBUtil:GetSavedQuestLinesForMap(mapID)
     local infos = {}
-    for questLineID, questLineData in pairs(ns.db.questLines) do
+    for questLineID, questLineData in pairs(ns.dataDB.questLines) do
         if tContains(questLineData.mapIDs, mapID) then
             tInsert(infos, questLineData.questID)
         end
@@ -490,7 +491,7 @@ function DBUtil:GetSavedQuestLinesForMap(mapID)
     return infos
 end
 function DBUtil:GetSavedQuestLineMapForQuest(questID)
-    for questLineID, questLineData in pairs(ns.db.questLines) do
+    for questLineID, questLineData in pairs(ns.dataDB.questLines) do
         if tContains(questLineData.quests, questID) then
             local mapID = questLineData.mapIDs[1]
             debug:print(self, "Found map for quest:", mapID)
@@ -851,7 +852,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if pin.questType then                                                       --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.db.showQuesType) then                                                       --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
         -- if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
     end
@@ -862,16 +863,16 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if pin.questInfo.hasZoneStoryInfo then                                      --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.db.showZoneStory) then            --> TODO - Optimize info retrieval to load only once (!)
         -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
-    if pin.questInfo.hasQuestLineInfo then
+    if (pin.questInfo.hasQuestLineInfo and ns.db.showQuestLine) then
         --> TODO - Optimize info retrieval to load only once (!)
         if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    if pin.questInfo.isCampaign then
+    if (pin.questInfo.isCampaign and ns.db.showCampaign) then
         GameTooltip_AddBlankLineToTooltip(tooltip)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
@@ -918,7 +919,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if pin.questType then                                                       --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.db.showQuesType) then                                                       --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
     end
     if pin.questInfo.isReadyForTurnIn then
@@ -930,16 +931,16 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if pin.questInfo.hasZoneStoryInfo then                                      --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.db.showZoneStory) then                                      --> TODO - Optimize info retrieval to load only once (!)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
-    if pin.questInfo.hasQuestLineInfo then
+    if (pin.questInfo.hasQuestLineInfo and ns.db.showQuestLine) then
         --> TODO - Optimize info retrieval to load only once (!)
         if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    if pin.questInfo.isCampaign then
+    if (pin.questInfo.isCampaign and ns.db.showCampaign) then
         GameTooltip_AddBlankLineToTooltip(tooltip)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
