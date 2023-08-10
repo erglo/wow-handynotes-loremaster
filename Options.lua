@@ -39,74 +39,48 @@ ns.pluginInfo.version = GetAddOnMetadata(AddonID, "Version")
 ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale) or GetAddOnMetadata(AddonID, "Notes")
 ns.pluginInfo.defaultOptions = {
 	profile = {
-		enabled = true,
         ["**"] = true,
-        -- showQuesType = true,
-        -- showZoneStory = true,
-        -- showQuestLine = true,
-        -- showCampaign = true,
-        -- tooltip_settings = {
-        --     ["**"] = true,
-        -- }
 	},
 }
-ns.pluginInfo.options = function(optionsHandler, currentDatabase)
-    -- local HandyNotesPlugin = optionsHandler
-    -- local db = currentDatabase
-    return {                                                                  --> TODO - L10n
+ns.pluginInfo.options = function()
+    return {
         type = 'group',
         name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
         desc = ns.pluginInfo.description,
         childGroups = "tab",
+        get = function(info) return ns.db[info.arg] end,
+        set = function(info, value)
+            ns.db[info.arg] = value
+            LocalOptionUtils:printOption(info.option.name, value)
+        end,
         args = {
-            enabled = {
-                type = "toggle",
-                name = "Enable plugin",
-                desc = "Enable or disable this plugin.",
-                order = 0,
-                get = function(info) return ns.db.enabled end,
-                set = function(info, value)
-                    ns.db.enabled = value
-                    -- HandyNotes.db.profile.enabledPlugins[AddonID] = value
-                    -- if value then ns:Enable() else ns:Disable() end
-                    LocalOptionUtils:printOption(info.option.name, value)
-                end,
-                hidden = true,
-                -- disabled = ns.db.enabled,
-            },
             about = {
                 type = "group",
-                name = "About this plugin",
+                name = "About this plugin",                                     --> TODO - L10n
                 order = 9,
                 args = {
                     header = {
                         type = "description",
-                        name = LocalOptionUtils:GenerateAboutHeader(),
+                        name = LocalOptionUtils:CreateAboutHeader(),
                         fontSize = "medium",
                         order = 0,
                     },
                     description = {
                         type = "description",
                         name = "|n"..ns.pluginInfo.description,
-                        -- fontSize = "small",
                         order = 1,
                     },
                     body = {
                         type = "description",
-                        name = LocalOptionUtils:GenerateAboutBody(),
-                        -- fontSize = "medium",
+                        name = LocalOptionUtils:CreateAboutBody(),
                         order = 2,
                     },
                 }
             },  --> about
             tooltip_settings = {
                 type = "group",
-                name = "Tooltip Settings",
-                get = function(info) return ns.db[info.arg] end,
-                set = function(info, value)
-                    ns.db[info.arg] = value
-                    LocalOptionUtils:printOption(info.option.name, value)
-                end,
+                name = "Tooltip Content",
+                desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
                 order = 1,
                 args = {
                     description = {
@@ -115,12 +89,30 @@ ns.pluginInfo.options = function(optionsHandler, currentDatabase)
                         -- fontSize = "medium",
                         order = 0,
                     },
+                    plugin_name = {
+                        type = "toggle",
+                        name = "Show Plugin Name",
+                        desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
+                        arg = "showPluginName",
+                        -- width = "double",
+                        width = 1.0,
+                        order = 1,
+                    },
+                    category_names = {
+                        type = "toggle",
+                        name = "Show Category Names",
+                        desc = "Each content category is indicated by its name. Deactivate to hide those names.",
+                        arg = "showCategoryNames",
+                        -- width = "double",
+                        width = 1.0,
+                        order = 2,
+                    },
                     quest_type = {
                         type = "toggle",
                         name = "Show Quest Type",
                         desc = "Show or hide the type of a quest before accepting it."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
                         arg = "showQuesType",
-                        width = "full",
+                        width = "double",
                         order = 5,
                     },
                     zone_story = {
@@ -139,7 +131,7 @@ ns.pluginInfo.options = function(optionsHandler, currentDatabase)
                         width = "double",
                         order = 20,
                     },
-                   campaign = {
+                    campaign = {
                         type = "toggle",
                         name = "Show Campaign",
                         desc = "Show or hide story campaign details associated with the hovered quest.",
@@ -149,7 +141,52 @@ ns.pluginInfo.options = function(optionsHandler, currentDatabase)
                     },
                 }
             },  --> tooltip_settings
-        }
+            notification_settings = {
+                type = "group",
+                name = "Notifications",
+                desc = "Choose how or whether you want to be notified of plugin changes.",
+                order = 2,
+                args = {
+                    description = {
+                        type = "description",
+                        name = "Choose how or whether you want to be notified of plugin changes.".."|n|n",
+                        order = 0,
+                    },
+                    chat_notifications = {
+                        type = "group",
+                        name = CHAT_LABEL,
+                        inline = true,
+                        order = 1,
+                        args = {
+                            incomplete_zone_stories_msg = {
+                                type = "toggle",
+                                name = "Incomplete Zone Stories",
+                                desc = "Notifies you of Zone Stories which haven't been completed on the currently viewed map.",
+                                arg = "showIncompleteZoneStories",
+                                width ="double",
+                                order = 10,
+                            },
+                            incomplete_questlines_msg = {
+                                type = "toggle",
+                                name = "Incomplete Questlines",
+                                desc = "Notifies you of questlines which haven't been completed on the currently viewed map.",
+                                arg = "showIncompleteQuestLines",
+                                width ="double",
+                                order = 20,
+                            },
+                            incomplete_campaigns_msg = {
+                                type = "toggle",
+                                name = "Incomplete Campaigns",
+                                desc = "Notifies you of story campaigns which haven't been completed, yet.",
+                                arg = "showIncompleteCampaigns",
+                                width ="double",
+                                order = 30,
+                            },
+                        },
+                    },  --> chat_notifications
+                },
+            },  --> notification_settings
+        } --> root parent group
     }
 end
 
@@ -168,13 +205,13 @@ LocalOptionUtils.printOption = function(self, text, isEnabled)
     ns:cprintf(self.statusFormatString, text, NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
 end
 
-LocalOptionUtils.GenerateAboutHeader = function(self)
+LocalOptionUtils.CreateAboutHeader = function(self)
     local versionString = GRAY_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.version)
     local pluginName = NORMAL_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title)
     return "|n"..pluginName.."  "..versionString
 end
 
-LocalOptionUtils.GenerateAboutBody = function(self)
+LocalOptionUtils.CreateAboutBody = function(self)
     local text = self.newline
     for i, key in ipairs(self.tocKeys) do
         local keyString = string.gsub(key, "X[-]", '')
@@ -225,6 +262,15 @@ local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585
 --     desc = "Show or hide questline details associated with a campaign.",
 --     width = 2.0,
 --     order = 35,
+-- },
+
+-- welcome_msg = {
+--     type = "toggle",
+--     name = "Show Plugin-is-Ready Message",
+--     desc = format("Show or hide the \"%s\" message on startup.", YELLOW(LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title))),
+--     arg = "showWelcomeMessage",
+--     width ="double",
+--     order = 1,
 -- },
 
 -- type_icons_settings = {
