@@ -42,6 +42,10 @@
 local AddonID, ns = ...
 local utils = ns.utils
 
+local silent = true
+local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", silent)
+if not HandyNotes then return end
+
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert = tContains, table.insert
 
@@ -189,46 +193,36 @@ end
 
 ----- Main ---------------------------------------------------------------------
 
--- REF.: AceAddon:GetAddon(name, silent)
-local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", true)
-
 local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
 --> AceConsole is used for chat frame related functions, eg. printing or slash commands 
 
 function HandyNotesPlugin:OnInitialize()
-    -- Load options database and settings
     self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
-    self.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
-    self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
-    self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
+    --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, factionrealmregion, profile, and global
 
-    --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, profile, and global
-    ns.db = self.db.profile  --> All characters using the same profile share this database.
-    ns.dataDB = self.db.global  --> All characters on the same account share this database.
-    self.options = ns.pluginInfo.options()                                      --> TODO - Remove locale table after creating locale files
+    ns.settings = self.db.profile  --> All characters using the same profile share this database.
+    ns.data = self.db.global  --> All characters on the same account share this database.
 
-    -- Using                                      --> TODO - Keep slash commands ???
-    self.slash_commands = {"lm", "loremaster"}
-    self.hasRegisteredSlashCommands = false
+    self.options = ns.pluginInfo.options()
 
     -- Register options to Ace3 for a standalone config window
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)
 
-    -- Register this addon to HandyNotes as a plugin
+    -- Register this addon + options to HandyNotes as a plugin
     HandyNotes:RegisterPluginDB(AddonID, self, self.options)
-    ns.db.enabled = HandyNotes.db.profile.enabledPlugins[AddonID] or self.options.args.enabled
 
-    -- self:SetEnabledState
     ns.cprint = function(s, ...) self:Print(...) end
     ns.cprintf = function(s, ...) self:Printf(...) end
+
+    self.slash_commands = {"lm", "loremaster"}                                  --> TODO - Keep slash commands ???
+    self.hasRegisteredSlashCommands = false
 
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 end
 
 function HandyNotesPlugin:OnEnable()
-    if not ns.db.enabled then return end
-
-    for i, command in ipairs(self.slash_commands) do                            --> TODO - Keep slash commands ???
+    -- Register slash commands via AceConsole
+    for i, command in ipairs(self.slash_commands) do
         self:RegisterChatCommand(command, "ProcessSlashCommands")
     end
     self.hasRegisteredSlashCommands = true
@@ -237,6 +231,7 @@ function HandyNotesPlugin:OnEnable()
 end
 
 function HandyNotesPlugin:OnDisable()
+    -- Unregister slash commands from via AceConsole
     if self.hasRegisteredSlashCommands then
         for i, command in ipairs(self.slash_commands) do
             self:UnregisterChatCommand(command)
@@ -249,20 +244,7 @@ function HandyNotesPlugin:OnDisable()
     self:Printf(L.OPTION_STATUS_FORMAT, YELLOW(ns.pluginInfo.title), L.OPTION_STATUS_DISABLED)
 end
 
--- ns.OnEnable = HandyNotesPlugin.OnEnable
--- ns.OnDisable = HandyNotesPlugin.OnDisable
-
-function HandyNotesPlugin:OnProfileChanged(event, database, newProfileKey)
-    if DEV_MODE then print("OnProfileChanged:", event, newProfileKey) end
-    ns.db = database.profile
-end
-
 ----- Slash Commands ----------
-
-local arg_list = {
-    version = "Display addon version",
-    config = "Display settings",
-}
 
 function HandyNotesPlugin:ProcessSlashCommands(msg)
     -- Process the slash command ('input' contains whatever follows the slash command)
@@ -272,7 +254,12 @@ function HandyNotesPlugin:ProcessSlashCommands(msg)
     if (input == "help") then
         -- Print usage message to chat
         self:Print(L.SLASHCMD_USAGE, format(" '/%s <%s>'", self.slash_commands[1], YELLOW("arg")), "|",
-                                     format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg")))
+        format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg")))
+
+        -- local arg_list = {
+        --     version = "Display addon version",
+        --     config = "Display settings",
+        -- }
         -- for arg_name, arg_description in pairs(arg_list) do
         --     self:Print(" ", L.OBJECTIVE_FORMAT:format(YELLOW(arg_name..":")), arg_description)
         -- end
@@ -298,11 +285,10 @@ end
 -- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
 --     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 
-
 ----- Tooltip Data Handler ----------
 
 local DBUtil = {}
-DBUtil.debug = false
+DBUtil.debug = DEV_MODE
 DBUtil.debug_prefix = GREEN("DB:")
 
 local ZoneStoryUtils = {}
@@ -455,10 +441,10 @@ end
 ----- Database utilities ----------
 
 function DBUtil:CheckInitCategory(categoryName)
-    if not ns.dataDB[categoryName] then
+    if not ns.data[categoryName] then
         -- Save { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-        ns.dataDB[categoryName] = {}
-        setmetatable(ns.dataDB[categoryName], BaseCache)
+        ns.data[categoryName] = {}
+        -- setmetatable(ns.data[categoryName], BaseCache)
         debug:print(self, "Initialized DB:", categoryName)
     end
 end
@@ -466,22 +452,22 @@ end
 function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
     local questIDs = quests or QuestCache:GetQuestLineQuests(questLineInfo.questLineID)
     -- Structure: { [questLineID] = {questID=questID, mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
-    if not ns.dataDB.questLines[questLineInfo.questLineID] then
-        ns.dataDB.questLines[questLineInfo.questLineID] = {
+    if not ns.data.questLines[questLineInfo.questLineID] then
+        ns.data.questLines[questLineInfo.questLineID] = {
             questID = questLineInfo.questID,
             mapIDs = {mapID},
             quests = questIDs,
         }
         debug:print(self, "Saved QL:", questLineInfo.questLineID, questLineInfo.questLineName)
 
-    elseif not tContains(ns.dataDB.questLines[questLineInfo.questLineID].mapIDs, mapID) then
-        tInsert(ns.dataDB.questLines[questLineInfo.questLineID].mapIDs, mapID)
+    elseif not tContains(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID) then
+        tInsert(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID)
         debug:print(self, "Added mapID to QL:", mapID, questLineInfo.questLineID)
     end
 end
 function DBUtil:GetSavedQuestLinesForMap(mapID)
     local infos = {}
-    for questLineID, questLineData in pairs(ns.dataDB.questLines) do
+    for questLineID, questLineData in pairs(ns.data.questLines) do
         if tContains(questLineData.mapIDs, mapID) then
             tInsert(infos, questLineData.questID)
         end
@@ -491,7 +477,7 @@ function DBUtil:GetSavedQuestLinesForMap(mapID)
     return infos
 end
 function DBUtil:GetSavedQuestLineMapForQuest(questID)
-    for questLineID, questLineData in pairs(ns.dataDB.questLines) do
+    for questLineID, questLineData in pairs(ns.data.questLines) do
         if tContains(questLineData.quests, questID) then
             local mapID = questLineData.mapIDs[1]
             debug:print(self, "Found map for quest:", mapID)
@@ -852,7 +838,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.db.showQuesType) then                                                       --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.settings.showQuesType) then                        --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
         -- if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
     end
@@ -863,16 +849,16 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if (pin.questInfo.hasZoneStoryInfo and ns.db.showZoneStory) then            --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then      --> TODO - Optimize info retrieval to load only once (!)
         -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
-    if (pin.questInfo.hasQuestLineInfo and ns.db.showQuestLine) then
+    if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
         --> TODO - Optimize info retrieval to load only once (!)
         if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    if (pin.questInfo.isCampaign and ns.db.showCampaign) then
+    if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
         GameTooltip_AddBlankLineToTooltip(tooltip)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
@@ -886,7 +872,7 @@ end
 --     if not pin.questID then return end
 --     if not ShouldHookWorldQuestPin(pin) then return end
 
---     local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
+--     local tooltip = GameTooltip
 --     -- GameTooltip_AddBlankLineToTooltip(tooltip)
 --     GameTooltip_AddColoredDoubleLine(tooltip, " ", HandyNotesPlugin.name, NORMAL_FONT_COLOR, CATEGORY_NAME_COLOR, nil, nil)
 --     if IsShiftKeyDown() then
@@ -919,7 +905,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
     LocalUtils:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.db.showQuesType) then                                                       --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.settings.showQuesType) then                        --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
     end
     if pin.questInfo.isReadyForTurnIn then
@@ -931,16 +917,15 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if (pin.questInfo.hasZoneStoryInfo and ns.db.showZoneStory) then                                      --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then      --> TODO - Optimize info retrieval to load only once (!)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
-    if (pin.questInfo.hasQuestLineInfo and ns.db.showQuestLine) then
-        --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
         if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    if (pin.questInfo.isCampaign and ns.db.showCampaign) then
+    if (pin.questInfo.isCampaign and ns.settings.showCampaign) then             --> TODO - Optimize info retrieval to load only once (!)
         GameTooltip_AddBlankLineToTooltip(tooltip)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
@@ -972,24 +957,79 @@ end
 --     end
 -- end
 
+function HandyNotesPlugin:OnProfileChanged(event, ...)
+    -- REF.: <https://www.wowace.com/projects/ace3/pages/api/ace-db-3-0>
+    debug:print(debug.hooks, event, ...)
+
+    if (event == "OnProfileReset") then
+        -- local database = ...
+        local noChildren, noCallbacks = nil, true
+        self.db:ResetProfile(noChildren, noCallbacks)
+    end
+
+    if (event == "OnProfileDeleted") then
+        -- local database = ...
+        -- local noChildren, noCallbacks = nil, true
+        -- self.db:ResetProfile(noChildren, noCallbacks)
+        print(event, ...)
+    end
+
+    -- Note: The database given to the event handler is the one that changed,
+    -- ie. HandyNotes.db (do NOT use!)
+    if (event == "OnProfileCopied") then
+        local database, newProfileKey = ...
+        local silent = true
+        self.db:CopyProfile(newProfileKey, silent)
+    end
+    if (event == "OnProfileChanged") then
+        local database, newProfileKey = ...
+        self.db:SetProfile(newProfileKey)
+    end
+    ns.settings = self.db.profile
+    self:Print(HandyNotes.name, "profile change adapted.")
+
+    --> TODO - L10n
+    -- REF.: <https://www.wowace.com/projects/ace3/localization>
+end
+
+function HandyNotesPlugin:OnHandyNotesStateChanged()
+    -- print("state:", HandyNotes:IsEnabled(), self:IsEnabled(), HandyNotesPlugin:IsEnabled())
+    local parent_state = HandyNotes:IsEnabled()
+    if (parent_state ~= self:IsEnabled()) then
+        -- Toogle this plugin
+        if parent_state then self:OnEnable() else self:OnDisable() end
+        self:SetEnabledState(parent_state)
+    end
+    -- print("state:", HandyNotes:IsEnabled(), self:IsEnabled(), HandyNotesPlugin:IsEnabled())
+end
+
 function HandyNotesPlugin:RegisterHooks()
-    -- Active Quests                                                            --> TODO - Keep ???
+    -- Active Quests
     debug:print(debug.hooks, "Hooking active quests...")
     hooksecurefunc(QuestPinMixin, "OnMouseEnter", Hook_ActiveQuestPin_OnEnter)
-    -- EventRegistry:RegisterCallback("MapCanvas.QuestPin.OnEnter", HookIntoQuestTooltip, PTR_IssueReporter)
     hooksecurefunc(QuestPinMixin, "OnClick", Hook_OnClick)
+
     -- Storyline Quests
     debug:print(debug.hooks, "Hooking storyline quests...")
     hooksecurefunc(StorylineQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
     hooksecurefunc(StorylineQuestPinMixin, "OnClick", Hook_OnClick)
+
     -- Bonus Objectives
-    -- -- if _G.TaskPOI_OnEnter then
     -- if _G["TaskPOI_OnEnter"] then
     --     -- hooksecurefunc("TaskPOI_OnEnter", HNQH_TaskPOI_OnEnter)
     --     if not self:IsHooked(nil, "TaskPOI_OnEnter") then
     --         self:SecureHook(nil, "TaskPOI_OnEnter", HNQH_TaskPOI_OnEnter)
     --     end
     -- end
+
+    -- HandyNotes Hooks
+    --> Callback types: <https://www.wowace.com/projects/ace3/pages/ace-db-3-0-tutorial#title-5>
+    HandyNotes.db.RegisterCallback(self, "OnProfileChanged", "OnProfileChanged")
+    HandyNotes.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
+    HandyNotes.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
+    HandyNotes.db.RegisterCallback(self, "OnProfileDeleted", "OnProfileChanged")
+    hooksecurefunc(HandyNotes, "OnEnable", self.OnHandyNotesStateChanged)
+    hooksecurefunc(HandyNotes, "OnDisable", self.OnHandyNotesStateChanged)
 end
 
 --------------------------------------------------------------------------------

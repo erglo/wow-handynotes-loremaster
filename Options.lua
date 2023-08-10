@@ -48,9 +48,9 @@ ns.pluginInfo.options = function()
         name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
         desc = ns.pluginInfo.description,
         childGroups = "tab",
-        get = function(info) return ns.db[info.arg] end,
+        get = function(info) return ns.settings[info.arg] end,
         set = function(info, value)
-            ns.db[info.arg] = value
+            ns.settings[info.arg] = value
             LocalOptionUtils:printOption(info.option.name, value)
         end,
         args = {
@@ -97,7 +97,7 @@ ns.pluginInfo.options = function()
                         -- width = "double",
                         width = 1.0,
                         order = 1,
-                    },
+                    },                                                          --> TODO - Show quest ID ???
                     category_names = {
                         type = "toggle",
                         name = "Show Category Names",
