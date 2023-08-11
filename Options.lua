@@ -97,7 +97,7 @@ ns.pluginInfo.options = function()
                         -- width = "double",
                         width = 1.0,
                         order = 1,
-                    },                                                          --> TODO - Show quest ID ???
+                    },                                                          --> TODO - Show quest ID, trivial quests ???
                     category_names = {
                         type = "toggle",
                         name = "Show Category Names",
