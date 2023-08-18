@@ -373,7 +373,7 @@ ZoneStoryCache.GetZoneStoryInfo = function(self, mapID, prepareCache)
     if not self.meta[mapID] then
         local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
         if not storyAchievementID then return end
-        local mapInfo = C_Map.GetMapInfo(storyMapID or mapID)
+        local mapInfo = LocalUtils:GetMapInfo(storyMapID or mapID)
         -- local mapInfo = ns.activeZoneMapInfo
         self.meta[mapID] = {storyAchievementID, mapInfo}
         debug:print(self, "Added zone story:", storyAchievementID, storyMapID, mapInfo.name)
@@ -879,6 +879,15 @@ end
 
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
+LocalUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
+
+function LocalUtils:GetMapInfo(mapID)
+    if not LocalUtils.mapInfoCache[mapID] then
+        LocalUtils.mapInfoCache[mapID] = C_Map.GetMapInfo(mapID)
+        debug:print("Added mapID", mapID, "to map cache")
+    end
+    return LocalUtils.mapInfoCache[mapID]
+end
 
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format("Checking zone (%s) for stories...", pin.mapID or "n/a"))
@@ -1281,7 +1290,7 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
     if WorldMapFrame then
         local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
-        local mapInfo = C_Map.GetMapInfo(mapID)
+        local mapInfo = LocalUtils:GetMapInfo(mapID)
         debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "mapID:", mapID)
 
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
