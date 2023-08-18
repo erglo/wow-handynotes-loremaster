@@ -176,7 +176,6 @@ local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL-CACHE:" }
-local ZoneStoryCache =      { debug = false, debug_prefix = "ZS-CACHE:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
 local LocalUtils = {}
 
@@ -365,29 +364,28 @@ end
 
 ----- Tooltip Data Handler ----------
 
-ZoneStoryCache.meta = {}  --> {[mapID] = {storyAchievementID, storyMapInfo}, ...}
-ZoneStoryCache.achievements = {}  --> achievementInfo + .criteriaList
--- setmetatable(ZoneStoryCache.meta, BaseCache)
--- setmetatable(ZoneStoryCache.achievements, BaseCache)
-ZoneStoryCache.GetZoneStoryInfo = function(self, mapID, prepareCache)
-    if not self.meta[mapID] then
+ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyMapInfo}, ... }
+ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
+
+function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
+    if not self.storiesOnMap[mapID] then
         local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
         if not storyAchievementID then return end
+
         local mapInfo = LocalUtils:GetMapInfo(storyMapID or mapID)
-        -- local mapInfo = ns.activeZoneMapInfo
-        self.meta[mapID] = {storyAchievementID, mapInfo}
+        self.storiesOnMap[mapID] = {storyAchievementID, mapInfo}
         debug:print(self, "Added zone story:", storyAchievementID, storyMapID, mapInfo.name)
     end
     if not prepareCache then
-        debug:print(self, "Returning zone story for", mapID)
-        return SafeUnpack(self.meta[mapID])
+        return SafeUnpack(self.storiesOnMap[mapID])
     end
 end
-ZoneStoryCache.HasZoneStoryInfo = function(self, mapID)
-    -- return (C_QuestLog.GetZoneStoryInfo(activeMapID) ~= nil)
-    return self.meta[mapID] ~= nil
+
+function ZoneStoryUtils:HasZoneStoryInfo(mapID)
+    return self.storiesOnMap[mapID] ~= nil
 end
-ZoneStoryCache.GetAchievementInfo = function(self, achievementID)
+
+function ZoneStoryUtils:GetAchievementInfo(achievementID)
     if not self.achievements[achievementID] then
         local achievementInfo = utils.achieve.GetWrappedAchievementInfo(achievementID)
         achievementInfo.numCriteria = utils.achieve.GetWrappedAchievementNumCriteria(achievementID)
@@ -402,11 +400,67 @@ ZoneStoryCache.GetAchievementInfo = function(self, achievementID)
                 tInsert(achievementInfo.criteriaList, criteriaInfo)
             end
         end
+
+        -- Fix achievementInfo.completed - In some areas eg. Azshara it shows completed although it's not.
+        achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
+
         self.achievements[achievementID] = achievementInfo
-        debug:print(self, "Added achievementInfo:", achievementID, achievementInfo.name)
+        debug:print(self, "> Added achievementInfo:", achievementID, achievementInfo.name)
     end
-    debug:print(self, "Returning achievementInfo for", achievementID)
+
     return self.achievements[achievementID]
+end
+
+function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+    debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
+
+    local storyAchievementID, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
+    if not storyAchievementID then
+        debug:print(self, "> Nothing found.")
+        return false
+    end
+
+    local achievementInfo = self:GetAchievementInfo(storyAchievementID)
+
+    -- Category name
+    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+
+    -- Zone story name
+    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
+    local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
+    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR)
+
+    -- Chapter status
+    GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+
+    -- Chapter list
+    if IsShiftKeyDown() then
+        local wrapLine = false
+        local criteriaName
+        for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
+            criteriaName = criteriaInfo.criteriaString
+            -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
+            if debug.showChapterIDsInTooltip then
+                if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
+                    criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
+                else
+                    criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                end
+            end
+            if criteriaInfo.completed then
+                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
+            else
+                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), wrapLine)
+            end
+        end
+    else
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
+    end
+
+    debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
+    return true
 end
 
 ----- Quest Handler ----------
@@ -547,7 +601,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         questInfo.activeMapID = ns.activeZoneMapInfo.mapID  --> The ID of the map the user is currently looking at
         questInfo.isActiveMap = (questInfo.activeMapID == pinMapID)
         questInfo.isQuestMap = (questInfo.questMapID == pinMapID)
-        questInfo.hasZoneStoryInfo = ZoneStoryCache:HasZoneStoryInfo(questInfo.questMapID or pinMapID)
+        local zoneStoryMapID = questInfo.questMapID > 0 and questInfo.questMapID or pinMapID
+        questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(zoneStoryMapID)
         questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, questInfo.activeMapID)
 
         return questInfo
@@ -889,55 +944,6 @@ function LocalUtils:GetMapInfo(mapID)
     return LocalUtils.mapInfoCache[mapID]
 end
 
-function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
-    debug:print(self, format("Checking zone (%s) for stories...", pin.mapID or "n/a"))
-
-    local storyAchievementID, storyMapInfo = ZoneStoryCache:GetZoneStoryInfo(pin.mapID)
-    if not storyAchievementID then
-        debug:print(self, "> Nothing found.")
-        return false
-    end
-
-    -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
-
-    local achievementInfo = ZoneStoryCache:GetAchievementInfo(storyAchievementID)
-    -- Zone story name
-    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
-    local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
-    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR)
-    -- Chapter status
-    GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
-    debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
-    -- Chapter list
-    if IsShiftKeyDown() then
-        local wrapLine = false
-        local criteriaName
-        for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
-            criteriaName = criteriaInfo.criteriaString
-            -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
-            if debug.showChapterIDsInTooltip then
-                if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
-                    criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
-                else
-                    criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
-                end
-            end
-            if criteriaInfo.completed then
-                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
-            else
-                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), wrapLine)
-            end
-        end
-    else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
-        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
-    end
-
-    debug:print(self, format("> Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
-    return true
-end
-
 ----- Campaign Handler ----------
 --
 -- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/CampaignChapter.lua>
@@ -974,7 +980,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     -- Show quest line of current chapter
     if not pin.questInfo.hasQuestLineInfo and (campaignInfo.numChaptersTotal > 0) then
         LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignInfo.currentChapterID)
-        GameTooltip_AddBlankLineToTooltip(tooltip)
+        -- GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Category name
@@ -1080,7 +1086,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
 
     -- debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
-    if (DEV_MODE and IsShiftKeyDown() and IsControlKeyDown()) then
+    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
         debug:AddDebugQuestInfoLineToTooltip(tooltip, pin)
         GameTooltip:Show()
         return
@@ -1297,8 +1303,8 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
             ns.activeZoneMapInfo = mapInfo
             debug:print(LocalQuestLineUtils, GRAY("Entering zone:"), mapID, mapInfo.name)
             -- Update data cache for current zone
-            ZoneStoryCache:GetZoneStoryInfo(mapID, true)
             local prepareCache = true
+            ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent) then
