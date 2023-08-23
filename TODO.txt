@@ -1,7 +1,9 @@
-(B) Add tags to quest/chapter names @tags +tooltip
+(A) Apply manual filters @quests +data +tooltip
+(A) Save QL for currently active quests @questLines +data
 (B) Refine questline data retrieval @questLines +data
+(B) Add tags to quest/chapter names @tags +tooltip
 (C) Continent view @availabilityCheck +map
 (D) Show active QLs in world map button @questLines +map +button
 (E) Add navigation to pin @navigation +map +pin
-Add entry to Campaign Tracker @campaign +tracker
 Track minimap pins @hooks +minimap +pin
+Auto-hide complete stories @zoneStory +tooltip

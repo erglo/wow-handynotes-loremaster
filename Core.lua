@@ -47,7 +47,7 @@ local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", loadSilent)
 if not HandyNotes then return end
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
-local tContains, tInsert = tContains, table.insert
+local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
 local QuestUtils_GetQuestName = QuestUtils_GetQuestName
@@ -68,7 +68,8 @@ local YELLOW = function(txt) return YELLOW_FONT_COLOR:WrapTextInColorCode(txt) e
 local GRAY = function(txt) return GRAY_FONT_COLOR:WrapTextInColorCode(txt) end
 local GREEN = function(txt) return FACTION_GREEN_COLOR:WrapTextInColorCode(txt) end
 local RED = function(txt) return RED_FONT_COLOR:WrapTextInColorCode(txt) end
-local ORANGE = function(txt) return ORANGE_FONT_COLOR :WrapTextInColorCode(txt) end
+local ORANGE = function(txt) return ORANGE_FONT_COLOR:WrapTextInColorCode(txt) end
+local BLUE = function(txt) return BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(txt) end  -- PURE_BLUE_COLOR, LIGHTBLUE_FONT_COLOR 
 
 local function StringIsEmpty(str)
 	return str == nil or strlen(str) == 0
@@ -97,8 +98,8 @@ L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see chap
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
--- L.QUESTLINE_PROGRESS_FORMAT = "|"..string_gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1)
-L.QUESTLINE_PROGRESS_FORMAT = MAJOR_FACTION_RENOWN_CURRENT_PROGRESS
+-- L.QUESTLINE_PROGRESS_FORMAT = MAJOR_FACTION_RENOWN_CURRENT_PROGRESS
+L.QUESTLINE_PROGRESS_FORMAT = string_gsub(QUEST_LOG_COUNT_TEMPLATE, "%%s", "|cffffffff")
 
 L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s"
@@ -149,6 +150,8 @@ L.SLASHCMD_USAGE = "Usage:"
 
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
 
+local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
+
 ----- Debugging -----
 
 local DEV_MODE = false
@@ -175,8 +178,9 @@ local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
 local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
-local LocalQuestLineUtils = { debug = false, debug_prefix = "QL-CACHE:" }
+local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
+local QuestFilterUtils =    { debug = false, debug_prefix = "QFilter:" }
 local LocalUtils = {}
 
 --> TODO: CampaignCache, QuestCache
@@ -202,35 +206,6 @@ function debug:AddDebugQuestInfoLineToTooltip(tooltip, pin)
         rightHandColor = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
         GameTooltip_AddColoredDoubleLine(tooltip, k, tostring(v), leftHandColor, rightHandColor)
     end
-end
-
------ Faction Groups ----------
-
-local playerFactionGroup = UnitFactionGroup("player")
-
--- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
-local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
-
-local QuestNameFactionGroupFormat = {
-    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
-    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
-    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
-}
-
--- Quests are either for a specific faction group, quest type, phase, etc. Try to match those.
----@param questInfo table
----@return boolean
---
-local function PlayerMatchesQuestRequirements(questInfo)
-    -- Filter quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])
-    local isFactionGroupMatch = tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questInfo.questFactionGroup)
-    if not debug.isActive then
-        return isFactionGroupMatch and (not questInfo.isObsolete)
-    else
-        return isFactionGroupMatch
-    end
-    --> TODO - Add more filter types
-    -- eg. quests which are optional (?), different class, phase
 end
 
 ----- Main ---------------------------------------------------------------------
@@ -268,6 +243,8 @@ function HandyNotesPlugin:OnEnable()
         self:RegisterChatCommand(command, "ProcessSlashCommands")
     end
     self.hasRegisteredSlashCommands = true
+
+    QuestFilterUtils:Init()
 
     self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
 end
@@ -423,7 +400,9 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementInfo = self:GetAchievementInfo(storyAchievementID)
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    if ns.settings.showCategoryNames then
+        GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    end
 
     -- Zone story name
     local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
@@ -463,6 +442,191 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     return true
 end
 
+--------------------------------------------------------------------------------
+----- Quest Filter Handler -----------------------------------------------------
+--------------------------------------------------------------------------------
+
+function QuestFilterUtils:Init()
+    for i, weeklyQuestLineID in ipairs(self.weeklyQuestLines) do
+        local weeklyQuestIDs = LocalQuestCache:GetQuestLineQuests(weeklyQuestLineID)
+        tAppendAll(self.weeklyQuests, weeklyQuestIDs)
+    end
+    for i, dailyQuestLineID in ipairs(self.dailyQuestLines) do
+        local dailyQuestIDs = LocalQuestCache:GetQuestLineQuests(dailyQuestLineID)
+        tAppendAll(self.dailyQuests, dailyQuestIDs)
+    end
+    debug:print(self, "Filter data have been prepared")
+end
+
+-- All quests in this table are weekly quests of different questlines.
+QuestFilterUtils.weeklyQuests = {
+    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254,  -- Dragonflight, "Aiding the Accord" quests
+    66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
+    63949,  -- Shadowlands, Korthia, "Shaping Fate"
+    61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
+    61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
+    57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
+}
+
+-- All quests of these questlines are weekly quests.
+QuestFilterUtils.weeklyQuestLines = {
+    1416,  -- Dragonflight, "Bonus Event Holiday Quests"
+}
+
+-- All quests in this table are daily quests of different questlines.
+QuestFilterUtils.dailyQuests = {
+    59826, 59827, 59828, -- Shadowlands, Maldraxxus, "Bet On Yourself"
+}
+
+-- All quests of these questlines are daily quests or daily single quest questlines.
+QuestFilterUtils.dailyQuestLines = {
+    971,  -- Battle for Azeroth, Mechagon, "Visit from Archivist Bitbyte"
+    974,  -- Battle for Azeroth, Mechagon, "Visit from Tortollans"
+}
+
+-- All quests in this table have been marked obsolete by Blizzard and cannot be
+-- obtained or completed.
+QuestFilterUtils.obsoleteQuests = {
+    62699, -- Shadowlands, Covenant Sanctum (Kyrian)
+}
+
+----- Player Race ----------
+
+-- local playerRaceName, raceFileName, playerRaceID = UnitRace("player")
+local playerRaceID = select(3, UnitRace("player"))
+
+-- All quests in this table are bound to a specific player race.
+-- REF.: <https://wowpedia.fandom.com/wiki/RaceId>
+local raceQuests = {
+    ["8325"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Reclaiming Sunstrider Isle" (Horde)
+    ["8326"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Unfortunate Measures" (Horde)
+    ["8334"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Aggression" (Horde)
+    ["8335"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Felendren the Banished" (Horde)
+    ["8347"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Aiding the Outrunners" (Horde)
+    ["9327"] = {10},  -- Eastern Kingdoms, Ghostlands, "The Forsaken"
+    ["28202"] = {3, 29, 34},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28204"] = {7, 9},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28205"] = {4},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28428"] = {2, 5, 36},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28429"] = {6, 24, 25, 26, 28},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28430"] = {9, 35},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28431"] = {8, 10, 27},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+}
+
+-- Quests which are not bound to a specific player race are considered playable.
+function QuestFilterUtils:ShouldShowRaceQuest(questID)
+    local questIDstring = tostring(questID)
+    if not raceQuests[questIDstring] then return true end
+
+    return tContains(raceQuests[questIDstring], playerRaceID)
+end
+
+----- Player Class ----------
+
+-- local playerClassName, classFilename, playerClassID = UnitClass("player")
+local playerClassID = select(3, UnitClass("player"))
+
+-- All quests in this table are specific to aka player class.
+-- REF.: <https://wowpedia.fandom.com/wiki/ClassId>
+local classQuests = {
+    ["54058"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Unintended Consequences" (Neutral)
+    ["54118"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
+    ["54433"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
+}
+
+-- Quests which are not bound to a specific player class are considered playable.
+function QuestFilterUtils:ShouldShowClassQuest(questID)
+    local questIDstring = tostring(questID)
+    if not classQuests[questIDstring] then return true end
+
+    return tContains(classQuests[questIDstring], playerClassID)
+end
+
+----- Faction Groups ----------
+
+local playerFactionGroup = UnitFactionGroup("player")
+
+-- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
+local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+
+-----
+
+-- Quests are either for a specific faction group, quest type, phase, etc. Try to match those.
+---@param questInfo table
+---@return boolean
+--
+function QuestFilterUtils:PlayerMatchesQuestRequirements(questInfo)
+    if questInfo.isObsolete then
+        debug:print(self, "Skipping OBSOLETE quest:", questInfo.questID)
+        return false
+    end
+    if not self:ShouldShowRaceQuest(questInfo.questID) then
+        debug:print(self, "Skipping RACE quest:", questInfo.questID)
+        return false
+    end
+    if not self:ShouldShowClassQuest(questInfo.questID) then
+        debug:print(self, "Skipping CLASS quest:", questInfo.questID)
+        return false
+    end
+
+    -- Filter quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])
+    local isFactionGroupMatch = tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questInfo.questFactionGroup)
+    return isFactionGroupMatch
+end
+
+--> TODO - Add more filter types
+    -- eg. quests which are optional (?), different class, phase (?), weekly, daily, etc.
+--> TODO - Check quest giver quests
+--> TODO - Check quest types: warfront (?), WorldQuests (!, QL-940) 
+    -- [quest=53955]  -- "Warfront: The Battle for Darkshore" (???)
+--> TODO - Add filter for wrong factionGroup quests
+    -- [quest=54114]  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Alliance, not Neutral)
+
+----- Faction Group Labels ----------
+
+local QuestNameFactionGroupFormat = {
+    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
+    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
+    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
+}
+
+-- DAILY = "Täglich";
+-- WEEKLY = "Wöchentlich";
+-- PARENS_TEMPLATE = "(%s)";
+-- NORMAL_QUEST_DISPLAY = "|cff000000%s|r";
+-- IGNORED_QUEST_DISPLAY = "|cff000000%s (ignoriert)|r";
+-- TRIVIAL_QUEST_DISPLAY = "|cff000000%s (niedrigstufig)|r";
+-- OPTIONAL_QUEST_OBJECTIVE_DESCRIPTION = "(Optional) %s";
+
+local function FormatQuestName(questInfo)
+    local questTitle = QuestNameFactionGroupFormat[questInfo.questFactionGroup]:format(questInfo.questName)
+
+    if not StringIsEmpty(questInfo.questName) then
+        if questInfo.isDaily then
+            questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+        end
+        if questInfo.isWeekly then
+            questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+        end
+        if debug.showChapterIDsInTooltip then
+            local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
+            questTitle = format(colorCodeString.."%02d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+        end
+    else
+        debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
+        questTitle = RETRIEVING_DATA
+        if debug.isActive then
+            questTitle = format("> isDisabled: %s, questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.isDisabledForSession), tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
+        end
+        if debug.showChapterIDsInTooltip then
+            local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
+            questTitle = format(colorCodeString.."%02d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+        end
+    end
+
+    return questTitle
+end
+
 ----- Quest Handler ----------
 
 LocalQuestUtils.cache = {}
@@ -482,21 +646,27 @@ function LocalQuestUtils:IsDaily(questID)
     if (questInfo and questInfo.frequency) then
         return questInfo.frequency == Enum.QuestFrequency.Daily
     end
-    return false
+
+    return tContains(QuestFilterUtils.dailyQuests, questID)
 end
 
 function LocalQuestUtils:IsWeekly(questID)
-    local questInfo = QuestCache:Get(questID)
-    if (questInfo and questInfo.frequency) then
-        return questInfo.frequency == Enum.QuestFrequency.Weekly
+    local gameQuestInfo = QuestCache:Get(questID)
+    if (gameQuestInfo and gameQuestInfo.frequency) then
+        return gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
     end
-    return false
+
+    return tContains(QuestFilterUtils.weeklyQuests, questID)
 end
 
 -- Some quests which are still in the game have been marked obsolete by Blizzard
 -- and cannot be obtained or completed.
 -- **Note:** This is not a foolproof solution, but seems to work so far.
 function LocalQuestUtils:IsObsolete(questID)
+    if tContains(QuestFilterUtils.obsoleteQuests, questID) then
+        -- Prioritize manually verified questIDs
+        return true
+    end
     if (GetQuestExpansion(questID) < 0) then
         return true
     end
@@ -504,7 +674,14 @@ function LocalQuestUtils:IsObsolete(questID)
     if not HaveQuestData(questID) and (QuestCache.objects[questID] == nil) then
         return true
     end
+
     return false
+end
+
+-- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
+function LocalQuestUtils:GetQuestFactionGroup(questID)
+    local questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral
+    return questFactionGroup
 end
 
 -- Retrieve different quest details.
@@ -541,7 +718,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isWeekly = self:IsWeekly(questID),
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
-            questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral,
+            questFactionGroup = self:GetQuestFactionGroup(questID),
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
@@ -583,7 +760,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isWorldQuest = C_QuestLog.IsWorldQuest(questID),
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
-            questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral,
+            questFactionGroup = self:GetQuestFactionGroup(questID),
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
@@ -624,14 +801,6 @@ end
 --         return questInfo
 --     end
 -- end
-
--- LocalQuestUtils.weeklyQuests = {                                                --> TODO - Check quest giver quests
---     "61982", -- Kyrian, "Replenish the Reservoir"
---     "61332", -- Kyrian, "Return Lost Souls"
---     "62861", -- Kyrian, "Return Lost Souls"
---     "62862", -- Kyrian, "Return Lost Souls"
---     "62863", -- Kyrian, "Return Lost Souls"
--- }
 
 -- function Test_QuestInfo(questID)
 --     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
@@ -747,7 +916,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
             self:AddSingleQuestLine(questLineInfo, mapID)
             --> TODO - Add quests meta infos ???
         end
-        debug:print(self, format(GREEN("Cached %d questline |4info:infos; for map %d"), #questLineInfos, mapID))
+        debug:print(self, format(YELLOW("Cached or updated %d questline |4info:infos; for map %d"), #questLineInfos, mapID))
     end
 
     if not prepareCache then
@@ -813,17 +982,19 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     filteredQuestInfos.numCompleted = 0
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
         local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
-        if PlayerMatchesQuestRequirements(questInfo) then
+        if QuestFilterUtils:PlayerMatchesQuestRequirements(questInfo) then
             -- if DEV_MODE and questInfo.questName == '' then                      --> FIXME - Why sometimes no quest names?
             --     print("questName:", questID, HaveQuestData(questID))
             --     for k, v in pairs(questInfo) do
             --         if v then print("  ", k, "-->", v) end
             --     end
             -- end
-            if questInfo.isFlaggedCompleted then
-                filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
+            if not (questInfo.isDaily or questInfo.isWeekly) then
+                if questInfo.isFlaggedCompleted then
+                    filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
+                end
+                filteredQuestInfos.numTotal = filteredQuestInfos.numTotal + 1
             end
-            filteredQuestInfos.numTotal = filteredQuestInfos.numTotal + 1
             tInsert(filteredQuestInfos.quests, questInfo)
         end
     end
@@ -857,7 +1028,7 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     debug:print(self, "Searching QL for pin", pin.questID, pin.mapID)
     local questLineInfo = self:GetCachedQuestLineInfo(pin.questID, pin.mapID)
     if questLineInfo then
-        debug:print(self, format("%d Found cached QL %d", pin.questID, pin.questLineID))
+        debug:print(self, format("%d Found QL %d", pin.questID, pin.questLineID or questLineInfo.questLineID))
         return questLineInfo
     end
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
@@ -887,12 +1058,17 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     end
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    if ns.settings.showCategoryNames then
+        GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    end
 
     -- Quest line header name + progress
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
+    questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     GameTooltip_AddColoredLine(tooltip, questLineNameTemplate:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal))
+
+    --> TODO - Make optional, should show completed QL info (???)
 
     -- Quest line quests
     debug:AddDebugLineToTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
@@ -900,17 +1076,20 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local lineLimit = 48                                                        --> TODO - Determine tooltip height
     for i, questInfo in ipairs(filteredQuestInfos.quests) do
         -- Add a line limit
-        if (questInfo.isCampaign or questInfo.hasZoneStoryInfo) then lineLimit = 32 end
-        if (questInfo.isCampaign and questInfo.hasZoneStoryInfo) then lineLimit = 24 end
-        if (i == lineLimit) then
-            local numRemaining = filteredQuestInfos.numTotal - i
-            GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining))
-            return
+        if (filteredQuestInfos.numTotal > lineLimit) then
+            debug:print(QuestFilterUtils, "filteredQuestInfos.numTotal:", filteredQuestInfos.numTotal)
+            if (questInfo.isCampaign or questInfo.hasZoneStoryInfo) then lineLimit = 32 end
+            if (questInfo.isCampaign and questInfo.hasZoneStoryInfo) then lineLimit = 24 end
+            if (i == lineLimit) then
+                local numRemaining = filteredQuestInfos.numTotal - i
+                GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining))
+                debug:print(QuestFilterUtils, "lineLimit:", lineLimit)
+                return
+            end
         end
         local isActiveQuest = (questInfo.questID == pin.questInfo.questID) or questInfo.isComplete
-        local questTitle = QuestNameFactionGroupFormat[questInfo.questFactionGroup]:format((debug.isActive and questInfo.isObsolete) and "(old) "..questInfo.questName or questInfo.questName)
+        local questTitle = FormatQuestName(questInfo)
         if not StringIsEmpty(questInfo.questName) then
-            if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%02d %d|r %s", questInfo.questType, questInfo.questID, questTitle) end
             if questInfo.isFlaggedCompleted then
                 GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine)
             elseif isActiveQuest then
@@ -919,10 +1098,6 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                 GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
             end
         else
-            debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
-            questTitle = RETRIEVING_DATA
-            if debug.isActive then questTitle = format("NO! isObsolete: %s, isDisabled: %s, isRepeatable: %s, questExpansionID: %d", tostring(questInfo.isObsolete), tostring(questInfo.isDisabledForSession), tostring(questInfo.isRepeatable), questInfo.questExpansionID) end
-            if debug.showChapterIDsInTooltip then questTitle = format("|cff808080%02d %d|r %s", questInfo.questType, questInfo.questID, questTitle) end
             GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
         end
     end
@@ -984,7 +1159,9 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     end
 
     -- Category name
-    GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    if ns.settings.showCategoryNames then
+        GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    end
 
     -- -- Show hint that quest (line) is part of this campaign
     -- if DEV_MODE or showHintOnly then
@@ -1051,9 +1228,10 @@ end
 -- end
 
 local function ShouldShowPluginName(pin)
-    return (pin.questInfo.isReadyForTurnIn or pin.questType or IsShiftKeyDown()
-            or pin.questInfo.hasQuestLineInfo or pin.questInfo.isCampaign
-            or DEV_MODE)
+    return ns.settings.showPluginName and (pin.questInfo.isReadyForTurnIn
+        or pin.questType or IsShiftKeyDown()
+        or pin.questInfo.hasQuestLineInfo or pin.questInfo.isCampaign
+        or DEV_MODE)
 end
 
 -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
@@ -1091,7 +1269,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then      --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
         -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
@@ -1159,7 +1337,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         GameTooltip:Show()
         return
     end
-    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then      --> TODO - Optimize info retrieval to load only once (!)
+    if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
         -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
