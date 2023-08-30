@@ -175,7 +175,7 @@ debug.hooks.debug = false
 debug.hooks.debug_prefix = "HOOKS:"
 
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
-local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
+-- local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
@@ -306,38 +306,38 @@ end
 
 ----- Database utilities ----------
 
-function DBUtil:CheckInitCategory(categoryName)
-    if not ns.data[categoryName] then
-        ns.data[categoryName] = {}
-        debug:print(self, "Initialized DB:", categoryName)
-    end
-end
+-- function DBUtil:CheckInitCategory(categoryName)
+--     if not ns.data[categoryName] then
+--         ns.data[categoryName] = {}
+--         debug:print(self, "Initialized DB:", categoryName)
+--     end
+-- end
 
--- Save each questline with its questIDs and mapIDs.
---> { [questLineID] = {mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
----@param questLineInfo QuestLineInfo
----@param mapID number
----@param questIDs number[]?
---
-function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, questIDs)
-    if not ns.data.questLines[questLineInfo.questLineID] then
-        ns.data.questLines[questLineInfo.questLineID] = {
-            -- questID = questLineInfo.questID,
-            mapIDs = {mapID},
-            quests = questIDs,
-        }
-        debug:print(self, format("%d Saved QL: %s", questLineInfo.questLineID, questLineInfo.questLineName))
-        return
-    end
-    if not tContains(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID) then
-        tInsert(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID)
-        debug:print(self, format("%d Updated QL with map %d", questLineInfo.questLineID, mapID))
-    end
-end
+-- -- Save each questline with its questIDs and mapIDs.
+-- --> { [questLineID] = {mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
+-- ---@param questLineInfo QuestLineInfo
+-- ---@param mapID number
+-- ---@param questIDs number[]?
+-- --
+-- function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, questIDs)
+--     if not ns.data.questLines[questLineInfo.questLineID] then
+--         ns.data.questLines[questLineInfo.questLineID] = {
+--             -- questID = questLineInfo.questID,
+--             mapIDs = {mapID},
+--             quests = questIDs,
+--         }
+--         debug:print(self, format("%d Saved QL: %s", questLineInfo.questLineID, questLineInfo.questLineName))
+--         return
+--     end
+--     if not tContains(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID) then
+--         tInsert(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID)
+--         debug:print(self, format("%d Updated QL with map %d", questLineInfo.questLineID, mapID))
+--     end
+-- end
 
-function DBUtil:GetSavedQuestLineQuests(questLineID)
-    return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
-end
+-- function DBUtil:GetSavedQuestLineQuests(questLineID)
+--     return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
+-- end
 
 ----- Tooltip Data Handler ----------
 
@@ -868,7 +868,8 @@ LocalQuestCache.questLineQuests = {}  --> { [questLineID] = {questID1, questID2,
 function LocalQuestCache:GetQuestLineQuests(questLineID, prepareCache)
     local questIDs = self.questLineQuests[questLineID]
     if not questIDs then
-        questIDs = DBUtil:GetSavedQuestLineQuests(questLineID) or C_QuestLine.GetQuestLineQuests(questLineID)
+        -- questIDs = DBUtil:GetSavedQuestLineQuests(questLineID) or C_QuestLine.GetQuestLineQuests(questLineID)
+        questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 
         if (#questIDs == 0) then return end
 
@@ -896,7 +897,7 @@ LocalQuestLineUtils.questLineQuestsOnMap = {}  --> { [questID] = {questLineID=qu
 function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
     if prepareCache then debug:print(self, "Looking for QuestLines in", mapID) end
 
-    DBUtil:CheckInitCategory("questLines")
+    -- DBUtil:CheckInitCategory("questLines")
 
     local questLineInfos = self:GetCachedQuestLines(mapID)
     local isProcessedZone = questLineInfos ~= nil
@@ -947,14 +948,14 @@ function LocalQuestLineUtils:AddSingleQuestLine(questLineInfo, mapID)
         debug:print(self, format("%d Added QL and map %d", questLineInfo.questLineID, mapID))
         -- Also save QL in database or update mapIDs
         local quests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
-        DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
+        -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
         return
     end
     if not tContains(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID) then
         tInsert(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID)
         debug:print(self, format("%d Updated QL with map %d", questLineInfo.questLineID, mapID))
         -- Also update database mapIDs
-        DBUtil:SaveSingleQuestLine(questLineInfo, mapID)
+        -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID)
     end
 end
 
