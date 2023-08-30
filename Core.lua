@@ -824,43 +824,43 @@ end
 --     -- end
 -- end
 
--- Some quests have been removed from the game but still appear as part of 
--- questlines. Save this quests and count how many times is hasn't been found.
--- Sometimes the quest data takes some time to be retrieved. If we get data,
--- remove quest from this list.
----@param questID number
----@return string questName
----@return number? nilCount
---
-function LocalQuestUtils:CheckNilQuest(questID)
-    DBUtil:CheckInitCategory("nilQuests")
-    if not ns.data.nilQuests[questID] then
-        ns.data.nilQuests[questID] = 0
-        debug:print(self, "nilQuest:", questID, "Added to DB")
-    end
+-- -- Some quests have been removed from the game but still appear as part of 
+-- -- questlines. Save this quests and count how many times is hasn't been found.
+-- -- Sometimes the quest data takes some time to be retrieved. If we get data,
+-- -- remove quest from this list.
+-- ---@param questID number
+-- ---@return string questName
+-- ---@return number? nilCount
+-- --
+-- function LocalQuestUtils:CheckNilQuest(questID)
+--     DBUtil:CheckInitCategory("nilQuests")
+--     if not ns.data.nilQuests[questID] then
+--         ns.data.nilQuests[questID] = 0
+--         debug:print(self, "nilQuest:", questID, "Added to DB")
+--     end
 
-    local nilCount = ns.data.nilQuests[questID]
-    if (nilCount == -1) then
-        -- Quest will be removed from the game.
-        --> This has been verified manually by checking online databases.
-        debug:print(self, "nilQuest:", questID, "Removed from game")
-        return '', -1
-    end
+--     local nilCount = ns.data.nilQuests[questID]
+--     if (nilCount == -1) then
+--         -- Quest will be removed from the game.
+--         --> This has been verified manually by checking online databases.
+--         debug:print(self, "nilQuest:", questID, "Removed from game")
+--         return '', -1
+--     end
 
-    local questName = self:GetQuestName(questID)
-    if not StringIsEmpty(questName) then
-        -- Got data, can be removed
-        ns.data.nilQuests[questID] = nil
-        debug:print(self, "nilQuest:", questID, questName, "Removed from DB")
-        return questName
-    else
-        ns.data.nilQuests[questID] = nilCount + 1
-        nilCount = ns.data.nilQuests[questID]
-        debug:print(self, "nilQuest:", questID, nilCount, "Updated counter")
-    end
+--     local questName = self:GetQuestName(questID)
+--     if not StringIsEmpty(questName) then
+--         -- Got data, can be removed
+--         ns.data.nilQuests[questID] = nil
+--         debug:print(self, "nilQuest:", questID, questName, "Removed from DB")
+--         return questName
+--     else
+--         ns.data.nilQuests[questID] = nilCount + 1
+--         nilCount = ns.data.nilQuests[questID]
+--         debug:print(self, "nilQuest:", questID, nilCount, "Updated counter")
+--     end
 
-    return questName, nilCount
-end
+--     return questName, nilCount
+-- end
 
 
 LocalQuestCache.questLineQuests = {}  --> { [questLineID] = {questID1, questID2, ...}, ... }
