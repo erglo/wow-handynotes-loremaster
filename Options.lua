@@ -42,6 +42,7 @@ ns.pluginInfo.defaultOptions = {
         ["*"] = true,
         ["collapseType_zonestory"] = "auto",
         ["collapseType_questline"] = "show",
+        ["collapseType_campaign"] = "auto",
 	},
 }
 ns.pluginInfo.options = function()
@@ -109,8 +110,8 @@ ns.pluginInfo.options = function()
                         name = "Show Category Names",
                         desc = "Each content category is indicated by its name. Deactivate to hide those names.",
                         arg = "showCategoryNames",
-                        -- width = "double",
-                        width = 1.0,
+                        width = "double",
+                        -- width = 1.0,
                         order = 2,
                     },
                     quest_type = {
@@ -118,7 +119,7 @@ ns.pluginInfo.options = function()
                         name = "Show Quest Type",
                         desc = "Show or hide the type of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
                         arg = "showQuestType",
-                        width = "double",
+                        -- width = "double",
                         order = 3,
                     },
                     quest_turn_in = {
@@ -131,7 +132,7 @@ ns.pluginInfo.options = function()
                     },
                     zs_group = {
                         type = "group",
-                        name = "Zone Story",
+                        name = ZONE,
                         inline = true,
                         order = 10,
                         args = {
@@ -177,14 +178,28 @@ ns.pluginInfo.options = function()
                             },
                         },
                     },
-                    -- FEATURE_NOT_YET_AVAILABLE
-                    campaign = {
-                        type = "toggle",
-                        name = "Show Campaign",
-                        desc = "Show or hide story campaign details associated with the hovered quest.",
-                        arg = "showCampaign",
-                        width ="double",
+                    cp_group = {
+                        type = "group",
+                        name = TRACKER_HEADER_CAMPAIGN_QUESTS,
+                        inline = true,
                         order = 30,
+                        args = {
+                            campaign = {
+                                type = "toggle",
+                                name = "Show Campaign",
+                                desc = "Show or hide story campaign details associated with the hovered quest.",
+                                arg = "showCampaign",
+                                order = 1,
+                            },
+                            collapse_type = {
+                                type = "select",
+                                name = "Select Display Type...",
+                                desc = LocalOptionUtils.GetCollapseTypeDescription,
+                                arg = "collapseType_campaign",
+                                values = LocalOptionUtils.collapseTypeList,
+                                order = 2,
+                            },
+                        },
                     },
                 }
             },  --> tooltip_settings
@@ -201,7 +216,9 @@ ns.pluginInfo.options = function()
                     },
                     chat_notifications = {
                         type = "group",
-                        name = CHAT_LABEL,
+                        name = CHAT_LABEL.." - "..FEATURE_NOT_YET_AVAILABLE,
+                        desc = FEATURE_NOT_YET_AVAILABLE,
+                        disabled = true,
                         inline = true,
                         order = 1,
                         args = {
@@ -285,21 +302,21 @@ end
 
 LocalOptionUtils.collapseTypeList = {
     auto = "Auto-Collapse",  -- ..GRAY_FONT_COLOR:WrapTextInColorCode(" ("..DEFAULT..")"),
-    show = "Always Opened",
-    hide = "Always Collapsed",
+    hide = "Collapsed",
+    show = "Opened",
 }
 
 LocalOptionUtils.GetCollapseTypeDescription = function(self)
-    local desc = "Choose how the category details should be displayed."
+    local desc = "Choose how the details in this category should be displayed."
     desc = desc.."|n|n"
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.auto..HEADER_COLON)
     desc = desc.." ".."Automatically collapse this category's details when completed."
     desc = desc.."|n|n"
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
-    desc = desc.." ".."Always show full category details."
-    desc = desc.."|n|n"
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.hide..HEADER_COLON)
     desc = desc.." ".."Always show category details collapsed."
+    desc = desc.."|n|n"
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
+    desc = desc.." ".."Always show full category details."
 
     return desc
 end

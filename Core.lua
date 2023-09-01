@@ -1199,25 +1199,31 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_HEADER_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_PROGRESS_FORMAT:format(campaignInfo.numChaptersCompleted, campaignInfo.numChaptersTotal))
     debug:AddDebugLineToTooltip(tooltip, {text=format("> C:%d, state: %d, isWarCampaign: %d|n> > currentChapterID: %d", campaignID, campaignInfo.campaignState, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
+
     -- Campaign chapters
-    for i, chapterID in ipairs(campaignInfo.chapterIDs) do
-        local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(chapterID)
-        local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
-        local currentChapterID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
-        if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
-        if chapterInfo then
-            local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
-            if chapterIsComplete then
-                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
-            elseif (chapterID == currentChapterID) then
-                GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName), self.wrap_chapterName)
-            else
-                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
-            end
-            if DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
-                GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
+    if GetCollapseTypeModifier(campaignInfo.isComplete, "collapseType_campaign") then
+        for i, chapterID in ipairs(campaignInfo.chapterIDs) do
+            local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(chapterID)
+            local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
+            local currentChapterID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
+            if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
+            if chapterInfo then
+                local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
+                if chapterIsComplete then
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
+                elseif (chapterID == currentChapterID) then
+                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName), self.wrap_chapterName)
+                else
+                    GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
+                end
+                if DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
+                    GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
+                end
             end
         end
+    else
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
     if DEV_MODE and not StringIsEmpty(campaignInfo.description) then
