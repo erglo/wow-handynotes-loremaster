@@ -1274,7 +1274,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.settings.showQuesType) then                        --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.settings.showQuestType) then                       --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
         -- if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
     end
@@ -1341,11 +1341,10 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.settings.showQuesType) then                        --> TODO - Enhance, eg. isBounty, etc.
+    if (pin.questType and ns.settings.showQuestType) then                       --> TODO - Enhance, eg. isBounty, etc.
         QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
     end
-    if pin.questInfo.isReadyForTurnIn then
-        -- if tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
+    if (pin.questInfo.isReadyForTurnIn and ns.settings.showQuestTurnIn) then
         tooltip:AddLine(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN)
     end
     if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then

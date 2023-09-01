@@ -116,10 +116,18 @@ ns.pluginInfo.options = function()
                     quest_type = {
                         type = "toggle",
                         name = "Show Quest Type",
-                        desc = "Show or hide the type of a quest before accepting it."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
-                        arg = "showQuesType",
+                        desc = "Show or hide the type of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
+                        arg = "showQuestType",
                         width = "double",
-                        order = 5,
+                        order = 3,
+                    },
+                    quest_turn_in = {
+                        type = "toggle",
+                        name = format("Show %s message", string.gsub(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN, "|cff20ff20", "|cff999999")),
+                        desc = "Show or hide this message. This option affects active quests only.",
+                        arg = "showQuestTurnIn",
+                        width = "double",
+                        order = 4,
                     },
                     zs_group = {
                         type = "group",
