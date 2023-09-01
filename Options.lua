@@ -40,6 +40,7 @@ ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale
 ns.pluginInfo.defaultOptions = {
 	profile = {
         ["**"] = true,
+        ["collapseType"] = "auto",
 	},
 }
 ns.pluginInfo.options = function()
@@ -51,7 +52,11 @@ ns.pluginInfo.options = function()
         get = function(info) return ns.settings[info.arg] end,
         set = function(info, value)
             ns.settings[info.arg] = value
-            LocalOptionUtils:printOption(info.option.name, value)
+            if (info.arg == "collapseType") then
+                LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
+            else
+                LocalOptionUtils:printOption(info.option.name, value)
+            end
         end,
         args = {
             about = {
@@ -115,13 +120,30 @@ ns.pluginInfo.options = function()
                         width = "double",
                         order = 5,
                     },
-                    zone_story = {
-                        type = "toggle",
-                        name = "Show Zone Story",
-                        desc = "Show or hide story details of the currently viewed zone.",
-                        arg = "showZoneStory",
-                        width = "double",
+                    zs_group = {
+                        type = "group",
+                        name = "Zone Story",
+                        inline = true,
                         order = 10,
+                        args = {
+                            show_zone_story = {
+                                type = "toggle",
+                                name = "Show Zone Story",
+                                desc = "Show or hide story details of the currently viewed zone.",
+                                arg = "showZoneStory",
+                                -- width = "double",
+                                order = 1,
+                            },
+                            collapse_type = {
+                                type = "select",
+                                -- style = "radio",
+                                name = "Choose Display Type...",
+                                desc = LocalOptionUtils.GetCollapseTypeDescription,
+                                arg = "collapseType",
+                                values = LocalOptionUtils.collapseTypeList,
+                                order = 2,
+                            },
+                        },
                     },
                     questline = {
                         type = "toggle",
@@ -233,6 +255,34 @@ LocalOptionUtils.AddExampleLine = function(self, text, questTypeName)
     local lineText = self.dashLine:format(text)
     return coloredExampleText..lineText.." "..iconString
 end
+
+----- Collapse Type ----------
+
+LocalOptionUtils.collapseTypeList = {
+    auto = "Auto-Collapse"..GRAY_FONT_COLOR:WrapTextInColorCode(" ("..DEFAULT..")"),
+    show = "Always Opened",
+    hide = "Always Collapsed",
+}
+
+LocalOptionUtils.GetCollapseTypeDescription = function(self)
+    local desc = "Choose how the category details should be displayed."
+    desc = desc.."|n|n"
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.auto..HEADER_COLON)
+    desc = desc.." ".."Automatically collapse this category's details when completed."
+    desc = desc.."|n|n"
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
+    desc = desc.." ".."Always show full category details."
+    desc = desc.."|n|n"
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.hide..HEADER_COLON)
+    desc = desc.." ".."Always show category details collapsed."
+
+    return desc
+end
+
+-- LocalOptionUtils.SetCollapseType = function(self, info, value)
+--     ns.settings[info.arg] = value
+--     LocalOptionUtils:printOption(info.option.name, value)
+-- end
 
 --@do-not-package@
 --------------------------------------------------------------------------------

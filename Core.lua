@@ -93,8 +93,8 @@ L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
 
 L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
-L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see chapters"
-L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see chapters"
+L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see details"
+L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see details"
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
@@ -388,6 +388,16 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
     return self.achievements[achievementID]
 end
 
+local function GetCollapseTypeModifier(isComplete)
+    local types = {
+        auto = (not isComplete) or IsShiftKeyDown(),
+        hide = IsShiftKeyDown(),
+        -- hide = false,
+        show = true,
+    }
+    return types[ns.settings.collapseType]
+end
+
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
@@ -414,7 +424,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Chapter list
-    if IsShiftKeyDown() then
+    -- if (not achievementInfo.completed) or IsShiftKeyDown() then
+    if GetCollapseTypeModifier(achievementInfo.completed) then
         local wrapLine = false
         local criteriaName
         for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
