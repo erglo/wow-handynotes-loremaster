@@ -39,8 +39,9 @@ ns.pluginInfo.version = GetAddOnMetadata(AddonID, "Version")
 ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale) or GetAddOnMetadata(AddonID, "Notes")
 ns.pluginInfo.defaultOptions = {
 	profile = {
-        ["**"] = true,
-        ["collapseType"] = "auto",
+        ["*"] = true,
+        ["collapseType_zonestory"] = "auto",
+        ["collapseType_questline"] = "show",
 	},
 }
 ns.pluginInfo.options = function()
@@ -52,7 +53,7 @@ ns.pluginInfo.options = function()
         get = function(info) return ns.settings[info.arg] end,
         set = function(info, value)
             ns.settings[info.arg] = value
-            if (info.arg == "collapseType") then
+            if ( strsplit("_", info.arg) == "collapseType") then
                 LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
             else
                 LocalOptionUtils:printOption(info.option.name, value)
@@ -137,22 +138,38 @@ ns.pluginInfo.options = function()
                             collapse_type = {
                                 type = "select",
                                 -- style = "radio",
-                                name = "Choose Display Type...",
+                                name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
-                                arg = "collapseType",
+                                arg = "collapseType_zonestory",
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
                         },
                     },
-                    questline = {
-                        type = "toggle",
-                        name = "Show Questline",
-                        desc = "Show or hide questline details associated with the hovered quest.",
-                        arg = "showQuestLine",
-                        width = "double",
+                    ql_group = {
+                        type = "group",
+                        name = "Questline",
+                        inline = true,
                         order = 20,
+                        args = {
+                            questline = {
+                                type = "toggle",
+                                name = "Show Questline",
+                                desc = "Show or hide questline details associated with the hovered quest.",
+                                arg = "showQuestLine",
+                                order = 1,
+                            },
+                            collapse_type = {
+                                type = "select",
+                                name = "Select Display Type...",
+                                desc = LocalOptionUtils.GetCollapseTypeDescription,
+                                arg = "collapseType_questline",
+                                values = LocalOptionUtils.collapseTypeList,
+                                order = 2,
+                            },
+                        },
                     },
+                    -- FEATURE_NOT_YET_AVAILABLE
                     campaign = {
                         type = "toggle",
                         name = "Show Campaign",
@@ -259,7 +276,7 @@ end
 ----- Collapse Type ----------
 
 LocalOptionUtils.collapseTypeList = {
-    auto = "Auto-Collapse"..GRAY_FONT_COLOR:WrapTextInColorCode(" ("..DEFAULT..")"),
+    auto = "Auto-Collapse",  -- ..GRAY_FONT_COLOR:WrapTextInColorCode(" ("..DEFAULT..")"),
     show = "Always Opened",
     hide = "Always Collapsed",
 }

@@ -341,6 +341,19 @@ end
 
 ----- Tooltip Data Handler ----------
 
+
+local function GetCollapseTypeModifier(isComplete, varName)
+    local types = {
+        auto = (not isComplete) or IsShiftKeyDown(),
+        hide = IsShiftKeyDown(),
+        -- hide = false,
+        show = true,
+    }
+    return types[ns.settings[varName]]
+end
+
+----- Zone Story ----------
+
 ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyMapInfo}, ... }
 ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
 
@@ -388,16 +401,6 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
     return self.achievements[achievementID]
 end
 
-local function GetCollapseTypeModifier(isComplete)
-    local types = {
-        auto = (not isComplete) or IsShiftKeyDown(),
-        hide = IsShiftKeyDown(),
-        -- hide = false,
-        show = true,
-    }
-    return types[ns.settings.collapseType]
-end
-
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
@@ -424,13 +427,11 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Chapter list
-    -- if (not achievementInfo.completed) or IsShiftKeyDown() then
-    if GetCollapseTypeModifier(achievementInfo.completed) then
+    if GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory") then
         local wrapLine = false
         local criteriaName
         for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
             criteriaName = criteriaInfo.criteriaString
-            -- debug:print("criteria:", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaID)
             if debug.showChapterIDsInTooltip then
                 if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
                     criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
@@ -1074,44 +1075,47 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
         GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
     end
 
-    -- Quest line header name + progress
+    -- Questline header name + progress
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     GameTooltip_AddColoredLine(tooltip, questLineNameTemplate:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal))
-
-    --> TODO - Make optional, should show completed QL info (???)
-
-    -- Quest line quests
     debug:AddDebugLineToTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
-    local wrapLine = false
-    local lineLimit = 48                                                        --> TODO - Determine tooltip height
-    for i, questInfo in ipairs(filteredQuestInfos.quests) do
-        -- Add a line limit
-        if (filteredQuestInfos.numTotal > lineLimit) then
-            debug:print(QuestFilterUtils, "filteredQuestInfos.numTotal:", filteredQuestInfos.numTotal)
-            if (questInfo.isCampaign or questInfo.hasZoneStoryInfo) then lineLimit = 32 end
-            if (questInfo.isCampaign and questInfo.hasZoneStoryInfo) then lineLimit = 24 end
-            if (i == lineLimit) then
-                local numRemaining = filteredQuestInfos.numTotal - i
-                GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining))
-                debug:print(QuestFilterUtils, "lineLimit:", lineLimit)
-                return
+
+    -- Questline quests
+    if GetCollapseTypeModifier(filteredQuestInfos.isComplete, "collapseType_questline") then
+        local wrapLine = false
+        local lineLimit = 48                                                    --> TODO - Determine tooltip height
+        for i, questInfo in ipairs(filteredQuestInfos.quests) do
+            -- Add a line limit
+            if (filteredQuestInfos.numTotal > lineLimit) then
+                debug:print(QuestFilterUtils, "filteredQuestInfos.numTotal:", filteredQuestInfos.numTotal)
+                if (questInfo.isCampaign or questInfo.hasZoneStoryInfo) then lineLimit = 32 end
+                if (questInfo.isCampaign and questInfo.hasZoneStoryInfo) then lineLimit = 24 end
+                if (i == lineLimit) then
+                    local numRemaining = filteredQuestInfos.numTotal - i
+                    GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining))
+                    debug:print(QuestFilterUtils, "lineLimit:", lineLimit)
+                    return
+                end
             end
-        end
-        local isActiveQuest = (questInfo.questID == pin.questInfo.questID) or questInfo.isComplete
-        local questTitle = FormatQuestName(questInfo)
-        if not StringIsEmpty(questInfo.questName) then
-            if questInfo.isFlaggedCompleted then
-                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine)
-            elseif isActiveQuest then
-                GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine)
+            local isActiveQuest = (questInfo.questID == pin.questInfo.questID) or questInfo.isComplete
+            local questTitle = FormatQuestName(questInfo)
+            if not StringIsEmpty(questInfo.questName) then
+                if questInfo.isFlaggedCompleted then
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine)
+                elseif isActiveQuest then
+                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine)
+                else
+                    GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
+                end
             else
-                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
+                GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
             end
-        else
-            GameTooltip_AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle), wrapLine)
         end
+    else
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
     return true
