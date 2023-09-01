@@ -415,6 +415,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     -- Category name
     if ns.settings.showCategoryNames then
         GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    else
+        GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Zone story name
@@ -1073,6 +1075,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- Category name
     if ns.settings.showCategoryNames then
         GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    else
+        GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Questline header name + progress
@@ -1177,6 +1181,8 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     -- Category name
     if ns.settings.showCategoryNames then
         GameTooltip_AddColoredDoubleLine(tooltip, " ", TRACKER_HEADER_CAMPAIGN_QUESTS, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    else
+        GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- -- Show hint that quest (line) is part of this campaign
