@@ -9,7 +9,7 @@
 ## X-Website: https://github.com/erglo/wow-handynotes-loremaster
    
 # TODO - Get addon hosting IDs
-## X-Curse-Project-ID: 909254
+# X-Curse-Project-ID: 909254
 # X-Wago-ID: 
 # X-WoWI-ID: 
 

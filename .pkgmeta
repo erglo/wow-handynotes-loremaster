@@ -5,14 +5,15 @@ enable-nolib-creation: no
 # Files and directories beginning with a dot (such as .git) are automatically
 # ignored, as is the pgkmeta file itself.
 ignore:
-    # - CHANGELOG.md
-    - README.md
     - libs
     - utils
+    # - CHANGELOG.md
+    - README.md
+    - TODO.txt
 
 # For copying files without processing
-plain-copy:
-    - utils/*.lua
+# plain-copy:
+#     - utils/*.lua
 
 manual-changelog:
     # filename: CHANGELOG-LATEST.md
@@ -23,7 +24,7 @@ license-output: LICENSE.txt
 
 # Indicate the BigWigsMods packager to convert the changelog from Markdown to
 # BBCode for WoWInterface.
-wowi-convert-changelog: yes
+#wowi-convert-changelog: yes
 
 externals:
     libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
@@ -52,6 +53,9 @@ embedded-libraries:
 # like people to know that it was used, and for it to receive points for
 # CurseForge's Author Rewards Program.
 tools-used:
+    - ace3
     - bug-grabber
     - bugsack
-    - idtip-community-fork
+    - idtip
+    - textureviewer
+    - wowlua
