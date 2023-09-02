@@ -124,7 +124,7 @@ ns.pluginInfo.options = function()
                     },
                     quest_turn_in = {
                         type = "toggle",
-                        name = format("Show %s message", string.gsub(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN, "|cff20ff20", "|cff999999")),
+                        name = format("Show %s Message", string.gsub(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN, "|cff20ff20", "|cff999999")),
                         desc = "Show or hide this message. This option affects active quests only.",
                         arg = "showQuestTurnIn",
                         width = "double",
@@ -214,14 +214,21 @@ ns.pluginInfo.options = function()
                         name = "Choose how or whether you want to be notified of plugin changes.".."|n|n",
                         order = 0,
                     },
-                    chat_notifications = {
+                    chat_notifications_group = {
                         type = "group",
-                        name = CHAT_LABEL.." - "..FEATURE_NOT_YET_AVAILABLE,
+                        name = CHAT_LABEL,  -- name = CHAT_LABEL.." - "..FEATURE_NOT_YET_AVAILABLE,
                         desc = FEATURE_NOT_YET_AVAILABLE,
-                        disabled = true,
                         inline = true,
-                        order = 1,
+                        order = 10,
                         args = {
+                            welcome_msg = {
+                                type = "toggle",
+                                name = "Plugin-is-Ready Message",
+                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
+                                arg = "showWelcomeMessage",
+                                width ="double",
+                                order = 1,
+                            },
                             incomplete_zone_stories_msg = {
                                 type = "toggle",
                                 name = "Incomplete Zone Stories",
@@ -229,6 +236,7 @@ ns.pluginInfo.options = function()
                                 arg = "showIncompleteZoneStories",
                                 width ="double",
                                 order = 10,
+                                disabled = true,
                             },
                             incomplete_questlines_msg = {
                                 type = "toggle",
@@ -237,6 +245,7 @@ ns.pluginInfo.options = function()
                                 arg = "showIncompleteQuestLines",
                                 width ="double",
                                 order = 20,
+                                disabled = true,
                             },
                             incomplete_campaigns_msg = {
                                 type = "toggle",
@@ -245,6 +254,7 @@ ns.pluginInfo.options = function()
                                 arg = "showIncompleteCampaigns",
                                 width ="double",
                                 order = 30,
+                                disabled = true,
                             },
                         },
                     },  --> chat_notifications
@@ -354,15 +364,6 @@ local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585
 --     desc = "Show or hide questline details associated with a campaign.",
 --     width = 2.0,
 --     order = 35,
--- },
-
--- welcome_msg = {
---     type = "toggle",
---     name = "Show Plugin-is-Ready Message",
---     desc = format("Show or hide the \"%s\" message on startup.", YELLOW(LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title))),
---     arg = "showWelcomeMessage",
---     width ="double",
---     order = 1,
 -- },
 
 -- type_icons_settings = {

@@ -246,7 +246,9 @@ function HandyNotesPlugin:OnEnable()
 
     QuestFilterUtils:Init()
 
-    self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
+    if ns.settings.showWelcomeMessage then
+        self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
+    end
 end
 
 function HandyNotesPlugin:OnDisable()
