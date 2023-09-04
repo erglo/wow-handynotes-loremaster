@@ -470,7 +470,8 @@ QuestFilterUtils.dailyQuestLines = {
 -- All quests in this table have been marked obsolete by Blizzard and cannot be
 -- obtained or completed.
 QuestFilterUtils.obsoleteQuests = {
-    62699, -- Shadowlands, Covenant Sanctum (Kyrian)
+    62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
+    72943,  -- Dragonflight, United Again
 }
 
 ----- Player Race ----------
@@ -869,12 +870,14 @@ LocalQuestLineUtils.questLineQuestsOnMap = {}  --> { [questID] = {questLineID=qu
 ---@return QuestLineInfo[]? questLineInfos
 --
 function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
-    if prepareCache then debug:print(self, "Looking for QuestLines in", mapID) end
+    if prepareCache then debug:print(self, "Preparing QuestLines for", mapID) end
 
     -- DBUtil:CheckInitCategory("questLines")
 
     local questLineInfos = self:GetCachedQuestLines(mapID)
     local isProcessedZone = questLineInfos ~= nil
+    debug:print(self, "isProcessedZone:", isProcessedZone)
+    debug:print(self, "questLineInfos:", questLineInfos)
 
     if not questLineInfos then
         questLineInfos = C_QuestLine.GetAvailableQuestLines(mapID)
@@ -902,6 +905,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
 end
 
 function LocalQuestLineUtils:GetCachedQuestLines(mapID)
+    debug:print(self, mapID, "Looking for cached QLs on map")
     local questLineInfos = {}
     for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
         if tContains(cachedQuestLineData.mapIDs, mapID) then
@@ -909,8 +913,10 @@ function LocalQuestLineUtils:GetCachedQuestLines(mapID)
         end
     end
     if TableHasAnyEntries(questLineInfos) then
+        debug:print(self, mapID, format("> Found %d QLs for map", #questLineInfos))
         return questLineInfos
     end
+    debug:print(self, mapID, "> No QLs in cache found.")
 end
 
 function LocalQuestLineUtils:AddSingleQuestLine(questLineInfo, mapID)
@@ -934,6 +940,7 @@ function LocalQuestLineUtils:AddSingleQuestLine(questLineInfo, mapID)
 end
 
 function LocalQuestLineUtils:AddQuestLineQuestToMap(mapID, questLineID, questID)
+    debug:print(self, format("%d Adding quest %d to map %d", questLineID, questID, mapID))
     if not self.questLineQuestsOnMap[questID] then
         self.questLineQuestsOnMap[questID] = {
             questLineID = questLineID,
@@ -983,6 +990,7 @@ function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
 end
 
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
+    debug:print(self, questID, "Searching questLineQuestsOnMap", mapID)
     if self.questLineQuestsOnMap[questID] then
         local questLineID = self.questLineQuestsOnMap[questID].questLineID
         local questLineInfo = self.questLineInfos[questLineID].questLineInfo
@@ -994,7 +1002,7 @@ function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
         return questLineInfo
     else
         -- Might have slipped through caching (???); try API function
-        debug:print(self, RED("Not cached quest %d, using API call for map %d"):format(questID, mapID))
+        debug:print(self, questID, "QL quest NOT cached, using API call for map", mapID)
         return C_QuestLine.GetQuestLineInfo(questID, mapID)
     end
 end
@@ -1308,6 +1316,8 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
     end
+    -- Always update ready-for-turn-in info for active quests
+    pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
 
     local tooltip = GameTooltip
     -- Addon name
@@ -1470,7 +1480,7 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
 
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
             ns.activeZoneMapInfo = mapInfo
-            debug:print(LocalQuestLineUtils, GRAY("Entering zone:"), mapID, mapInfo.name)
+            debug:print(LocalQuestLineUtils, "Entering zone:", mapID, mapInfo.name)
             -- Update data cache for current zone
             local prepareCache = true
             ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
