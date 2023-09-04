@@ -93,8 +93,9 @@ L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
 
 L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
-L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY = "Hold %s to see details"
-L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER = "Hold %s and hover icon to see details"
+
+L.HOLD_KEY_HINT_FORMAT = "Hold %s to see details"
+L.HOLD_KEY_HINT_FORMAT_HOVER = "Hold %s and hover icon to see details"
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
@@ -111,42 +112,8 @@ L.CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16
 L.CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 L.CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s"
 
--- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
--- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
--- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
--- "questlog-questtypeicon-story"
--- "CampaignAvailableQuestIcon"
--- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
-
--- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
--- ITEM_REQ_REPUTATION = "Requires %s - %s";
--- ITEM_REQ_SKILL = "Requires %s";
--- ITEM_REQ_SPECIALIZATION = "Requires: %s";
--- ITEM_REQ_ALLIANCE = "Alliance Only";
--- ITEM_REQ_HORDE = "Horde Only";
--- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
--- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
--- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
--- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
--- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
--- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
--- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
--- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
-L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
--- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
--- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
--- CONTINENT = "Kontinent";
--- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
-
--- GENERIC_FRACTION_STRING = "%d/%d";
--- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
--- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
-
 -- Custom strings
 L.SLASHCMD_USAGE = "Usage:"
-
--- "achievementcompare-GreenCheckmark"
--- "achievementcompare-YellowCheckmark"
 
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
 
@@ -450,7 +417,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -606,14 +573,6 @@ local QuestNameFactionGroupFormat = {
     [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
 }
 
--- DAILY = "Täglich";
--- WEEKLY = "Wöchentlich";
--- PARENS_TEMPLATE = "(%s)";
--- NORMAL_QUEST_DISPLAY = "|cff000000%s|r";
--- IGNORED_QUEST_DISPLAY = "|cff000000%s (ignoriert)|r";
--- TRIVIAL_QUEST_DISPLAY = "|cff000000%s (niedrigstufig)|r";
--- OPTIONAL_QUEST_OBJECTIVE_DESCRIPTION = "(Optional) %s";
-
 local function FormatQuestName(questInfo)
     local questTitle = QuestNameFactionGroupFormat[questInfo.questFactionGroup]:format(questInfo.questName)
 
@@ -762,7 +721,6 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
-            -- isObsolete = self:IsObsolete(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
@@ -1105,7 +1063,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                     return
                 end
             end
-            local isActiveQuest = (questInfo.questID == pin.questInfo.questID) or questInfo.isComplete
+            local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
                 if questInfo.isFlaggedCompleted then
@@ -1120,7 +1078,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -1148,7 +1106,8 @@ end
 CampaignUtils.wrap_chapterName = false
 CampaignUtils.leftOffset_description = 16
 
-CampaignUtils.GetCampaignInfo = function(self, campaignID)  -- Extend default results from `C_CampaignInfo.GetCampaignInfo`
+-- Extend default results from `C_CampaignInfo.GetCampaignInfo`
+CampaignUtils.GetCampaignInfo = function(self, campaignID)
     local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
     if not campaignInfo then return end
 
@@ -1211,9 +1170,12 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
             if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
             if chapterInfo then
                 local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
-                if chapterIsComplete then
+                local isActive = (chapterID == currentChapterID)
+                if (chapterIsComplete and isActive) then
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
+                elseif chapterIsComplete then
                     GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(chapterName), GREEN_FONT_COLOR, self.wrap_chapterName)
-                elseif (chapterID == currentChapterID) then
+                elseif isActive then
                     GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName), self.wrap_chapterName)
                 else
                     GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
@@ -1224,7 +1186,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY or L.STORY_HINT_FORMAT_SEE_CHAPTERS_KEY_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -1571,6 +1533,37 @@ C_Minimap.IsTrackingHiddenQuests()
 -- 	end
 -- 	return n
 -- end
+
+-- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
+-- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
+-- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
+-- "questlog-questtypeicon-story"
+-- "CampaignAvailableQuestIcon"
+-- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
+
+-- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
+-- ITEM_REQ_REPUTATION = "Requires %s - %s";
+-- ITEM_REQ_SKILL = "Requires %s";
+-- ITEM_REQ_SPECIALIZATION = "Requires: %s";
+-- ITEM_REQ_ALLIANCE = "Alliance Only";
+-- ITEM_REQ_HORDE = "Horde Only";
+-- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
+-- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
+-- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
+-- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
+-- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
+-- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
+-- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
+-- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
+L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
+-- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
+-- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
+-- CONTINENT = "Kontinent";
+-- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
+
+-- GENERIC_FRACTION_STRING = "%d/%d";
+-- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
+-- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
 
 ]]
 --@end-do-not-package@
