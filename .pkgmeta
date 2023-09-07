@@ -5,15 +5,16 @@ enable-nolib-creation: no
 # Files and directories beginning with a dot (such as .git) are automatically
 # ignored, as is the pgkmeta file itself.
 ignore:
-    # - libs
+    - libs
     - utils
     - CHANGELOG.md
     - README.md
     - TODO.txt
 
-# For copying files without processing
+# For copying files without processing (after downloading latest externals)
 plain-copy:
     - utils/*.lua
+    - libs/*
 
 # The manual changelog will be created via GitHub action
 manual-changelog:
