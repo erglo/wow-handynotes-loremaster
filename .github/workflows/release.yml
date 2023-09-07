@@ -1,4 +1,4 @@
-name: Package and release
+name: Package and Release
 
 on:
   push:
@@ -19,10 +19,13 @@ jobs:
     
     steps:
 
-      - name: Clone project
+      # Include submodule on checkout
+      - name: Clone Project
         uses: actions/checkout@v3
+        with:
+          submodules: recursive
       
-      - name: Package and release
+      - name: Package and Release
         uses: BigWigsMods/packager@v2
         with:
           args: -g retail

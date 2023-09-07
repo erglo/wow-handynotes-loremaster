@@ -3,13 +3,13 @@
 ## Notes: Helps you keep track of the Loremaster and story quests achievements as well as other questlines.
 ## Notes-deDE: Hilft euch die "Meister der Lehren" Erfolge, Geschichtsquests und sonstige Questreihen im Blick zu behalten.
 ## IconTexture: 133739
-## Version: v0.1.1-alpha
+## Version: v0.1.2-alpha
 ## Author: ergloCoder
 ## X-Email: erglo.coder+HNLM@gmail.com
 ## X-Website: https://github.com/erglo/wow-handynotes-loremaster
    
 # TODO - Get addon hosting IDs
-## X-Curse-Project-ID: 909254
+# X-Curse-Project-ID: 909254
 # X-Wago-ID: 
 # X-WoWI-ID: 
 
