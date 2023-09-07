@@ -629,7 +629,12 @@ end
 function LocalQuestUtils:IsWeekly(questID)
     local gameQuestInfo = QuestCache:Get(questID)
     if (gameQuestInfo and gameQuestInfo.frequency) then
-        return gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
+        local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
+        if (isWeekly and tContains(QuestFilterUtils.weeklyQuests, questID) and debug.isActive) then
+            -- Note: The weekly flag might be added by Blizzard at some  point. No need for duplicates.
+            debug:print(format("Quest %s can be safely removed from manual weekly list.", RED(tostring(questID))))
+        end
+        return isWeekly
     end
 
     return tContains(QuestFilterUtils.weeklyQuests, questID)
@@ -689,7 +694,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
             isStory = IsStoryQuest(questID),
-            isThreat = C_QuestLog.IsThreatQuest(questID),
+            -- isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
@@ -975,18 +980,18 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 if questInfo.isFlaggedCompleted then
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
                 end
-                filteredQuestInfos.numTotal = filteredQuestInfos.numTotal + 1
             end
             tInsert(filteredQuestInfos.quests, questInfo)
         end
     end
+    filteredQuestInfos.numTotal = #filteredQuestInfos.quests
     filteredQuestInfos.isComplete = filteredQuestInfos.numCompleted == filteredQuestInfos.numTotal
 
     return filteredQuestInfos
 end
 
 function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
-    return self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)
+    return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
 
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
@@ -1017,6 +1022,8 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
 end
 
+local numRebuildTooltip = 0
+
 LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, campaignChapterID)
     local questLineInfo = self:GetQuestLineInfoByPin(pin)
     if campaignChapterID then
@@ -1035,8 +1042,9 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- to active quest campaigns.
 
     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-    if (filteredQuestInfos.numTotalUnfiltered > 1 and filteredQuestInfos.numTotal <= 1) then
-        debug:print("Rebuilding tooltip")                                       --> TODO - Find a better way 
+    if (filteredQuestInfos.numTotalUnfiltered > 1 and filteredQuestInfos.numTotal <= 1 and numRebuildTooltip <= 3) then
+        debug:print("Rebuilding tooltip...", numRebuildTooltip)                 --> TODO - Find a better way
+        numRebuildTooltip = numRebuildTooltip + 1
         return self:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID)
     end
 
@@ -1056,6 +1064,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
 
     -- Questline quests
     if GetCollapseTypeModifier(filteredQuestInfos.isComplete, "collapseType_questline") then
+        numRebuildTooltip = 0
         local wrapLine = false
         local lineLimit = 48                                                    --> TODO - Determine tooltip height
         for i, questInfo in ipairs(filteredQuestInfos.quests) do
