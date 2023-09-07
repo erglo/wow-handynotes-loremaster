@@ -1,0 +1,28 @@
+name: Manual trigger
+
+on:
+  workflow_dispatch:
+
+jobs:
+  
+  release:
+
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+      # "GITHUB_TOKEN" is a secret automatically provided to the workflow
+      # for your own token, the name cannot start with "GITHUB_"
+    
+    steps:
+
+      # Include submodule on checkout
+      - name: Clone Project
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      
+      - name: Package and Release
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -d -g retail
