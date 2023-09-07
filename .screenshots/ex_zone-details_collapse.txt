@@ -1,0 +1,3 @@
+Example of collapsible zone details
+
+Every category is collapsible. Category and addon name can be hidden.
