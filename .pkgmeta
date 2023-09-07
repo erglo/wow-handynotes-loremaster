@@ -8,7 +8,9 @@ ignore:
     - libs
     - utils
     - CHANGELOG.md
-    - README.md
+    - README*
+    # - README.md
+    # - README-WI.bbcode
     - TODO.txt
 
 # For copying files without processing (after downloading latest externals)
@@ -26,7 +28,7 @@ license-output: LICENSE.txt
 
 # Indicate the BigWigsMods packager to convert the changelog from Markdown to
 # BBCode for WoWInterface.
-#wowi-convert-changelog: yes
+wowi-convert-changelog: yes
 
 externals:
     libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk

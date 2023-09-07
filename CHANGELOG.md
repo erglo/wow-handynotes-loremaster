@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-* Updated meta files for packaging and releasing this project.
+* Automated packaging and releasing for `CurseForge`, `Wago`, `WoWInterface` and `GitHub`.
 
-## [0.1.1-alpha-100107] - 2023-09-07
+### Fixed
+
+* Meta files for packaging and releasing didn't include the embedded libraries correctly.
+
+## [0.1.1-alpha+100107] - 2023-09-07
 
 ### Changed
 

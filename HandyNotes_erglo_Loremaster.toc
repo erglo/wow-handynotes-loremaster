@@ -7,11 +7,12 @@
 ## Author: ergloCoder
 ## X-Email: erglo.coder+HNLM@gmail.com
 ## X-Website: https://github.com/erglo/wow-handynotes-loremaster
+## X-Website-WoWInterface: https://www.wowinterface.com/downloads/info26628-HandyNotesLoremaster.html
    
 # TODO - Get addon hosting IDs
 ## X-Curse-Project-ID: 909254
 # X-Wago-ID: 
-# X-WoWI-ID: 
+## X-WoWI-ID: 26628
 
 ## X-License: GNU General Public License Version 3
 ## X-Category: Map & Minimap, Plugins, Achievements, Quests & Leveling, Tooltip
