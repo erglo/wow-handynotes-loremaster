@@ -14,7 +14,8 @@ ignore:
 # For copying files without processing (after downloading latest externals)
 plain-copy:
     - utils/*.lua
-    - libs/*
+    - libs/Ace*
+    - libs/LibStub/LibStub.lua
 
 # The manual changelog will be created via GitHub action
 manual-changelog:
