@@ -40,10 +40,10 @@ externals:
 # Dependencies that will show on the CurseForge website and the Twitch App with
 # a list of project short names (slugs).
 required-dependencies:
-    - ace3
     - handynotes
 
 optional-dependencies:
+    - ace3
     - libstub
 
 # This will make sure the developers receive points for their addons in

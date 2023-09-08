@@ -1,13 +1,20 @@
 # HandyNotes: Loremaster
 
-[![GitHub repo](https://img.shields.io/badge/repo-wow--handynotes--loremaster-gray?logo=github&logoColor=%23959DA5&labelColor=%2324292E&color=%23959DA5)](https://github.com/erglo/wow-handynotes-loremaster/ "Repo on GitHub")
-![GitHub tag (with filter)](https://img.shields.io/github/v/tag/erglo/wow-handynotes-loremaster?logo=github&logoColor=%23959DA5&label=latest&labelColor=%2324292E&color=brightgreen)
+[![GitHub repo](https://img.shields.io/badge/repo-wow--handynotes--loremaster-gray?logo=github&color=%2324292E)](https://github.com/erglo/wow-handynotes-loremaster/ "Repo on GitHub")
+![GitHub tag (with filter)](https://img.shields.io/github/v/tag/erglo/wow-handynotes-loremaster?logo=github&label=latest&color=brightgreen)
 ![CurseForge Game Versions](https://img.shields.io/curseforge/game-versions/461804?logo=battle.net&label=WoW-retail&color=%23148EFF)
 
-This World of Warcraft™ addon helps you keep track of the Loremaster and story quests achievements as well as other questlines.  
+This World of Warcraft™ addon helps you keep track of the Loremaster and story quest achievements as well as other questlines.  
 Simply **hover a quest icon** on the world map, if it is part of a questline or a story campaign additional details about your progress will appear in the icon's tooltip.
 
 ⚠️**Required addon:** [HandyNotes](https://www.curseforge.com/wow/addons/handynotes "Visit CurseForge.com")
+
+Download available at:
+[CurseForge.com](https://www.curseforge.com/wow/addons/handynotes-loremaster/files "CurseForge Files"),
+[WoWInterface.com](https://www.wowinterface.com/downloads/info26628-HandyNotesLoremaster.html "WoWInterface"),
+[Wago.io](https://addons.wago.io/addons/wow-handynotes-loremaster/versions?stability=alpha "Wago Releases (alpha)") and
+[GitHub.com](https://github.com/erglo/wow-handynotes-loremaster/releases "GitHub Releases").  
+_(**Note:** Activate visibility for **alpha** releases.)_
 
 ## Features (_alpha_)
 

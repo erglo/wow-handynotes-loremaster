@@ -1,17 +1,18 @@
 ## Interface: 100107
 ## Title: HandyNotes: Loremaster
-## Notes: Helps you keep track of the Loremaster and story quests achievements as well as other questlines.
+## Notes: Helps you keep track of the Loremaster and story quest achievements as well as other questlines.
 ## Notes-deDE: Hilft euch die "Meister der Lehren" Erfolge, Geschichtsquests und sonstige Questreihen im Blick zu behalten.
 ## IconTexture: 133739
 ## Version: v0.1.2-alpha
 ## Author: ergloCoder
 ## X-Email: erglo.coder+HNLM@gmail.com
 ## X-Website: https://github.com/erglo/wow-handynotes-loremaster
+## X-Website-CurseForge: https://www.curseforge.com/wow/addons/handynotes-loremaster
 ## X-Website-WoWInterface: https://www.wowinterface.com/downloads/info26628-HandyNotesLoremaster.html
-   
-# TODO - Get addon hosting IDs
+## X-Website-Wago: https://addons.wago.io/addons/wow-handynotes-loremaster
+
 ## X-Curse-Project-ID: 909254
-# X-Wago-ID: 
+## X-Wago-ID: b6XVyOGp
 ## X-WoWI-ID: 26628
 
 ## X-License: GNU General Public License Version 3
