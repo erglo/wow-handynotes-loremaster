@@ -967,25 +967,24 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     filteredQuestInfos.numTotalUnfiltered = #filteredQuestInfos.unfilteredQuests
     filteredQuestInfos.numTotal = 0
     filteredQuestInfos.numCompleted = 0
+    filteredQuestInfos.numRepeatable = 0
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
         local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
         if QuestFilterUtils:PlayerMatchesQuestRequirements(questInfo) then
-            -- if DEV_MODE and questInfo.questName == '' then                      --> FIXME - Why sometimes no quest names?
-            --     print("questName:", questID, HaveQuestData(questID))
-            --     for k, v in pairs(questInfo) do
-            --         if v then print("  ", k, "-->", v) end
-            --     end
-            -- end
             if not (questInfo.isDaily or questInfo.isWeekly) then
                 if questInfo.isFlaggedCompleted then
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
                 end
+            else
+                filteredQuestInfos.numRepeatable = filteredQuestInfos.numRepeatable + 1
             end
             tInsert(filteredQuestInfos.quests, questInfo)
         end
     end
-    filteredQuestInfos.numTotal = #filteredQuestInfos.quests
-    filteredQuestInfos.isComplete = filteredQuestInfos.numCompleted == filteredQuestInfos.numTotal
+    local numQuests = #filteredQuestInfos.quests - filteredQuestInfos.numRepeatable
+    local isRepeatableQuestLine = (numQuests == 0 and filteredQuestInfos.numRepeatable > 0)
+    filteredQuestInfos.numTotal = numQuests
+    filteredQuestInfos.isComplete = (filteredQuestInfos.numCompleted == filteredQuestInfos.numTotal and not isRepeatableQuestLine)
 
     return filteredQuestInfos
 end
@@ -1059,7 +1058,11 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     GameTooltip_AddColoredLine(tooltip, questLineNameTemplate:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR)
-    GameTooltip_AddNormalLine(tooltip, L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal))
+    local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+    if (filteredQuestInfos.numRepeatable > 0) then
+        questLineCountLine = questLineCountLine.." "..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
+    end
+    GameTooltip_AddNormalLine(tooltip, questLineCountLine)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
 
     -- Questline quests
@@ -1487,8 +1490,9 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
         local mapInfo = LocalUtils:GetMapInfo(mapID)
         debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "mapID:", mapID)
 
+        ns.activeZoneMapInfo = mapInfo
+
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
-            ns.activeZoneMapInfo = mapInfo
             debug:print(LocalQuestLineUtils, "Entering zone:", mapID, mapInfo.name)
             -- Update data cache for current zone
             local prepareCache = true
