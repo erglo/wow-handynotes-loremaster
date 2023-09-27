@@ -14,7 +14,7 @@ Download available at:
 [WoWInterface.com](https://www.wowinterface.com/downloads/info26628-HandyNotesLoremaster.html "WoWInterface"),
 [Wago.io](https://addons.wago.io/addons/wow-handynotes-loremaster/versions?stability=alpha "Wago Releases (alpha)") and
 [GitHub.com](https://github.com/erglo/wow-handynotes-loremaster/releases "GitHub Releases").  
-_(**Note:** Activate visibility for **alpha** releases.)_
+_(**Note:** This is a playable release. Activate visibility for **alpha** releases to find this addon.)_
 
 ## Features (_alpha_)
 
