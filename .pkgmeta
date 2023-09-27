@@ -7,7 +7,7 @@ enable-nolib-creation: no
 ignore:
     - libs
     - utils
-    - CHANGELOG.md
+    # - CHANGELOG.md
     - README*
     # - README.md
     # - README-WI.bbcode
@@ -21,7 +21,8 @@ plain-copy:
 
 # The manual changelog will be created via GitHub action
 manual-changelog:
-    filename: CHANGELOG-LATEST.md
+    filename: CHANGELOG.md
+    # filename: CHANGELOG-LATEST.md
     markup-type: markdown
 
 license-output: LICENSE.txt
