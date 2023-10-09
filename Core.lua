@@ -88,6 +88,8 @@ L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
 
 L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a"
 L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
+-- L.QUEST_NAME_FORMAT_ALLIANCE = "|A:questlog-questtypeicon-alliance:16:16:0:-1|a%s"
+-- L.QUEST_NAME_FORMAT_HORDE = "|A:questlog-questtypeicon-horde:16:16:0:-1|a%s"
 L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
 -- QUEST_TYPE_NAME_FORMAT_TRIVIAL = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r"
 
@@ -568,21 +570,46 @@ end
 
 ----- Faction Group Labels ----------
 
-local QuestNameFactionGroupFormat = {
+local QuestNameFactionGroupTemplate = {
     [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
     [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
     [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
 }
 
+-- Expand the default quest tag atlas map 
+--> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua> 
+QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
+QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  -- escort
+-- QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
+-- "questlog-questtypeicon-lock"
+
 local function FormatQuestName(questInfo)
-    local questTitle = QuestNameFactionGroupFormat[questInfo.questFactionGroup]:format(questInfo.questName)
+    local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not StringIsEmpty(questInfo.questName) then
         if questInfo.isDaily then
-            questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                local iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
+                questTitle = iconString..questTitle
+            end
         end
         if questInfo.isWeekly then
-            questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                local iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
+                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            end
+        end
+        if (questInfo.questType ~= 0) then
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                local iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
+                questTitle = questTitle..iconString
+            end
         end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
@@ -704,6 +731,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),
+            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
         }
         -- if not (StringIsEmpty(questName) and self.cache[questID]) then
         --     -- Should not be cached w/o a name
@@ -745,8 +773,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),
-            -- Test
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
+            -- Test
             questWatchType = C_QuestLog.GetQuestWatchType(questID),
             isFailed = C_QuestLog.IsFailed(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),

@@ -43,6 +43,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_zonestory"] = "auto",
         ["collapseType_questline"] = "show",
         ["collapseType_campaign"] = "auto",
+        ["showQuestTypeAsText"] = false,
 	},
 }
 ns.pluginInfo.options = function()
@@ -175,6 +176,14 @@ ns.pluginInfo.options = function()
                                 arg = "collapseType_questline",
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
+                            },
+                            quest_type_in_names = {
+                                type = "toggle",
+                                name = "Show Quest Type as Text",
+                                desc = "Displays the quest type in quest titles as text instead of using icons.",
+                                arg = "showQuestTypeAsText",
+                                width = "double",
+                                order = 3,
                             },
                         },
                     },
