@@ -51,7 +51,7 @@ local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
 local QuestUtils_GetQuestName = QuestUtils_GetQuestName
-local QuestUtils_AddQuestTypeToTooltip = QuestUtils_AddQuestTypeToTooltip
+local QuestUtils_AddQuestTagLineToTooltip = QuestUtils_AddQuestTagLineToTooltip
 local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
@@ -692,6 +692,18 @@ function LocalQuestUtils:GetQuestFactionGroup(questID)
     return questFactionGroup
 end
 
+-- Add daily and weekly quests to known quest types.
+function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
+    local tagInfo = questInfo.questTagInfo or {}
+    QuestUtils_AddQuestTagLineToTooltip(tooltip, tagInfo.tagName, tagInfo.tagID, tagInfo.worldQuestType, NORMAL_FONT_COLOR)
+    if questInfo.isDaily then
+        QuestUtils_AddQuestTagLineToTooltip(tooltip, DAILY, "DAILY", nil, NORMAL_FONT_COLOR)
+    end
+    if questInfo.isWeekly then
+        QuestUtils_AddQuestTagLineToTooltip(tooltip, WEEKLY, "WEEKLY", nil, NORMAL_FONT_COLOR)
+    end
+end
+
 -- Retrieve different quest details.
 --
 function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
@@ -1298,9 +1310,8 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.settings.showQuestType) then                       --> TODO - Enhance, eg. isBounty, etc.
-        QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
-        -- if not tContains({"Normal", "Legendary", "Trivial"}, pin.questType) then GameTooltip_AddBlankLineToTooltip(tooltip) end
+    if (pin.questType and ns.settings.showQuestType) then
+        LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, pin.questInfo)
     end
 
     -- debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
@@ -1367,8 +1378,8 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    if (pin.questType and ns.settings.showQuestType) then                       --> TODO - Enhance, eg. isBounty, etc.
-        QuestUtils_AddQuestTypeToTooltip(tooltip, pin.questID, NORMAL_FONT_COLOR)
+    if (pin.questType and ns.settings.showQuestType) then
+        LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, pin.questInfo)
     end
     if (pin.questInfo.isReadyForTurnIn and ns.settings.showQuestTurnIn) then
         tooltip:AddLine(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN)
