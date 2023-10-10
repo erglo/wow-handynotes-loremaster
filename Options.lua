@@ -102,7 +102,6 @@ ns.pluginInfo.options = function()
                         name = "Show Plugin Name",
                         desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
                         arg = "showPluginName",
-                        -- width = "double",
                         width = 1.0,
                         order = 1,
                     },                                                          --> TODO - Show quest ID, trivial quests ???
@@ -112,13 +111,12 @@ ns.pluginInfo.options = function()
                         desc = "Each content category is indicated by its name. Deactivate to hide those names.",
                         arg = "showCategoryNames",
                         width = "double",
-                        -- width = 1.0,
                         order = 2,
                     },
                     quest_type = {
                         type = "toggle",
                         name = "Show Quest Type",
-                        desc = "Show or hide the type of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
+                        desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
                         arg = "showQuestType",
                         -- width = "double",
                         order = 3,
@@ -142,12 +140,10 @@ ns.pluginInfo.options = function()
                                 name = "Show Zone Story",
                                 desc = "Show or hide story details of the currently viewed zone.",
                                 arg = "showZoneStory",
-                                -- width = "double",
                                 order = 1,
                             },
                             collapse_type = {
                                 type = "select",
-                                -- style = "radio",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
                                 arg = "collapseType_zonestory",
@@ -180,7 +176,7 @@ ns.pluginInfo.options = function()
                             quest_type_in_names = {
                                 type = "toggle",
                                 name = "Show Quest Type as Text",
-                                desc = "Displays the quest type in quest titles as text instead of using icons.",
+                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddExampleLine("Quest Name", WEEKLY, true, true).."|n"..PET_BATTLE_UI_VS..LocalOptionUtils:AddExampleLine("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 width = "double",
                                 order = 3,
@@ -279,7 +275,8 @@ LocalOptionUtils.statusFormatString = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
 LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
 LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
 LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
-LocalOptionUtils.newline = "|n|n"
+LocalOptionUtils.new_paragraph = "|n|n"
+LocalOptionUtils.newline = "|n"
 LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
@@ -291,30 +288,30 @@ end
 LocalOptionUtils.CreateAboutHeader = function(self)
     local versionString = GRAY_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.version)
     local pluginName = NORMAL_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title)
-    return "|n"..pluginName.."  "..versionString
+    return self.newline..pluginName.."  "..versionString
 end
 
 LocalOptionUtils.CreateAboutBody = function(self)
-    local text = self.newline
+    local text = self.new_paragraph
     for i, key in ipairs(self.tocKeys) do
         local keyString = string.gsub(key, "X[-]", '')
         text = text..NORMAL_FONT_COLOR_CODE..keyString..FONT_COLOR_CODE_CLOSE
         text = text..HEADER_COLON.." "..GetAddOnMetadata(AddonID, key)
-        text = text..self.newline
+        text = text..self.new_paragraph
     end
     return text
 end
 
-LocalOptionUtils.AddExampleLine = function(self, text, questTypeName)
-    local exampleText = "|n|n"..EXAMPLE_TEXT.."|n"
-    local coloredExampleText = NORMAL_FONT_COLOR:WrapTextInColorCode(exampleText)
-    -- Add type icon to text
-    local iconString = format("|A:questlog-questtypeicon-%s:16:16:0:-1|a", questTypeName)
-    if (questTypeName == "raid") then
-        return exampleText..iconString.." "..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+LocalOptionUtils.AddExampleLine = function(self, text, tagName, prepend, asText, skipHeader)
+    local exampleText = skipHeader and self.newline or self.new_paragraph..EXAMPLE_TEXT..self.newline
+    local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(tagName)) or format("|A:questlog-questtypeicon-%s:16:16:0:-1|a", tagName)
+    if (tagName == "raid") then
+        return exampleText..tagString..ITEM_NAME_DESCRIPTION_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
-    local lineText = self.dashLine:format(text)
-    return coloredExampleText..lineText.." "..iconString
+    if prepend then
+        return exampleText..format(self.dashLine, tagString)..ITEM_NAME_DESCRIPTION_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+    end
+    return exampleText..format(self.dashLine, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..ITEM_NAME_DESCRIPTION_DELIMITER..tagString
 end
 
 ----- Collapse Type ----------
