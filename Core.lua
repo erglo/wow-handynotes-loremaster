@@ -236,6 +236,12 @@ end
 
 ----- Slash Commands ----------
 
+local function OpenHandyNotesPluginSettings()
+    -- HideUIPanel(WorldMapFrame)
+    Settings.OpenToCategory(HandyNotes.name)
+    LibStub('AceConfigDialog-3.0'):SelectGroup(HandyNotes.name, 'plugins', AddonID, "about")
+end
+
 function HandyNotesPlugin:ProcessSlashCommands(msg)
     -- Process the slash command ('input' contains whatever follows the slash command)
     -- Registered in :OnEnable()
@@ -257,11 +263,11 @@ function HandyNotesPlugin:ProcessSlashCommands(msg)
     elseif (input == "version") then
         self:Print(ns.pluginInfo.version)
 
-    elseif (input == "config") then
-        Settings.OpenToCategory(HandyNotes.name)
-        -- LibStub("AceConfigDialog-3.0"):Open("HandyNotes")
+    elseif (input == "config" or input == "about") then
+        OpenHandyNotesPluginSettings()
 
     else
+        -- Without any input open stand-alone settings frame.
         LibStub("AceConfigDialog-3.0"):Open(AddonID)
 
     end
