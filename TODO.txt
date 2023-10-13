@@ -1,7 +1,5 @@
-(A) Update manual filters @quests +data +tooltip
-(A) Save QL for currently active quests @questLines +data
-(B) Add tags to quest/chapter names @tags +tooltip
-(C) Continent view @availabilityCheck +map
+(A) Continent view @availabilityCheck +map
 (D) Show active QLs in world map button @questLines +map +button
+Save QL for currently active quests @questLines +data
 Add navigation to pin @navigation +map +pin
 Track minimap pins @hooks +minimap +pin
