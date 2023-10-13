@@ -7,10 +7,8 @@ enable-nolib-creation: no
 ignore:
     - libs
     - utils
-    # - CHANGELOG.md
+    - CHANGELOG.md
     - README*
-    # - README.md
-    # - README-WI.bbcode
     - TODO.txt
 
 # For copying files without processing (after downloading latest externals)
@@ -21,8 +19,7 @@ plain-copy:
 
 # The manual changelog will be created via GitHub action
 manual-changelog:
-    filename: CHANGELOG.md
-    # filename: CHANGELOG-LATEST.md
+    filename: CHANGELOG-LATEST.md
     markup-type: markdown
 
 license-output: LICENSE.txt
