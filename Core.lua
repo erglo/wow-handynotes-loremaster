@@ -91,7 +91,8 @@ L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
 -- L.QUEST_NAME_FORMAT_ALLIANCE = "|A:questlog-questtypeicon-alliance:16:16:0:-1|a%s"
 -- L.QUEST_NAME_FORMAT_HORDE = "|A:questlog-questtypeicon-horde:16:16:0:-1|a%s"
 L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
--- QUEST_TYPE_NAME_FORMAT_TRIVIAL = TRIVIAL_QUEST_DISPLAY,  -- "|cff000000%s (niedrigstufig)|r"
+L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
+-- MINIMAP_TRACKING_TRIVIAL_QUESTS = "Niedrigstufige Quests";                   --> TODO - Add requirement to activate trivial quest tracking
 
 L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
@@ -589,8 +590,23 @@ local QuestNameFactionGroupTemplate = {
 QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
 QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  --> escort
 QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"  -- "worldquest-questmarker-dragon"  --> elite world quest (!)
+QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
+QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
+QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
+QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
+QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 -- QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
 -- "questlog-questtypeicon-lock"
+
+local QuestTagNames = {
+    ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
+    ["TRIVIAL_CAMPAIGN"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(TRACKER_HEADER_CAMPAIGN_QUESTS),
+    ["TRIVIAL_IMPORTANT"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ENCOUNTER_JOURNAL_SECTION_FLAG5),
+    ["TRIVIAL_LEGENDARY"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ITEM_QUALITY5_DESC),
+    ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
+    ["LEGENDARY"] = ITEM_QUALITY5_DESC,
+    -- ["ACCOUNT"] = ITEM_UPGRADE_DISCOUNT_TOOLTIP_ACCOUNT_WIDE,
+}
 
 local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, 109}
 
@@ -713,13 +729,32 @@ end
 
 -- Add daily and weekly quests to known quest types.
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
-    local tagInfo = questInfo.questTagInfo or {}
-    QuestUtils_AddQuestTagLineToTooltip(tooltip, tagInfo.tagName, tagInfo.tagID, tagInfo.worldQuestType, NORMAL_FONT_COLOR)
+    local tagInfo = questInfo.questTagInfo
+    if tagInfo then
+        QuestUtils_AddQuestTagLineToTooltip(tooltip, tagInfo.tagName, tagInfo.tagID, tagInfo.worldQuestType, NORMAL_FONT_COLOR)
+    end
     if questInfo.isDaily then
         QuestUtils_AddQuestTagLineToTooltip(tooltip, DAILY, "DAILY", nil, NORMAL_FONT_COLOR)
     end
     if questInfo.isWeekly then
         QuestUtils_AddQuestTagLineToTooltip(tooltip, WEEKLY, "WEEKLY", nil, NORMAL_FONT_COLOR)
+    end
+    if questInfo.isTrivial then
+        if questInfo.isLegendary then
+            QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["TRIVIAL_LEGENDARY"], "TRIVIAL_LEGENDARY", nil, NORMAL_FONT_COLOR)
+        elseif questInfo.isImportant then
+            QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["TRIVIAL_IMPORTANT"], "TRIVIAL_IMPORTANT", nil, NORMAL_FONT_COLOR)
+        elseif questInfo.isCampaign then
+            QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["TRIVIAL_CAMPAIGN"], "TRIVIAL_CAMPAIGN", nil, NORMAL_FONT_COLOR)
+        else
+            QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, NORMAL_FONT_COLOR)
+        end
+    end
+    if questInfo.isCampaign then
+        QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["CAMPAIGN"], "CAMPAIGN", nil, NORMAL_FONT_COLOR)
+    end
+    if questInfo.isLegendary then
+        QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["LEGENDARY"], Enum.QuestTag.Legendary, nil, NORMAL_FONT_COLOR)
     end
 end
 
@@ -745,6 +780,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
             isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isObsolete = self:IsObsolete(questID),
@@ -784,6 +820,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
             isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
@@ -1493,6 +1530,7 @@ function HandyNotesPlugin:RegisterHooks()
 
     debug:print(debug.hooks, "Hooking storyline quests...")
     hooksecurefunc(StorylineQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
+    hooksecurefunc(StorylineQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(StorylineQuestPinMixin, "OnClick", Hook_OnClick)
 
     -- Bonus Objectives
