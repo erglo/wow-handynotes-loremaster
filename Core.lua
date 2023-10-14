@@ -632,6 +632,14 @@ local function FormatQuestName(questInfo)
                 questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             end
         end
+        if questInfo.isLegendary then
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
+                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            end
+        end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
@@ -772,8 +780,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         -- end
         local questInfo = {
             isAccountQuest = C_QuestLog.IsAccountQuest(questID),
-            isBounty = C_QuestLog.IsQuestBounty(questID),
-            isBreadcrumbQuest = IsBreadcrumbQuest(questID),
+            -- isBounty = C_QuestLog.IsQuestBounty(questID),
+            -- isBreadcrumbQuest = IsBreadcrumbQuest(questID),
             isCalling = C_QuestLog.IsQuestCalling(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isComplete = C_QuestLog.IsComplete(questID),
@@ -784,10 +792,10 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isObsolete = self:IsObsolete(questID),
-            isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
-            isReplayable = C_QuestLog.IsQuestReplayable(questID),
+            -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
+            -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
-            isStory = IsStoryQuest(questID),
+            -- isStory = IsStoryQuest(questID),
             -- isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
