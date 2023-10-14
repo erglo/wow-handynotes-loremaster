@@ -121,6 +121,8 @@ L.SLASHCMD_USAGE = "Usage:"
 
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 
+local currentPin;  -- Currently hovered worldmap pin
+
 ----- Debugging -----
 
 local DEV_MODE = false
@@ -659,6 +661,9 @@ LocalQuestUtils.GetQuestName = function(self, questID)
 end
 
 function LocalQuestUtils:IsDaily(questID)
+    if (currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
+        return true
+    end
     local questInfo = QuestCache:Get(questID)
     if (questInfo and questInfo.frequency) then
         return questInfo.frequency == Enum.QuestFrequency.Daily
@@ -1308,6 +1313,8 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if (pin.pinTemplate ~= LocalUtils.StorylineQuestPinTemplate) then return end
 
+    currentPin = pin
+
     -- Extend quest meta data
     pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
@@ -1373,6 +1380,8 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then return end
 
+    currentPin = pin
+
     -- Extend quest meta data
     pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
@@ -1425,6 +1434,11 @@ local function Hook_OnClick(pin, mouseButton)                                   
     end
 end
 
+local function Hook_QuestPin_OnLeave()
+    currentPin = nil
+    -- GameTooltip:Hide()
+end
+
 ----- Ace3 Profile Handler ----------
 
 function HandyNotesPlugin:OnProfileChanged(event, ...)
@@ -1474,6 +1488,7 @@ end
 function HandyNotesPlugin:RegisterHooks()
     debug:print(debug.hooks, "Hooking active quests...")
     hooksecurefunc(QuestPinMixin, "OnMouseEnter", Hook_ActiveQuestPin_OnEnter)
+    hooksecurefunc(QuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(QuestPinMixin, "OnClick", Hook_OnClick)
 
     debug:print(debug.hooks, "Hooking storyline quests...")
