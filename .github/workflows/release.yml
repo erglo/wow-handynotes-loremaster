@@ -27,11 +27,11 @@ jobs:
         with:
           submodules: recursive
 
-      # - name: Create Latest Changelog
-      #   uses: kemayo/actions-recent-changelog@v1
-      #   with:
-      #     input: CHANGELOG.md
-      #     output: CHANGELOG-LATEST.md
+      - name: Create Latest Changelog
+        uses: kemayo/actions-recent-changelog@v1
+        with:
+          input: CHANGELOG.md
+          output: CHANGELOG-LATEST.md
       
       - name: Package and Release
         uses: BigWigsMods/packager@v2
