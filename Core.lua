@@ -585,11 +585,16 @@ local QuestNameFactionGroupTemplate = {
 -- Expand the default quest tag atlas map 
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua> 
 QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
-QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  -- escort
+QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  --> escort
+QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"  -- "worldquest-questmarker-dragon"  --> elite world quest (!)
 -- QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
 -- "questlog-questtypeicon-lock"
 
+local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, 109}
+
+-- Add quest type tags (text or icon) to a quest name.
 local function FormatQuestName(questInfo)
+    local iconString;
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not StringIsEmpty(questInfo.questName) then
@@ -597,7 +602,7 @@ local function FormatQuestName(questInfo)
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             else
-                local iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
                 questTitle = iconString..questTitle
             end
         end
@@ -605,15 +610,18 @@ local function FormatQuestName(questInfo)
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             else
-                local iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
                 questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             end
         end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            elseif tContains(leftSidedTags, questInfo.questType) then
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
+                questTitle = iconString..questTitle
             else
-                local iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
+                iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
                 questTitle = questTitle..iconString
             end
         end
