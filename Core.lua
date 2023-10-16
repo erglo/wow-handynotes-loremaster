@@ -404,6 +404,15 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
     GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR)
 
+    -- Achievement details
+    if ns.settings.showAchievement then
+        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name))
+        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) and not StringIsEmpty(achievementInfo.earnedBy) then
+            GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
+        end
+        print("wasEarnedByMe, earnedBy:", achievementInfo.wasEarnedByMe, achievementInfo.earnedBy)
+    end
+
     -- Chapter status
     GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
     debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
@@ -431,10 +440,6 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
-
-    -- print("wasEarnedByMe, earnedBy:", achievementInfo.wasEarnedByMe, achievementInfo.earnedBy)
-    -- ACHIEVEMENT_EARNED_BY = "Errungen von: |cffffffff%s|r";
-    -- CONTENT_TRACKING_ACHIEVEMENT_FORMAT = "Erfolg: \"%s\"";
 
     debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
     return true
