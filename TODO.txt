@@ -1,4 +1,6 @@
-(A) Continent view @availabilityCheck +map
+(A) Auto-adjust tooltip height @tooltip +map
+(B) Continent view @availabilityCheck +story +map
+(C) Show achievements of other chars @availabilityCheck +story +map
 (D) Show active QLs in world map button @questLines +map +button
 Save QL for currently active quests @questLines +data
 Add navigation to pin @navigation +map +pin

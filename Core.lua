@@ -432,6 +432,10 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
+    -- print("wasEarnedByMe, earnedBy:", achievementInfo.wasEarnedByMe, achievementInfo.earnedBy)
+    -- ACHIEVEMENT_EARNED_BY = "Errungen von: |cffffffff%s|r";
+    -- CONTENT_TRACKING_ACHIEVEMENT_FORMAT = "Erfolg: \"%s\"";
+
     debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
     return true
 end
@@ -454,11 +458,11 @@ end
 
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
-    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
+    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976,  -- 75860,  -- Dragonflight, "Aiding the Accord" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
-    61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
-    61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
+    61332, 62861, 62862,  -- 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
+    -- 61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
     57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
 
@@ -702,7 +706,7 @@ function LocalQuestUtils:IsWeekly(questID)
         local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
         if (isWeekly and tContains(QuestFilterUtils.weeklyQuests, questID) and debug.isActive) then
             -- Note: The weekly flag might be added by Blizzard at some  point. No need for duplicates.
-            debug:print(format("Quest %s can be safely removed from manual weekly list.", RED(tostring(questID))))
+            debug:print(RED(format("Quest %s can be safely removed from manual weekly list.", YELLOW(tostring(questID)))))
         end
         return isWeekly
     end
@@ -1126,6 +1130,8 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
 end
 
 local numRebuildTooltip = 0
+local wrapLine = false
+local lineLimit = 48
 
 LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, campaignChapterID)
     local questLineInfo = self:GetQuestLineInfoByPin(pin)
@@ -1148,7 +1154,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     if (filteredQuestInfos.numTotalUnfiltered > 1 and filteredQuestInfos.numTotal <= 1 and numRebuildTooltip <= 3) then
         debug:print("Rebuilding tooltip...", numRebuildTooltip)                 --> TODO - Find a better way
         numRebuildTooltip = numRebuildTooltip + 1
-        return self:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID)
+        -- return self:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID)
+        -- print(filteredQuestInfos.numTotalUnfiltered, filteredQuestInfos.numTotal, numRebuildTooltip, filteredQuestInfos.numRepeatable)
     end
 
     -- Category name
@@ -1172,8 +1179,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- Questline quests
     if GetCollapseTypeModifier(filteredQuestInfos.isComplete, "collapseType_questline") then
         numRebuildTooltip = 0
-        local wrapLine = false
-        local lineLimit = 48                                                    --> TODO - Determine tooltip height
+        -- local numLines = tooltip:NumLines()                                     --> TODO - Determine tooltip height
         for i, questInfo in ipairs(filteredQuestInfos.quests) do
             -- Add a line limit
             if (filteredQuestInfos.numTotal > lineLimit) then
@@ -1368,7 +1374,9 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
     end
 
-    local tooltip = GameTooltip                                                 --> TODO - Add to options: addon name, questID, etc.
+    local tooltip = GameTooltip
+    -- tooltip:SetCustomLineSpacing(0.75)
+
     -- Addon name
     if ShouldShowPluginName(pin) then
         local questTypeText = DEV_MODE and tostring(pin.questType) or " "
@@ -1401,6 +1409,8 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
 
     GameTooltip:Show()
+
+    -- print("tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
 end
 
 -- local function HNQH_TaskPOI_OnEnter(pin, skipSetOwner)
@@ -1673,7 +1683,6 @@ C_Minimap.IsTrackingHiddenQuests()
 
 -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
 -- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
--- ACHIEVEMENT_UNLOCKED_FORMAT = ACHIEVEMENT_UNLOCKED_CHAT_MSG,  -- "Erfolg errungen: %s";
 -- "questlog-questtypeicon-story"
 -- "CampaignAvailableQuestIcon"
 -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
