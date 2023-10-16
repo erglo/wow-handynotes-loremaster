@@ -207,6 +207,9 @@ function HandyNotesPlugin:OnInitialize()
     self.hasRegisteredSlashCommands = false
 
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
+
+    ns.lore:PrepareData()
+    -- ns.data.storyQuest = ns.lore.storyQuests
 end
 
 function HandyNotesPlugin:OnEnable()
@@ -804,7 +807,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
-            -- isStory = IsStoryQuest(questID),
+            isStory = IsStoryQuest(questID),
             -- isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
@@ -1700,6 +1703,10 @@ C_Minimap.IsTrackingHiddenQuests()
 -- ITEM_REQ_HORDE = "Horde Only";
 -- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
 -- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
+ACHIEVEMENTS = "Erfolge";
+ACHIEVEMENT_BUTTON = "Erfolge";
+-- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
+OBJECTIVES_VIEW_ACHIEVEMENT = "Erfolg öffnen";
 -- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
 -- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
 -- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
