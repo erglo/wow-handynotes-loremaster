@@ -284,6 +284,51 @@ end
 -- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
 --     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 
+function HandyNotesPlugin:OnEnter(mapID, coord)
+    -- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
+    if self:GetCenter() > UIParent:GetCenter() then
+		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	else
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+	end
+
+    local tooltip = GameTooltip
+
+    local node = ns.points[mapID] and ns.points[mapID][coord]
+    if node then
+        GameTooltip_SetTitle(tooltip, HandyNotesPlugin.name)
+        GameTooltip_AddNormalLine(tooltip, node.mapInfo.name)
+
+        local storyAchievementID = ZoneStoryUtils:GetZoneStoryInfo(node.mapInfo.mapID)
+        if storyAchievementID then
+            local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
+            GameTooltip_AddBlankLineToTooltip(tooltip)
+            GameTooltip_AddHighlightLine(tooltip, "Zone Story:")
+            GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name))
+            if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) and not StringIsEmpty(achievementInfo.earnedBy) then
+                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
+            end
+            GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+        end
+
+        local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
+        if questLines then
+            GameTooltip_AddBlankLineToTooltip(tooltip)
+            GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
+            for i, questLineInfo in ipairs(questLines) do
+                GameTooltip_AddNormalLine(tooltip, questLineInfo)
+            end
+        end
+    end
+
+    GameTooltip:Show()
+end
+
+function HandyNotesPlugin:OnLeave(mapID, coord)
+    -- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
+    GameTooltip:Hide()
+end
+
 ----- Database utilities ----------
 
 -- function DBUtil:CheckInitCategory(categoryName)
@@ -410,7 +455,6 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) and not StringIsEmpty(achievementInfo.earnedBy) then
             GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
         end
-        print("wasEarnedByMe, earnedBy:", achievementInfo.wasEarnedByMe, achievementInfo.earnedBy)
     end
 
     -- Chapter status
@@ -1577,6 +1621,32 @@ end
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
 --------------------------------------------------------------------------------
+ns.points = {}
+
+local function GetContinentInfo(parentMapInfo)
+    -- local mapLinks = C_Map.GetMapLinksForMap(mapInfo.mapID);
+    -- print("numLinks:", #mapLinks)
+	-- for i, mapLink in ipairs(mapLinks) do
+	-- 	print("mapLink:", mapLink.areaPoiID, mapLink.atlasName, mapLink.linkedUiMapID, mapLink.name)
+	-- end
+    local includeAllDescendants = false
+    local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
+    -- print("numChildren:", #mapChildren)
+    local points = {}
+    points[parentMapInfo.mapID] = {}
+
+    for i, mapChildInfo in ipairs(mapChildren) do
+        local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
+        if (minX == 0) then return end
+        local centerX = (maxX - minX) / 2 + minX
+        local centerY = (maxY - minY) / 2 + minY
+        -- print(format("%2d %d %4d %25s %f, %f", i, mapChildInfo.mapType, mapChildInfo.mapID, mapChildInfo.name, centerX, centerY))
+        local coord = HandyNotes:getCoord(centerX, centerY)
+        -- print(i, mapChildInfo.mapID, mapChildInfo.name, "-->", coord)
+        points[parentMapInfo.mapID][coord] = {mapInfo=mapChildInfo, icon=133739}
+    end
+    return points
+end
 
 -- points[<mapfile>] = { [<coordinates>] = { <quest ID>, <item name>, <notes> } }
 
@@ -1586,17 +1656,19 @@ end
 -- same uiMapID as the argument passed in. Mainly used for continent uiMapID where the map passed
 -- in is a continent, and the return values are coords of subzone maps.
 --
-local function PointsDataIterator(state, value)
-    if not state then return end
+local function PointsDataIterator(t, prev)
+    if not t then return end
     -- debug:print("HN args -->", state, value)
-    -- local coord, v = next(t, prev)
-    -- while coord do
-    --     if v and (db.completed or not completedQuests[v[1]]) then
-    --         return coord, nil, "interface\\icons\\inv_misc_punchcards_yellow", db.icon_scale, db.icon_alpha
-    --     end
-
-    --     coord, v = next(t, coord)
-    -- end
+    local coord, zoneData = next(t, prev)
+    -- print("Iter coord:", coord, type(zoneData))
+    while coord do
+        if zoneData then
+            -- print("Got:", coord, zoneData.icon)
+            -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
+            return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, 1.0, 1.0
+        end
+        coord, zoneData = next(t, coord)
+    end
 end
 
 -- Required standard function for HandyNotes to get a location node.
@@ -1629,13 +1701,27 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent) then
+        -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
+            -- print("Displaying continent or world view...")
             ns.activeContinentMapInfo = mapInfo
+            local points = GetContinentInfo(mapInfo)
+            -- local includeAllDescendants = false
+            -- local mapChildren = C_Map.GetMapChildrenInfo(mapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
+            -- print("numChildren:", #mapChildren)
+            -- local mapChildInfo = mapChildren[1]
+            -- print("mapChildInfo:", mapChildInfo and type(mapChildInfo), mapChildInfo.mapID, mapChildInfo.name)
+            -- return PointsDataIterator, mapChildren
+            if points then
+                ns.points[mapInfo.mapID] = points[mapInfo.mapID]
+                return PointsDataIterator, points[mapInfo.mapID]
+            end
         end
+        -- end
         -- local questsOnMap = C_QuestLog.GetQuestsOnMap(mapID)
         -- -- local doesMapShowTaskObjectives = C_TaskQuest.DoesMapShowTaskQuestObjectives(mapID)
         -- -- print("doesMapShowTaskObjectives:", doesMapShowTaskObjectives, "questsOnMap:", #questsOnMap)
         -- print("questsOnMap:", #questsOnMap)
-        return PointsDataIterator, isWorldMapShown, mapID
+        return PointsDataIterator --, mapID
     end
     return PointsDataIterator
 end
