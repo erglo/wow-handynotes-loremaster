@@ -147,7 +147,7 @@ debug.hooks.debug = false
 debug.hooks.debug_prefix = "HOOKS:"
 
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
--- local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
+local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
@@ -182,8 +182,9 @@ end
 
 ----- Main ---------------------------------------------------------------------
 
-local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
---> AceConsole is used for chat frame related functions, eg. printing or slash commands 
+local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0", "AceEvent-3.0")
+--> AceConsole is used for chat frame related functions, eg. printing or slash commands
+--> AceEvent is used for global event handling
 
 function HandyNotesPlugin:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
@@ -191,11 +192,12 @@ function HandyNotesPlugin:OnInitialize()
 
     ns.settings = self.db.profile  --> All characters using the same profile share this database.
     ns.data = self.db.global  --> All characters on the same account share this database.
+    ns.charDB = self.db.char
 
     self.options = ns.pluginInfo.options()
 
     -- Register options to Ace3 for a standalone config window
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)  --> TODO - Check if library files are needed
 
     -- Register this addon + options to HandyNotes as a plugin
     HandyNotes:RegisterPluginDB(AddonID, self, self.options)
@@ -364,6 +366,14 @@ end
 --     return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
 -- end
 
+function DBUtil:CheckInitDbCategory(categoryName, database)
+    local db = database or ns.charDB
+    if db[categoryName] then return end
+
+    db[categoryName] = {}
+    debug:print(self, "Initialized DB:", categoryName)
+end
+
 ----- Tooltip Data Handler ----------
 
 
@@ -507,13 +517,32 @@ end
 
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
-    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976,  -- 75860,  -- Dragonflight, "Aiding the Accord" quests
+    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976, 75860,  -- Dragonflight, "Aiding the Accord" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
-    61332, 62861, 62862,  -- 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
-    -- 61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
+    61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
+    61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
     57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
+
+local catName_completedWeeklyQuests = "completedWeeklyQuests"
+
+function QuestFilterUtils:SetWeeklyQuestCompleted(questID)
+    DBUtil:CheckInitDbCategory(catName_completedWeeklyQuests, ns.charDB)
+
+    if not tContains(ns.charDB[catName_completedWeeklyQuests], questID) then
+        tInsert(ns.charDB[catName_completedWeeklyQuests], questID)
+        debug:print(DBUtil, questID, "Weekly quest has been saved.")
+    else
+        debug:print(DBUtil, questID, "Already saved.")
+    end
+end
+-- Test_SetWeeklyQuestCompleted = function(qID) QuestFilterUtils:SetWeeklyQuestCompleted(qID) end
+-- 61982, 62863, 75860
+
+function QuestFilterUtils:IsWeeklyQuestCompleted(questID)
+    return tContains(ns.charDB[catName_completedWeeklyQuests], questID)
+end
 
 -- All quests of these questlines are weekly quests.
 QuestFilterUtils.weeklyQuestLines = {
@@ -840,7 +869,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or QuestFilterUtils:IsWeeklyQuestCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
@@ -880,7 +909,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or QuestFilterUtils:IsWeeklyQuestCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
@@ -1617,6 +1646,19 @@ function HandyNotesPlugin:RegisterHooks()
     hooksecurefunc(HandyNotes, "OnEnable", self.OnHandyNotesStateChanged)
     hooksecurefunc(HandyNotes, "OnDisable", self.OnHandyNotesStateChanged)
 end
+
+----- Ace3 event handler
+
+function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
+    local questID, xpReward, moneyReward = ...
+    -- print("Event:", ...)
+    -- print("Quest turned in:", questID, LocalQuestUtils:GetQuestName(questID))
+    if LocalQuestUtils:IsWeekly(questID) then
+        QuestFilterUtils:SetWeeklyQuestCompleted(questID)
+    end
+end
+
+HandyNotesPlugin:RegisterEvent("QUEST_TURNED_IN")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
