@@ -525,23 +525,23 @@ QuestFilterUtils.weeklyQuests = {
     57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
 
-local catName_completedWeeklyQuests = "completedWeeklyQuests"
+function QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    DBUtil:CheckInitDbCategory(catName_recurringQuest, ns.charDB)
 
-function QuestFilterUtils:SetWeeklyQuestCompleted(questID)
-    DBUtil:CheckInitDbCategory(catName_completedWeeklyQuests, ns.charDB)
-
-    if not tContains(ns.charDB[catName_completedWeeklyQuests], questID) then
-        tInsert(ns.charDB[catName_completedWeeklyQuests], questID)
-        debug:print(DBUtil, questID, "Weekly quest has been saved.")
+    if not tContains(ns.charDB[catName_recurringQuest], questID) then
+        tInsert(ns.charDB[catName_recurringQuest], questID)
+        debug:print(DBUtil, questID, recurringTypeName, "quest has been saved.")
     else
         debug:print(DBUtil, questID, "Already saved.")
     end
 end
--- Test_SetWeeklyQuestCompleted = function(qID) QuestFilterUtils:SetWeeklyQuestCompleted(qID) end
--- 61982, 62863, 75859, 75860
+-- Test_SetRecurringQuestCompleted = function(tName, qID) QuestFilterUtils:SetRecurringQuestCompleted(tName, qID) end
+-- 57301, 61982, 62863, 63949, 75859, 75860
 
-function QuestFilterUtils:IsWeeklyQuestCompleted(questID)
-    return tContains(ns.charDB[catName_completedWeeklyQuests], questID)
+function QuestFilterUtils:IsCompletedRecurringQuest(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    return tContains(ns.charDB[catName_recurringQuest], questID)
 end
 
 -- All quests of these questlines are weekly quests.
@@ -767,7 +767,7 @@ LocalQuestUtils.GetQuestName = function(self, questID)
 end
 
 function LocalQuestUtils:IsDaily(questID)
-    if (currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
+    if (currentPin and currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
         return true
     end
     local questInfo = QuestCache:Get(questID)
@@ -869,7 +869,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or QuestFilterUtils:IsWeeklyQuestCompleted(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
@@ -894,6 +894,15 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         --     -- Should not be cached w/o a name
         --     self.cache[questID] = questInfo
         -- end
+        if ns.settings.saveRecurringQuests then
+            -- Enhance completion flagging for recurring quests
+            if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then
+                questInfo.isFlaggedCompleted = QuestFilterUtils:IsCompletedRecurringQuest("Daily", questID)
+            end
+            if (questInfo.isWeekly and not questInfo.isFlaggedCompleted) then
+                questInfo.isFlaggedCompleted = QuestFilterUtils:IsCompletedRecurringQuest("Weekly", questID)
+            end
+        end
 
         return questInfo
     end
@@ -909,7 +918,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or QuestFilterUtils:IsWeeklyQuestCompleted(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
@@ -1274,7 +1283,9 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
-                if questInfo.isFlaggedCompleted then
+                if (questInfo.isFlaggedCompleted and isActiveQuest) then
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
+                elseif questInfo.isFlaggedCompleted then
                     GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine)
                 elseif isActiveQuest then
                     GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine)
@@ -1651,10 +1662,10 @@ end
 
 function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
-    -- print("Event:", ...)
-    -- print("Quest turned in:", questID, LocalQuestUtils:GetQuestName(questID))
-    if LocalQuestUtils:IsWeekly(questID) and ns.settings.saveRecurringQuests then
-        QuestFilterUtils:SetWeeklyQuestCompleted(questID)
+    debug:print(QuestFilterUtils, "Quest turned in:", questID, LocalQuestUtils:GetQuestName(questID))
+    if ns.settings.saveRecurringQuests and (LocalQuestUtils:IsWeekly(questID) or LocalQuestUtils:IsDaily(questID)) then
+        local recurringTypeName = LocalQuestUtils:IsWeekly(questID) and "Weekly" or "Daily"
+        QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     end
 end
 

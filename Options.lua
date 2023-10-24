@@ -192,8 +192,8 @@ ns.pluginInfo.options = function()
                             },
                             save_recurring_quests = {
                                 type = "toggle",
-                                name = "Save Recurring Quests",
-                                desc = "By default Blizzard resets recurring quests eg. on a daily or weekly base. Activate to always remember whether a recurring quest has been completed or not.",
+                                name = "Save Completed Recurring Quests",
+                                desc = "By default Blizzard resets recurring quests eg. daily or weekly.|nActivate to display recurring quests as completed, once they've been completed.",
                                 arg = "saveRecurringQuests",
                                 width = "double",
                                 order = 4,
