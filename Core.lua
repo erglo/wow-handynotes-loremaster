@@ -538,7 +538,7 @@ function QuestFilterUtils:SetWeeklyQuestCompleted(questID)
     end
 end
 -- Test_SetWeeklyQuestCompleted = function(qID) QuestFilterUtils:SetWeeklyQuestCompleted(qID) end
--- 61982, 62863, 75860
+-- 61982, 62863, 75859, 75860
 
 function QuestFilterUtils:IsWeeklyQuestCompleted(questID)
     return tContains(ns.charDB[catName_completedWeeklyQuests], questID)
@@ -1653,7 +1653,7 @@ function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
     -- print("Event:", ...)
     -- print("Quest turned in:", questID, LocalQuestUtils:GetQuestName(questID))
-    if LocalQuestUtils:IsWeekly(questID) then
+    if LocalQuestUtils:IsWeekly(questID) and ns.settings.saveRecurringQuests then
         QuestFilterUtils:SetWeeklyQuestCompleted(questID)
     end
 end
