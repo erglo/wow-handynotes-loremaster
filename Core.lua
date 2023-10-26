@@ -147,7 +147,7 @@ debug.hooks.debug = false
 debug.hooks.debug_prefix = "HOOKS:"
 
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
--- local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
+local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
@@ -182,8 +182,9 @@ end
 
 ----- Main ---------------------------------------------------------------------
 
-local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0")
---> AceConsole is used for chat frame related functions, eg. printing or slash commands 
+local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0", "AceEvent-3.0")
+--> AceConsole is used for chat frame related functions, eg. printing or slash commands
+--> AceEvent is used for global event handling
 
 function HandyNotesPlugin:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
@@ -191,11 +192,12 @@ function HandyNotesPlugin:OnInitialize()
 
     ns.settings = self.db.profile  --> All characters using the same profile share this database.
     ns.data = self.db.global  --> All characters on the same account share this database.
+    ns.charDB = self.db.char
 
     self.options = ns.pluginInfo.options()
 
     -- Register options to Ace3 for a standalone config window
-    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)
+    LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)  --> TODO - Check if library files are needed
 
     -- Register this addon + options to HandyNotes as a plugin
     HandyNotes:RegisterPluginDB(AddonID, self, self.options)
@@ -279,6 +281,8 @@ function HandyNotesPlugin:ProcessSlashCommands(msg)
     end
 end
 
+----- Map pin tooltip handler -----
+
 -- Standard functions you can provide optionally:
 -- pluginHandler:OnEnter(uiMapID/mapFile, coord)
 --     Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
@@ -286,6 +290,63 @@ end
 --     Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
 -- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
 --     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
+
+-- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
+function HandyNotesPlugin:OnEnter(mapID, coord)
+    if self:GetCenter() > UIParent:GetCenter() then
+		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	else
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+	end
+
+    local tooltip = GameTooltip
+    local wrapText = false
+
+    local node = ns.points[mapID] and ns.points[mapID][coord]
+    if node then
+        -- Header
+        GameTooltip_SetTitle(tooltip, HandyNotesPlugin.name)
+        if debug.isActive then
+            local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
+            GameTooltip_AddColoredDoubleLine(tooltip, node.mapInfo.name, mapIDstring, NORMAL_FONT_COLOR, GRAY_FONT_COLOR)
+        else
+            GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
+        end
+
+        -- Zone Story details
+        local achievementInfo = node.achievementInfo
+        local storyAchievementID = achievementInfo.achievementID
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+        -- Achievement details
+        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), wrapText)
+        -- Chapter status
+        GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), wrapText)
+        -- Achieved by Alt
+        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
+            if not StringIsEmpty(achievementInfo.earnedBy) then
+                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), wrapText)
+            end
+        end
+
+        -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
+        -- -- LocalQuestLineUtils.questLineInfos
+        -- if questLines then
+        --     GameTooltip_AddBlankLineToTooltip(tooltip)
+        --     GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
+        --     for i, questLineInfo in ipairs(questLines) do
+        --         GameTooltip_AddNormalLine(tooltip, questLineInfo)
+        --     end
+        -- end
+    end
+
+    GameTooltip:Show()
+end
+
+function HandyNotesPlugin:OnLeave(mapID, coord)
+    -- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
+    GameTooltip:Hide()
+end
 
 ----- Database utilities ----------
 
@@ -322,8 +383,17 @@ end
 --     return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
 -- end
 
------ Tooltip Data Handler ----------
+function DBUtil:CheckInitDbCategory(categoryName, database)
+    local db = database or ns.charDB
+    if db[categoryName] then return end
 
+    db[categoryName] = {}
+    debug:print(self, "Initialized DB:", categoryName)
+end
+
+--------------------------------------------------------------------------------
+----- Tooltip Data Handler -----------------------------------------------------
+--------------------------------------------------------------------------------
 
 local function GetCollapseTypeModifier(isComplete, varName)
     local types = {
@@ -410,10 +480,11 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     -- Achievement details
     if ns.settings.showAchievement then
         GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name))
-        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) and not StringIsEmpty(achievementInfo.earnedBy) then
-            GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
+        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
+            if not StringIsEmpty(achievementInfo.earnedBy) then
+                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
+            end
         end
-        print("wasEarnedByMe, earnedBy:", achievementInfo.wasEarnedByMe, achievementInfo.earnedBy)
     end
 
     -- Chapter status
@@ -466,13 +537,32 @@ end
 
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
-    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976,  -- 75860,  -- Dragonflight, "Aiding the Accord" quests
+    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976, 75860,  -- Dragonflight, "Aiding the Accord" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
-    61332, 62861, 62862,  -- 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
-    -- 61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
+    61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
+    61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
     57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
+
+function QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    DBUtil:CheckInitDbCategory(catName_recurringQuest, ns.charDB)
+
+    if not tContains(ns.charDB[catName_recurringQuest], questID) then
+        tInsert(ns.charDB[catName_recurringQuest], questID)
+        debug:print(DBUtil, questID, recurringTypeName, "quest has been saved.")
+    else
+        debug:print(DBUtil, questID, "Already saved.")
+    end
+end
+-- Test_SetRecurringQuestCompleted = function(tName, qID) QuestFilterUtils:SetRecurringQuestCompleted(tName, qID) end
+-- 57301, 61982, 62863, 63949, 75859, 75860
+
+function QuestFilterUtils:IsCompletedRecurringQuest(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    return tContains(ns.charDB[catName_recurringQuest], questID)
+end
 
 -- All quests of these questlines are weekly quests.
 QuestFilterUtils.weeklyQuestLines = {
@@ -697,7 +787,7 @@ LocalQuestUtils.GetQuestName = function(self, questID)
 end
 
 function LocalQuestUtils:IsDaily(questID)
-    if (currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
+    if (currentPin and currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
         return true
     end
     local questInfo = QuestCache:Get(questID)
@@ -705,7 +795,7 @@ function LocalQuestUtils:IsDaily(questID)
         return questInfo.frequency == Enum.QuestFrequency.Daily
     end
 
-    return tContains(QuestFilterUtils.dailyQuests, questID)
+    return tContains(QuestFilterUtils.dailyQuests, questID)  -- or QuestFilterUtils:IsCompletedRecurringQuest("Daily", questID)
 end
 
 function LocalQuestUtils:IsWeekly(questID)
@@ -719,7 +809,7 @@ function LocalQuestUtils:IsWeekly(questID)
         return isWeekly
     end
 
-    return tContains(QuestFilterUtils.weeklyQuests, questID)
+    return tContains(QuestFilterUtils.weeklyQuests, questID)  -- or QuestFilterUtils:IsCompletedRecurringQuest("Weekly", questID)
 end
 
 -- Some quests which are still in the game have been marked obsolete by Blizzard
@@ -811,7 +901,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
-            questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
+            -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
             questFactionGroup = self:GetQuestFactionGroup(questID),
             questID = questID,
@@ -824,6 +914,15 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         --     -- Should not be cached w/o a name
         --     self.cache[questID] = questInfo
         -- end
+        if ns.settings.saveRecurringQuests then
+            -- Enhance completion flagging for recurring quests
+            if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then
+                questInfo.isFlaggedCompleted = QuestFilterUtils:IsCompletedRecurringQuest("Daily", questID)
+            end
+            if (questInfo.isWeekly and not questInfo.isFlaggedCompleted) then
+                questInfo.isFlaggedCompleted = QuestFilterUtils:IsCompletedRecurringQuest("Weekly", questID)
+            end
+        end
 
         return questInfo
     end
@@ -853,7 +952,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
-            isWorldQuest = C_QuestLog.IsWorldQuest(questID),
+            -- isWorldQuest = C_QuestLog.IsWorldQuest(questID),
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
             questFactionGroup = self:GetQuestFactionGroup(questID),
@@ -879,6 +978,18 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, questInfo.activeMapID)
 
         return questInfo
+    end
+
+    if (targetType == "event") then
+        local playerMapID = C_Map.GetBestMapForUnit("player")
+        return {
+            questName = questName,
+            isDaily = self:IsDaily(questID),
+            isWeekly = self:IsWeekly(questID),
+            isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
+            isStory = IsStoryQuest(questID),
+            hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, playerMapID),
+        }
     end
 end
 
@@ -1204,7 +1315,9 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
-                if questInfo.isFlaggedCompleted then
+                if (questInfo.isFlaggedCompleted and isActiveQuest) then
+                    GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
+                elseif questInfo.isFlaggedCompleted then
                     GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle), GREEN_FONT_COLOR, wrapLine)
                 elseif isActiveQuest then
                     GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), wrapLine)
@@ -1577,11 +1690,90 @@ function HandyNotesPlugin:RegisterHooks()
     hooksecurefunc(HandyNotes, "OnDisable", self.OnHandyNotesStateChanged)
 end
 
+----- Ace3 event handler
+
+function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
+    local questID, xpReward, moneyReward = ...
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
+    debug:print(QuestFilterUtils, eventName, questInfo.isStory, questInfo.isCalling, questInfo.hasQuestLineInfo)
+    if ns.settings.saveRecurringQuests and (questInfo.isWeekly or questInfo.isDaily) then
+        local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
+        QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
+    end
+end
+
+function HandyNotesPlugin:QUEST_ACCEPTED(eventName, ...)
+    local questID = ...
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    debug:print(QuestFilterUtils, eventName, questID, questInfo.questName)
+    debug:print(QuestFilterUtils, eventName, questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+end
+
+HandyNotesPlugin:RegisterEvent("QUEST_TURNED_IN")
+HandyNotesPlugin:RegisterEvent("QUEST_ACCEPTED")
+
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
 --------------------------------------------------------------------------------
+ns.points = {}
 
--- points[<mapfile>] = { [<coordinates>] = { <quest ID>, <item name>, <notes> } }
+-- Convert an atlas file to a texture table with coordinates suitable for
+-- HandyNotes map icons.
+---@param atlasName string
+---@return table|nil textureInfo
+--
+-- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/a8e8163c1ebc6f41dd42690aa43dc6de13211c87/HandyNotes.lua#L379C35-L379C35>
+--
+local function GetTextureInfoFromAtlas(atlasName)
+    local atlasInfo = C_Texture.GetAtlasInfo(atlasName)
+    if atlasInfo then
+        return {
+            tCoordLeft = atlasInfo.leftTexCoord,
+            tCoordRight = atlasInfo.rightTexCoord,
+            tCoordTop = atlasInfo.topTexCoord,
+            tCoordBottom = atlasInfo.bottomTexCoord,
+            icon = atlasInfo.file,
+        }
+    end
+end
+
+local function GetContinentInfo(parentMapInfo)
+    -- local mapLinks = C_Map.GetMapLinksForMap(mapInfo.mapID);
+    -- print("numLinks:", #mapLinks)
+	-- for i, mapLink in ipairs(mapLinks) do
+	-- 	print("mapLink:", mapLink.areaPoiID, mapLink.atlasName, mapLink.linkedUiMapID, mapLink.name)
+	-- end
+    local includeAllDescendants = false
+    local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
+    -- print("numChildren:", #mapChildren)
+    local points = {}
+    points[parentMapInfo.mapID] = {}
+
+    for i, mapChildInfo in ipairs(mapChildren) do
+        local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
+        if (minX == 0) then return end
+        local centerX = (maxX - minX) / 2 + minX
+        local centerY = (maxY - minY) / 2 + minY
+        -- print(format("%2d %d %4d %25s %f, %f", i, mapChildInfo.mapType, mapChildInfo.mapID, mapChildInfo.name, centerX, centerY))
+        local coord = HandyNotes:getCoord(centerX, centerY)
+        -- print(i, mapChildInfo.mapID, mapChildInfo.name, "-->", coord)
+
+        -- Get achievement details
+        -- Note: only add a pin if the zone has a story achievement.
+        local storyAchievementID = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
+        if storyAchievementID then
+            local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
+            local icon = achievementInfo.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
+            local scale = achievementInfo.completed and 1.5 or 1.2
+            points[parentMapInfo.mapID][coord] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+        end
+    end
+    return points
+end
+-- "StoryHeader-CheevoIcon"
+
+-- points[<mapID>] = { [<coordinates>] = { <quest ID>, <item name>, <notes> } }
 
 -- An iterator function that will loop over and return 5 values
 -- (coord, uiMapID, iconpath, scale, alpha)
@@ -1589,17 +1781,19 @@ end
 -- same uiMapID as the argument passed in. Mainly used for continent uiMapID where the map passed
 -- in is a continent, and the return values are coords of subzone maps.
 --
-local function PointsDataIterator(state, value)
-    if not state then return end
+local function PointsDataIterator(t, prev)
+    if not t then return end
     -- debug:print("HN args -->", state, value)
-    -- local coord, v = next(t, prev)
-    -- while coord do
-    --     if v and (db.completed or not completedQuests[v[1]]) then
-    --         return coord, nil, "interface\\icons\\inv_misc_punchcards_yellow", db.icon_scale, db.icon_alpha
-    --     end
-
-    --     coord, v = next(t, coord)
-    -- end
+    local coord, zoneData = next(t, prev)
+    -- print("Iter coord:", coord, type(zoneData))
+    while coord do
+        if zoneData then
+            -- print("Got:", coord, zoneData.icon)
+            -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
+            return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
+        end
+        coord, zoneData = next(t, coord)
+    end
 end
 
 -- Required standard function for HandyNotes to get a location node.
@@ -1632,13 +1826,27 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent) then
+        -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
+            -- print("Displaying continent or world view...")
             ns.activeContinentMapInfo = mapInfo
+            local points = GetContinentInfo(mapInfo)
+            -- local includeAllDescendants = false
+            -- local mapChildren = C_Map.GetMapChildrenInfo(mapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
+            -- print("numChildren:", #mapChildren)
+            -- local mapChildInfo = mapChildren[1]
+            -- print("mapChildInfo:", mapChildInfo and type(mapChildInfo), mapChildInfo.mapID, mapChildInfo.name)
+            -- return PointsDataIterator, mapChildren
+            if points then
+                ns.points[mapInfo.mapID] = points[mapInfo.mapID]
+                return PointsDataIterator, points[mapInfo.mapID]
+            end
         end
+        -- end
         -- local questsOnMap = C_QuestLog.GetQuestsOnMap(mapID)
         -- -- local doesMapShowTaskObjectives = C_TaskQuest.DoesMapShowTaskQuestObjectives(mapID)
         -- -- print("doesMapShowTaskObjectives:", doesMapShowTaskObjectives, "questsOnMap:", #questsOnMap)
         -- print("questsOnMap:", #questsOnMap)
-        return PointsDataIterator, isWorldMapShown, mapID
+        return PointsDataIterator --, mapID
     end
     return PointsDataIterator
 end

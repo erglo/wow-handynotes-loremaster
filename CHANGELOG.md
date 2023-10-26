@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * Zone Story: added details to a zone's corresponding Loremaster achievement.
+* Recurring quests completion can optionally be remembered, despite the eg. daily or weekly reset, once they have been completed.
 
 ## [0.3.0-alpha+100107] - 2023-10-14
 
