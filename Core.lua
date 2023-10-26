@@ -383,12 +383,21 @@ end
 --     return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
 -- end
 
-function DBUtil:CheckInitDbCategory(categoryName, database)
+function DBUtil:GetInitDbCategory(categoryName, database)
     local db = database or ns.charDB
-    if db[categoryName] then return end
+    if not db[categoryName] then
+        db[categoryName] = {}
+        debug:print(self, "Initialized DB:", categoryName)
+    end
+    return db[categoryName]
+end
+DBUtil.CheckInitDbCategory = DBUtil.GetInitDbCategory                           --> TODO - Remove/change occurrences
 
-    db[categoryName] = {}
-    debug:print(self, "Initialized DB:", categoryName)
+function DBUtil:HasCategoryTableAnyEntries(categoryName, database)
+    local db = database or ns.charDB
+    local value = db[categoryName] and TableHasAnyEntries(db[categoryName])
+    debug:print(self, "Has", categoryName, "table any entries:", value)
+    return value
 end
 
 --------------------------------------------------------------------------------
@@ -544,6 +553,8 @@ QuestFilterUtils.weeklyQuests = {
     61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
     57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
+-- Noteworthy quests:
+-- 75665 - A Worthy Ally: Loamm Niffen (Weekly, neutral)
 
 function QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
@@ -556,12 +567,18 @@ function QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
         debug:print(DBUtil, questID, "Already saved.")
     end
 end
--- Test_SetRecurringQuestCompleted = function(tName, qID) QuestFilterUtils:SetRecurringQuestCompleted(tName, qID) end
--- 57301, 61982, 62863, 63949, 75859, 75860
 
 function QuestFilterUtils:IsCompletedRecurringQuest(recurringTypeName, questID)
     local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
     return tContains(ns.charDB[catName_recurringQuest], questID)
+end
+
+function QuestFilterUtils:ShouldSaveRecurringQuest(questInfo)
+    return (
+        ns.settings.saveRecurringQuests and
+        (questInfo.isWeekly or questInfo.isDaily) and
+        (questInfo.isStory or questInfo.isCampaign or questInfo.hasQuestLineInfo)
+    )
 end
 
 -- All quests of these questlines are weekly quests.
@@ -807,7 +824,7 @@ function LocalQuestUtils:IsWeekly(questID)
         local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
         if (isWeekly and tContains(QuestFilterUtils.weeklyQuests, questID) and debug.isActive) then
             -- Note: The weekly flag might be added by Blizzard at some  point. No need for duplicates.
-            debug:print(RED(format("Quest %s can be safely removed from manual weekly list.", YELLOW(tostring(questID)))))
+            debug:print(BLUE(format("Quest %s has been confirmed via API as weekly.", YELLOW(tostring(questID)))))
         end
         return isWeekly
     end
@@ -996,6 +1013,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isStory = IsStoryQuest(questID),
             hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, playerMapID),
+            playerMapID = playerMapID
         }
     end
 end
@@ -1158,21 +1176,13 @@ function LocalQuestLineUtils:GetCachedQuestLinesForMap(mapID)
     debug:print(self, mapID, "> No QLs in cache found.")
 end
 
-function LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
-    for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
-        if (cachedQuestLineData.questLineInfo.questID == questID) then
-            return cachedQuestLineData.questLineInfo
-        end
-    end
-end
-
 function LocalQuestLineUtils:AddSingleQuestLineToCache(questLineInfo, mapID)
     if not self.questLineInfos[questLineInfo.questLineID] then
         self.questLineInfos[questLineInfo.questLineID] = {
             questLineInfo = questLineInfo,
             mapIDs = { mapID },
         }
-        debug:print(self, format("%d Added QL and map %d", questLineInfo.questLineID, mapID))
+        debug:print(self, format("%d Added QL and map %d to cache", questLineInfo.questLineID, mapID))
         -- Also save QL in database or update mapIDs
         -- local quests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
         -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
@@ -1180,7 +1190,7 @@ function LocalQuestLineUtils:AddSingleQuestLineToCache(questLineInfo, mapID)
     end
     if not tContains(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID) then
         tInsert(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID)
-        debug:print(self, format("%d Updated QL with map %d", questLineInfo.questLineID, mapID))
+        debug:print(self, format("%d Updated cached QL with map %d", questLineInfo.questLineID, mapID))
         -- Also update database mapIDs
         -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID)
     end
@@ -1235,6 +1245,18 @@ function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
     return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
 
+-- function LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
+--     debug:print(self, questID, "Looking for cached QL for quest")
+--     for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
+--         debug:print(self, questID, "==", cachedQuestLineData.questLineInfo.questID, cachedQuestLineData.questLineInfo.questID == questID)
+--         if (cachedQuestLineData.questLineInfo.questID == questID) then
+--             debug:print(self, questID, "Found cached QL:", cachedQuestLineID)
+--             return cachedQuestLineData.questLineInfo
+--         end
+--     end
+--     debug:print(self, questID, "Nothing found. :(")
+-- end
+
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
     debug:print(self, questID, "Searching questLineQuestsOnMap", mapID)
     if self.questLineQuestsOnMap[questID] then
@@ -1249,7 +1271,11 @@ function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
     else
         -- Might have slipped through caching (???); try API function
         debug:print(self, questID, "QL quest NOT cached, using API call for map", mapID)
-        return C_QuestLine.GetQuestLineInfo(questID, mapID)
+        local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, mapID)
+        if questLineInfo then
+            self:AddSingleQuestLineToCache(questLineInfo, mapID)
+            return questLineInfo
+        end
     end
 end
 
@@ -1259,6 +1285,14 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     if questLineInfo then
         debug:print(self, format("%d Found QL %d", pin.questID, pin.questLineID or questLineInfo.questLineID))
         return questLineInfo
+    elseif DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
+        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
+            if (pin.questID == activeQuestLineInfo.questID) or (pin.questLineID and pin.questLineID == activeQuestLineInfo.questLineID) then
+                debug:print(self, format("%d Found active QL %d", pin.questID, pin.questLineID or activeQuestLineInfo.questLineID))
+                return activeQuestLineInfo
+            end
+        end
     end
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
 end
@@ -1368,6 +1402,7 @@ end
 ----- Campaign Handler ----------
 --
 -- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/CampaignChapter.lua>
+-- REF.: <https://warcraft.wiki.gg/wiki/API_C_CampaignInfo.GetCampaignInfo>
 
 CampaignUtils.wrap_chapterName = false
 CampaignUtils.leftOffset_description = 16
@@ -1402,7 +1437,6 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     -- Show quest line of current chapter
     if not pin.questInfo.hasQuestLineInfo and (campaignInfo.numChaptersTotal > 0) then
         LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin, campaignInfo.currentChapterID)
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Category name
@@ -1707,27 +1741,61 @@ end
 
 ----- Ace3 event handler
 
+-- Save daily and weekly quests as completed, if they are Lore related.
 function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
-    if ns.settings.saveRecurringQuests and (questInfo.isWeekly or questInfo.isDaily) then
+    if QuestFilterUtils:ShouldSaveRecurringQuest(questInfo) then
         local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
         QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     end
 end
 
+-- Remove a saved active questline, if available.
+-- Note: This event fires before you turn-in or when you abort a quest.
+function HandyNotesPlugin:QUEST_REMOVED(eventName, ...)
+    local questID, wasReplayQuest = ...
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
+    debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
+    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
+        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
+            if (questID == activeQuestLineInfo.questID) then
+                debug:print(LocalQuestLineUtils, "> Removing active QL:", activeQuestLineInfo.questLineID)
+                activeQuestlinesDB[i] = nil
+            end
+        end
+    end
+end
+
+-- Save the questline of an active quest, if available.
 function HandyNotesPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest accepted:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    if questInfo.hasQuestLineInfo then
+        -- local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
+        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
+        if questLineInfo then
+            debug:print(LocalQuestLineUtils, "> Saving active QL", questLineInfo.questLineID)
+            local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+            if not tContains(activeQuestlinesDB, questLineInfo) then
+                tInsert(activeQuestlinesDB, questLineInfo)
+            end
+        end
+    end
 end
 
 HandyNotesPlugin:RegisterEvent("QUEST_TURNED_IN")
+HandyNotesPlugin:RegisterEvent("QUEST_REMOVED")
 HandyNotesPlugin:RegisterEvent("QUEST_ACCEPTED")
 
 --------------------------------------------------------------------------------
