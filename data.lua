@@ -101,7 +101,8 @@ function LocalLoreUtil:GetStoryQuests(achievementID)
         if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
             self:GetStoryQuests(criteriaInfo.assetID)
         elseif (criteriaInfo.criteriaType == CriteriaType.Quest) then
-            tinsert(self.storyQuests, {criteriaInfo.assetID,  criteriaInfo.completed})
+            -- tinsert(self.storyQuests, {questID=criteriaInfo.assetID,  completed=criteriaInfo.completed})
+            tinsert(self.storyQuests, tostring(criteriaInfo.assetID))
         -- else
         --     print(format("%2d %d %5d %5d %s %s", i, criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.assetID, criteriaInfo.completed and "OK" or "--", criteriaInfo.criteriaString))
         end

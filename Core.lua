@@ -742,6 +742,9 @@ local function FormatQuestName(questInfo)
                 questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             end
         end
+        if questInfo.isStory then
+            questTitle = ORANGE(questTitle)
+        end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
@@ -831,6 +834,10 @@ function LocalQuestUtils:IsObsolete(questID)
     return false
 end
 
+function LocalQuestUtils:IsStory(questID)
+    return tContains(ns.lore.storyQuests, tostring(questID)) or IsStoryQuest(questID)
+end
+
 -- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
 function LocalQuestUtils:GetQuestFactionGroup(questID)
     local questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral
@@ -897,7 +904,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
-            isStory = IsStoryQuest(questID),
+            isStory = self:IsStory(questID),
             -- isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
@@ -947,7 +954,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isReplayedRecently = C_QuestLog.IsQuestReplayedRecently(questID),
             isSequenced = IsQuestSequenced(questID),
-            isStory = IsStoryQuest(questID),
+            isStory = self:IsStory(questID),
             isTask = C_QuestLog.IsQuestTask(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
