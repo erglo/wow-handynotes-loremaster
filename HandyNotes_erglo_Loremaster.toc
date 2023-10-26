@@ -28,6 +28,6 @@ embeds.xml
 utils/achievements.lua
 
 # Load main files
-data.lua
+Data.lua
 Options.lua
 Core.lua
