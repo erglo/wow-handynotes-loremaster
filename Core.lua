@@ -714,6 +714,7 @@ QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
 QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
 QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
+QUEST_TAG_ATLAS["STORY"] = "questlog-questtypeicon-story"
 -- QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
 -- "questlog-questtypeicon-lock"
 
@@ -724,6 +725,7 @@ local QuestTagNames = {
     ["TRIVIAL_LEGENDARY"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ITEM_QUALITY5_DESC),
     ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
     ["LEGENDARY"] = ITEM_QUALITY5_DESC,
+    ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
     -- ["ACCOUNT"] = ITEM_UPGRADE_DISCOUNT_TOOLTIP_ACCOUNT_WIDE,
 }
 
@@ -760,7 +762,15 @@ local function FormatQuestName(questInfo)
             end
         end
         if questInfo.isStory then
-            questTitle = ORANGE(questTitle)
+            if ns.settings.highlightStoryQuests then
+                questTitle = ORANGE(questTitle)
+            end
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["STORY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS["STORY"], 16, 16)
+                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            end
         end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
@@ -1984,7 +1994,6 @@ C_Minimap.IsTrackingHiddenQuests()
 
 -- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
 -- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
--- "questlog-questtypeicon-story"
 -- "CampaignAvailableQuestIcon"
 -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
 
