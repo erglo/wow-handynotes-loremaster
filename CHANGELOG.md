@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* Zone Story: added details to a zone's corresponding Loremaster achievement.
+* Zone Story: added completion check to the Worldmap's continent view with two icons (a green checkmark for complete and a red X for incomplete achievements).
+* Zone Story: added a zone's Loremaster achievement name to the Zone tooltip details.
+* Questlines: active quests can now display chapter details; by default Blizzard does not provide any questline information for active quests.
 * Recurring quests completion can optionally be remembered, despite the eg. daily or weekly reset, once they have been completed.
 
 ## [0.3.0-alpha+100107] - 2023-10-14
