@@ -1113,7 +1113,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
 
     -- DBUtil:CheckInitCategory("questLines")
 
-    local questLineInfos = self:GetCachedQuestLines(mapID)
+    local questLineInfos = self:GetCachedQuestLinesForMap(mapID)
     local isProcessedZone = questLineInfos ~= nil
     debug:print(self, "isProcessedZone:", isProcessedZone)
     debug:print(self, "questLineInfos:", questLineInfos)
@@ -1130,7 +1130,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         for i, questLineInfo in ipairs(questLineInfos) do
             debug:print(self, ORANGE("%d - Processing QL %d"):format(i, questLineInfo.questLineID))
             self:AddQuestLineQuestToMap(mapID, questLineInfo.questLineID, questLineInfo.questID)
-            self:AddSingleQuestLine(questLineInfo, mapID)
+            self:AddSingleQuestLineToCache(questLineInfo, mapID)
             --> TODO - Add quests meta infos ???
         end
         debug:print(self, format(YELLOW("Cached or updated %d questline |4info:infos; for map %d"), #questLineInfos, mapID))
@@ -1143,7 +1143,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
     end
 end
 
-function LocalQuestLineUtils:GetCachedQuestLines(mapID)
+function LocalQuestLineUtils:GetCachedQuestLinesForMap(mapID)
     debug:print(self, mapID, "Looking for cached QLs on map")
     local questLineInfos = {}
     for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
@@ -1158,7 +1158,15 @@ function LocalQuestLineUtils:GetCachedQuestLines(mapID)
     debug:print(self, mapID, "> No QLs in cache found.")
 end
 
-function LocalQuestLineUtils:AddSingleQuestLine(questLineInfo, mapID)
+function LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
+    for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
+        if (cachedQuestLineData.questLineInfo.questID == questID) then
+            return cachedQuestLineData.questLineInfo
+        end
+    end
+end
+
+function LocalQuestLineUtils:AddSingleQuestLineToCache(questLineInfo, mapID)
     if not self.questLineInfos[questLineInfo.questLineID] then
         self.questLineInfos[questLineInfo.questLineID] = {
             questLineInfo = questLineInfo,
@@ -1166,7 +1174,7 @@ function LocalQuestLineUtils:AddSingleQuestLine(questLineInfo, mapID)
         }
         debug:print(self, format("%d Added QL and map %d", questLineInfo.questLineID, mapID))
         -- Also save QL in database or update mapIDs
-        local quests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
+        -- local quests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
         -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
         return
     end
@@ -1703,7 +1711,8 @@ function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
-    debug:print(QuestFilterUtils, eventName, questInfo.isStory, questInfo.isCalling, questInfo.hasQuestLineInfo)
+    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if ns.settings.saveRecurringQuests and (questInfo.isWeekly or questInfo.isDaily) then
         local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
         QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
@@ -1713,8 +1722,9 @@ end
 function HandyNotesPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    debug:print(QuestFilterUtils, eventName, questID, questInfo.questName)
-    debug:print(QuestFilterUtils, eventName, questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    debug:print(QuestFilterUtils, "Quest accepted:", questID, questInfo.questName)
+    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
 end
 
 HandyNotesPlugin:RegisterEvent("QUEST_TURNED_IN")
