@@ -211,7 +211,6 @@ function HandyNotesPlugin:OnInitialize()
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 
     ns.lore:PrepareData()
-    -- ns.data.storyQuest = ns.lore.storyQuests
 end
 
 function HandyNotesPlugin:OnEnable()
@@ -1332,13 +1331,12 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     if (filteredQuestInfos.numTotalUnfiltered > 1 and filteredQuestInfos.numTotal <= 1 and numRebuildTooltip <= 3) then
         debug:print("Rebuilding tooltip...", numRebuildTooltip)                 --> TODO - Find a better way
         numRebuildTooltip = numRebuildTooltip + 1
-        -- return self:AddQuestLineDetailsToTooltip(tooltip, pin, campaignChapterID)
         -- print(filteredQuestInfos.numTotalUnfiltered, filteredQuestInfos.numTotal, numRebuildTooltip, filteredQuestInfos.numRepeatable)
     end
 
     -- Category name
     if ns.settings.showCategoryNames then
-        GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+        GameTooltip_AddColoredDoubleLine(tooltip, " ", L.CATEGORY_NAME_QUESTLINE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, wrapLine)
     else
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
@@ -1346,12 +1344,12 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- Questline header name + progress
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
-    GameTooltip_AddColoredLine(tooltip, questLineNameTemplate:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR)
+    GameTooltip_AddColoredLine(tooltip, questLineNameTemplate:format(questLineInfo.questLineName), QUESTLINE_HEADER_COLOR, wrapLine)
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine.." "..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
     end
-    GameTooltip_AddNormalLine(tooltip, questLineCountLine)
+    GameTooltip_AddNormalLine(tooltip, questLineCountLine, wrapLine)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
 
     -- Questline quests
@@ -1366,7 +1364,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                 if (questInfo.isCampaign and questInfo.hasZoneStoryInfo) then lineLimit = 24 end
                 if (i == lineLimit) then
                     local numRemaining = filteredQuestInfos.numTotal - i
-                    GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining))
+                    GameTooltip_AddNormalLine(tooltip, format("(+ %d more)", numRemaining), wrapLine)
                     debug:print(QuestFilterUtils, "lineLimit:", lineLimit)
                     return
                 end
@@ -1389,7 +1387,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
         end
     else
         local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
-        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)), wrapLine)
     end
 
     return true
