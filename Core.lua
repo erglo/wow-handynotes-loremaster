@@ -569,7 +569,7 @@ end
 
 function QuestFilterUtils:IsCompletedRecurringQuest(recurringTypeName, questID)
     local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
-    return tContains(ns.charDB[catName_recurringQuest], questID)
+    return ns.charDB[catName_recurringQuest] and tContains(ns.charDB[catName_recurringQuest], questID)
 end
 
 function QuestFilterUtils:ShouldSaveRecurringQuest(questInfo)
@@ -824,7 +824,7 @@ function LocalQuestUtils:IsDaily(questID)
         return questInfo.frequency == Enum.QuestFrequency.Daily
     end
 
-    return tContains(QuestFilterUtils.dailyQuests, questID)  -- or QuestFilterUtils:IsCompletedRecurringQuest("Daily", questID)
+    return tContains(QuestFilterUtils.dailyQuests, questID) or QuestFilterUtils:IsCompletedRecurringQuest("Daily", questID)
 end
 
 function LocalQuestUtils:IsWeekly(questID)
@@ -838,7 +838,7 @@ function LocalQuestUtils:IsWeekly(questID)
         return isWeekly
     end
 
-    return tContains(QuestFilterUtils.weeklyQuests, questID)  -- or QuestFilterUtils:IsCompletedRecurringQuest("Weekly", questID)
+    return tContains(QuestFilterUtils.weeklyQuests, questID) or QuestFilterUtils:IsCompletedRecurringQuest("Weekly", questID)
 end
 
 -- Some quests which are still in the game have been marked obsolete by Blizzard
