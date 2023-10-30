@@ -194,7 +194,7 @@ function HandyNotesPlugin:OnInitialize()
     ns.data = self.db.global  --> All characters on the same account share this database.
     ns.charDB = self.db.char
 
-    self.options = ns.pluginInfo.options()
+    self.options = ns.pluginInfo.options(HandyNotes)
 
     -- Register options to Ace3 for a standalone config window
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)  --> TODO - Check if library files are needed
@@ -1888,8 +1888,10 @@ local function PointsDataIterator(t, prev)
     while coord do
         if zoneData then
             -- print("Got:", coord, zoneData.icon)
-            -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
-            return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
+            if not (ns.settings.hideCompletedZonesIcon and zoneData.achievementInfo.completed) then
+                -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
+                return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
+            end
         end
         coord, zoneData = next(t, coord)
     end

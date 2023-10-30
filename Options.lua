@@ -31,6 +31,8 @@ local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 local format = string.format
 
 local LocalOptionUtils = {}
+LocalOptionUtils.new_paragraph = "|n|n"
+LocalOptionUtils.newline = "|n"
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -45,9 +47,10 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
         ["saveRecurringQuests"] = false,
+        ["hideCompletedZonesIcon"] = false,
 	},
 }
-ns.pluginInfo.options = function()
+ns.pluginInfo.options = function(HandyNotes)
     return {
         type = 'group',
         name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
@@ -60,6 +63,9 @@ ns.pluginInfo.options = function()
                 LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
             else
                 LocalOptionUtils:printOption(info.option.name, value)
+            end
+            if (info.arg == "hideCompletedZonesIcon") then
+                HandyNotes.WorldMapDataProvider:RefreshAllData()
             end
         end,
         args = {
@@ -84,17 +90,34 @@ ns.pluginInfo.options = function()
                         name = LocalOptionUtils:CreateAboutBody(),
                         order = 2,
                     },
+                    chat_notifications_group = {
+                        type = "group",
+                        name = SHOW_TOAST_CONVERSATION_TEXT,  -- CHAT_LABEL,
+                        inline = true,
+                        order = 10,
+                        args = {
+                            welcome_msg = {
+                                type = "toggle",
+                                name = "Plugin-is-Ready Message",
+                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
+                                arg = "showWelcomeMessage",
+                                width ="double",
+                                order = 3,
+                            },
+                        },
+                    },
                 }
             },  --> about
-            tooltip_settings = {
+            tooltip_details_zone = {
                 type = "group",
                 name = "Tooltip Content",
+                -- name = "Tooltip"..ITEM_NAME_DESCRIPTION_DELIMITER..PARENS_TEMPLATE:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
                 order = 1,
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the tooltip details which should be shown when hovering a quest icon on the world map.".."|n|n",
+                        name = "Select the tooltip details which should be shown when hovering a quest icon on the world map."..LocalOptionUtils.new_paragraph,
                         -- fontSize = "medium",
                         order = 0,
                     },
@@ -232,64 +255,29 @@ ns.pluginInfo.options = function()
                         },
                     },
                 }
-            },  --> tooltip_settings
-            notification_settings = {
+            },  --> tooltip_details_zone
+            tooltip_details_continent = {
                 type = "group",
-                name = "Notifications",
-                desc = "Choose how or whether you want to be notified of plugin changes.",
+                name = CONTINENT,
+                desc = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map.",
                 order = 2,
                 args = {
                     description = {
                         type = "description",
-                        name = "Choose how or whether you want to be notified of plugin changes.".."|n|n",
+                        name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map."..LocalOptionUtils.new_paragraph,
                         order = 0,
                     },
-                    chat_notifications_group = {
-                        type = "group",
-                        name = CHAT_LABEL,  -- name = CHAT_LABEL.." - "..FEATURE_NOT_YET_AVAILABLE,
-                        desc = FEATURE_NOT_YET_AVAILABLE,
-                        inline = true,
-                        order = 10,
-                        args = {
-                            welcome_msg = {
-                                type = "toggle",
-                                name = "Plugin-is-Ready Message",
-                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
-                                arg = "showWelcomeMessage",
-                                width ="double",
-                                order = 1,
-                            },
-                            incomplete_zone_stories_msg = {
-                                type = "toggle",
-                                name = "Incomplete Zone Stories",
-                                desc = "Notifies you of Zone Stories which haven't been completed on the currently viewed map.",
-                                arg = "showIncompleteZoneStories",
-                                width ="double",
-                                order = 10,
-                                disabled = true,
-                            },
-                            incomplete_questlines_msg = {
-                                type = "toggle",
-                                name = "Incomplete Questlines",
-                                desc = "Notifies you of questlines which haven't been completed on the currently viewed map.",
-                                arg = "showIncompleteQuestLines",
-                                width ="double",
-                                order = 20,
-                                disabled = true,
-                            },
-                            incomplete_campaigns_msg = {
-                                type = "toggle",
-                                name = "Incomplete Campaigns",
-                                desc = "Notifies you of story campaigns which haven't been completed, yet.",
-                                arg = "showIncompleteCampaigns",
-                                width ="double",
-                                order = 30,
-                                disabled = true,
-                            },
-                        },
-                    },  --> chat_notifications
+                    completed_zone_icons = {
+                        type = "toggle",
+                        name = "Hide Completed Zone Icon",
+                        desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
+                        arg = "hideCompletedZonesIcon",
+                        width ="double",
+                        order = 1,
+                        -- disabled = true,
+                    },
                 },
-            },  --> notification_settings
+            },  --> tooltip_details_continent
         } --> root parent group
     }
 end
@@ -300,8 +288,6 @@ LocalOptionUtils.statusFormatString = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
 LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
 LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
 LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
-LocalOptionUtils.new_paragraph = "|n|n"
-LocalOptionUtils.newline = "|n"
 LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
@@ -324,7 +310,7 @@ LocalOptionUtils.CreateAboutBody = function(self)
         text = text..HEADER_COLON.." "..GetAddOnMetadata(AddonID, key)
         text = text..self.new_paragraph
     end
-    return text
+    return text..self.new_paragraph
 end
 
 LocalOptionUtils.AddExampleLine = function(self, text, tagName, prepend, asText, skipHeader)
@@ -349,23 +335,18 @@ LocalOptionUtils.collapseTypeList = {
 
 LocalOptionUtils.GetCollapseTypeDescription = function(self)
     local desc = "Choose how the details in this category should be displayed."
-    desc = desc.."|n|n"
+    desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.auto..HEADER_COLON)
     desc = desc.." ".."Automatically collapse this category's details when completed."
-    desc = desc.."|n|n"
+    desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.hide..HEADER_COLON)
     desc = desc.." ".."Always show category details collapsed."
-    desc = desc.."|n|n"
+    desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
     desc = desc.." ".."Always show full category details."
 
     return desc
 end
-
--- LocalOptionUtils.SetCollapseType = function(self, info, value)
---     ns.settings[info.arg] = value
---     LocalOptionUtils:printOption(info.option.name, value)
--- end
 
 --@do-not-package@
 --------------------------------------------------------------------------------
@@ -377,25 +358,6 @@ end
 -- 		print(pluginName == pluginHandler.name, pluginName, "-->", pluginHandler.name)
 -- 	end
 -- end
-
--- Achievement IDs
-local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585
-
--- expand_zone_story = {
---     type = "toggle",
---     name = "Always Expand Zone Story",
---     desc = "Always show the zone story details expanded, instead of collapsed.",
---     width = 2.0,
---     order = 11,
--- },
-
--- campaign_questline = {
---     type = "toggle",
---     name = "Show Campaign Questline",
---     desc = "Show or hide questline details associated with a campaign.",
---     width = 2.0,
---     order = 35,
--- },
 
 -- type_icons_settings = {
 --     type = "group",
