@@ -349,39 +349,6 @@ end
 
 ----- Database utilities ----------
 
--- function DBUtil:CheckInitCategory(categoryName)
---     if not ns.data[categoryName] then
---         ns.data[categoryName] = {}
---         debug:print(self, "Initialized DB:", categoryName)
---     end
--- end
-
--- -- Save each questline with its questIDs and mapIDs.
--- --> { [questLineID] = {mapIDs={mapID1, mapID2, ...}, quests={questID1, questID2, ...}}, ... }
--- ---@param questLineInfo QuestLineInfo
--- ---@param mapID number
--- ---@param questIDs number[]?
--- --
--- function DBUtil:SaveSingleQuestLine(questLineInfo, mapID, questIDs)
---     if not ns.data.questLines[questLineInfo.questLineID] then
---         ns.data.questLines[questLineInfo.questLineID] = {
---             -- questID = questLineInfo.questID,
---             mapIDs = {mapID},
---             quests = questIDs,
---         }
---         debug:print(self, format("%d Saved QL: %s", questLineInfo.questLineID, questLineInfo.questLineName))
---         return
---     end
---     if not tContains(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID) then
---         tInsert(ns.data.questLines[questLineInfo.questLineID].mapIDs, mapID)
---         debug:print(self, format("%d Updated QL with map %d", questLineInfo.questLineID, mapID))
---     end
--- end
-
--- function DBUtil:GetSavedQuestLineQuests(questLineID)
---     return ns.data.questLines[questLineID] and ns.data.questLines[questLineID].quests
--- end
-
 function DBUtil:GetInitDbCategory(categoryName, database)
     local db = database or ns.charDB
     if not db[categoryName] then
@@ -415,17 +382,33 @@ end
 
 ----- Zone Story ----------
 
-ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyMapInfo}, ... }
+ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyAchievementID2, storyMapInfo}, ... }
 ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
 
+-- Return the achievement ID for given zone.  
+-- **Note:** Shadowlands + Dragonflight have 2 story achievements per zone.
+---@param mapID number
+---@param prepareCache boolean|nil
+---@return number|nil storyAchievementID
+---@return number|nil storyAchievementID2
+---@return number|nil storyMapInfo
+--
 function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
     if not self.storiesOnMap[mapID] then
-        local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
+        local storyAchievementID, storyAchievementID2, storyMapID = nil, nil, mapID
+        if (ns.lore.AchievementsLocationMap[mapID] ~= nil) then
+            storyAchievementID, storyAchievementID2 = SafeUnpack(ns.lore.AchievementsLocationMap[mapID])
+        else
+            storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
+        end
         if not storyAchievementID then return end
 
         local mapInfo = LocalUtils:GetMapInfo(storyMapID or mapID)
-        self.storiesOnMap[mapID] = {storyAchievementID, mapInfo}
+        self.storiesOnMap[mapID] = {storyAchievementID, storyAchievementID2, mapInfo}
         debug:print(self, "Added zone story:", storyAchievementID, storyMapID, mapInfo.name)
+        if storyAchievementID2 then
+            debug:print(self, "Added 2nd zone story:", storyAchievementID2, storyMapID, mapInfo.name)
+        end
     end
     if not prepareCache then
         return SafeUnpack(self.storiesOnMap[mapID])
@@ -465,7 +448,7 @@ end
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
-    local storyAchievementID, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
+    local storyAchievementID, storyAchievementID2, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
     if not storyAchievementID then
         debug:print(self, "> Nothing found.")
         return false
@@ -1562,27 +1545,26 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
+    -- Quest Types
     if (pin.questType and ns.settings.showQuestType) then
         LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, pin.questInfo)
     end
 
-    -- debug:print("pin:", pin.mapID, pin:GetMap():GetMapID(), GetQuestUiMapID(pin.questID), YELLOW(pin.questType or "no-type"))
     if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
         debug:AddDebugQuestInfoLineToTooltip(tooltip, pin)
         GameTooltip:Show()
         return
     end
+
+    -- Lore
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
     if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
         --> TODO - Optimize info retrieval to load only once (!)
-        -- if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
     if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
 
@@ -1831,38 +1813,62 @@ local function GetTextureInfoFromAtlas(atlasName)
     end
 end
 
-local function GetContinentInfo(parentMapInfo)
-    -- local mapLinks = C_Map.GetMapLinksForMap(mapInfo.mapID);
-    -- print("numLinks:", #mapLinks)
-	-- for i, mapLink in ipairs(mapLinks) do
-	-- 	print("mapLink:", mapLink.areaPoiID, mapLink.atlasName, mapLink.linkedUiMapID, mapLink.name)
-	-- end
+local points = {}
+-- local pointOffset = 0.0125
+local pointOffset = 0.008
+
+local function ProcessContinentInfo(parentMapInfo)
     local includeAllDescendants = false
     local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
     -- print("numChildren:", #mapChildren)
-    local points = {}
-    points[parentMapInfo.mapID] = {}
 
-    for i, mapChildInfo in ipairs(mapChildren) do
-        local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
-        if (minX == 0) then return end
-        local centerX = (maxX - minX) / 2 + minX
-        local centerY = (maxY - minY) / 2 + minY
-        -- print(format("%2d %d %4d %25s %f, %f", i, mapChildInfo.mapType, mapChildInfo.mapID, mapChildInfo.name, centerX, centerY))
-        local coord = HandyNotes:getCoord(centerX, centerY)
-        -- print(i, mapChildInfo.mapID, mapChildInfo.name, "-->", coord)
+    if not points[parentMapInfo.mapID] then
+        points[parentMapInfo.mapID] = {}
 
-        -- Get achievement details
-        -- Note: only add a pin if the zone has a story achievement.
-        local storyAchievementID = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
-        if storyAchievementID then
-            local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
-            local icon = achievementInfo.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
-            local scale = achievementInfo.completed and 1.5 or 1.2
-            points[parentMapInfo.mapID][coord] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+        for i, mapChildInfo in ipairs(mapChildren) do
+            local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
+            if (minX == 0) then return end
+            local centerX = (maxX - minX) / 2 + minX
+            local centerY = (maxY - minY) / 2 + minY
+            -- print(format("%2d %d %4d %25s %f, %f", i, mapChildInfo.mapType, mapChildInfo.mapID, mapChildInfo.name, centerX, centerY))
+
+            -- Get achievement details
+            -- Note: only add a pin if the zone has a story achievement.
+            -- Also note: Shadowlands + Dragonflight have 2 story achievements per zone (!)
+            local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
+            if storyAchievementID then
+                local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
+                if achievementInfo then
+                    local icon = achievementInfo.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
+                    local scale = achievementInfo.completed and 1.5 or 1.2
+                    centerX = storyAchievementID2 and centerX-pointOffset or centerX
+                    local coord = HandyNotes:getCoord(centerX, centerY)
+                    -- print(i, mapChildInfo.mapID, mapChildInfo.name, "-->", coord)
+                    points[parentMapInfo.mapID][coord] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+                end
+            end
+            if storyAchievementID2 then
+                local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
+                if achievementInfo2 then
+                    local icon = achievementInfo2.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
+                    local scale = achievementInfo2.completed and 1.5 or 1.2
+                    local coord2 = HandyNotes:getCoord(centerX+(pointOffset*2), centerY)
+                    points[parentMapInfo.mapID][coord2] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo2}
+                end
+            end
+            -- else
+            --     -- print(GRAY("> No storyAchievementID:"), parentMapInfo.mapID, mapChildInfo.mapID, storyAchievementID)
+            --     if not ns.testDB[parentMapInfo.mapID] then
+            --         ns.testDB[parentMapInfo.mapID] = {}
+            --     end
+            --     if not tContains(ns.testDB[parentMapInfo.mapID], mapChildInfo.mapID) then
+            --         tInsert(ns.testDB[parentMapInfo.mapID], mapChildInfo.mapID)
+            --     end
+            -- end
         end
+    -- else
+    --     print("Skipping:", parentMapInfo.mapID, parentMapInfo.name)
     end
-    return points
 end
 -- "StoryHeader-CheevoIcon"
 
@@ -1920,27 +1926,18 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
         end
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent) then
         -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
-            -- print("Displaying continent or world view...")
             ns.activeContinentMapInfo = mapInfo
-            local points = GetContinentInfo(mapInfo)
-            -- local includeAllDescendants = false
-            -- local mapChildren = C_Map.GetMapChildrenInfo(mapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
-            -- print("numChildren:", #mapChildren)
-            -- local mapChildInfo = mapChildren[1]
-            -- print("mapChildInfo:", mapChildInfo and type(mapChildInfo), mapChildInfo.mapID, mapChildInfo.name)
-            -- return PointsDataIterator, mapChildren
+            -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
+            ProcessContinentInfo(mapInfo)
             if points then
                 ns.points[mapInfo.mapID] = points[mapInfo.mapID]
                 return PointsDataIterator, points[mapInfo.mapID]
             end
         end
-        -- end
-        -- local questsOnMap = C_QuestLog.GetQuestsOnMap(mapID)
-        -- -- local doesMapShowTaskObjectives = C_TaskQuest.DoesMapShowTaskQuestObjectives(mapID)
-        -- -- print("doesMapShowTaskObjectives:", doesMapShowTaskObjectives, "questsOnMap:", #questsOnMap)
-        -- print("questsOnMap:", #questsOnMap)
-        return PointsDataIterator --, mapID
+
+        return PointsDataIterator
     end
+
     return PointsDataIterator
 end
 
@@ -1948,6 +1945,35 @@ end
 --------------------------------------------------------------------------------
 --[[ Tests
 --------------------------------------------------------------------------------
+
+-- function DeleteTestDB()
+--     if DBUtil:HasCategoryTableAnyEntries("TEST_Zones") then
+--         ns.charDB["TEST_Zones"] = nil
+--         debug:print(DBUtil, "Test DB has been deleted.")
+--     end
+-- end
+
+-- function SaveAchievementIDs()
+--     local testDB = DBUtil:GetInitDbCategory("TEST_Zones")
+--     -- local aID = 14280  -- Loremaster of Shadowlands
+--     local aID = 16585  -- Loremaster of the Dragon Isles
+--     if not testDB[aID] then
+--         testDB[aID] = {}
+--     end
+--     local numCriteria = GetAchievementNumCriteria(aID)
+--     local criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible; -- duration, elapsed;
+
+--     for criteriaIndex = 1, numCriteria do
+--         criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible = GetAchievementCriteriaInfo(aID, criteriaIndex)
+--         --   print(format(lineIndent.."%2d %d %5d %5d %s %s", criteriaIndex, criteriaType, criteriaID, assetID, completed and "OK" or "--", criteriaString))
+--         if not tContains(testDB[aID], assetID) then
+--             tInsert(testDB[aID], assetID)
+--             debug:print(DBUtil, "Adding", assetID, criteriaID, criteriaString)
+--         end
+--     end
+-- end
+
+-----
 
 GetQuestLink(questID)
 
