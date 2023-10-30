@@ -1793,9 +1793,19 @@ HandyNotesPlugin:RegisterEvent("QUEST_ACCEPTED")
 ----- Required functions for HandyNotes ----------------------------------------
 --------------------------------------------------------------------------------
 
-local pointOffset = 0.008
 local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
+local point2Offset = 0.008
+local zoneOffsetInfo = {  --> Some points are overlapping with something else on the map.
+    [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
+    [69] = { x = 0.005, y = -0.02 }, -- Feralas
+    [76] = { x = -0.02, y = 0 }, -- Azshara
+    [77] = { x = -0.015, y = -0.01 }, -- Felwood
+    [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
+    [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
+    [646] = { x = 0.025, y = 0 }, -- Broken Shore
+    [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
+}
 
 -- Convert an atlas file to a texture table with coordinates suitable for
 -- HandyNotes map icons.
@@ -1840,19 +1850,26 @@ local function ProcessContinentInfo(parentMapInfo)
                 local centerX = (maxX - minX) / 2 + minX
                 local centerY = (maxY - minY) / 2 + minY
 
+                -- Some points are overlapping with something else on the map. Use manual offset for those points.
+                if (zoneOffsetInfo[mapChildInfo.mapID] ~= nil) then
+                    local offSet = zoneOffsetInfo[mapChildInfo.mapID]
+                    centerX = centerX + offSet.x
+                    centerY = centerY + offSet.y
+                end
+
                 -- Get achievement details
                 -- Note: only add a pin if the zone has a story achievement.
                 -- Also note: Shadowlands + Dragonflight have 2 story achievements per zone (!)
                 local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
                 if achievementInfo then
                     -- Adjust horizontal position if a 2nd achievement is available.
-                    centerX = storyAchievementID2 and centerX-pointOffset or centerX
+                    centerX = storyAchievementID2 and centerX-point2Offset or centerX
                     AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo, storyMapInfo)
                 end
                 if storyAchievementID2 then
                     local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
                     if achievementInfo2 then
-                        centerX = centerX + (pointOffset * 2)
+                        centerX = centerX + (point2Offset * 2)
                         AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo2, storyMapInfo)
                     end
                 end
@@ -1913,7 +1930,7 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
         local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
         local mapInfo = LocalUtils:GetMapInfo(mapID)
-        debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "mapID:", mapID)
+        debug:print(GRAY("GetNodes2"), "> mapID:", uiMapID, mapID, "mapType:", mapInfo.mapType)
 
         ns.activeZoneMapInfo = mapInfo
 

@@ -1,7 +1,6 @@
+(A) Add Vash'jir zone stories @completionCheck +map +data
 (A) Auto-adjust tooltip height @tooltip +map
-(B) Continent view @availabilityCheck +story +map
-(C) Show achievements of other chars @availabilityCheck +story +map
+(A) Add 2nd zone story to tooltip @tooltip +map
 (D) Show active QLs in world map button @questLines +map +button
-Save QL for currently active quests @questLines +data
 Add navigation to pin @navigation +map +pin
 Track minimap pins @hooks +minimap +pin
