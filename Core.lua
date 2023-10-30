@@ -123,6 +123,7 @@ L.SLASHCMD_USAGE = "Usage:"
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 
 local currentPin;  -- Currently hovered worldmap pin
+local points = {}
 
 ----- Debugging -----
 
@@ -301,7 +302,7 @@ function HandyNotesPlugin:OnEnter(mapID, coord)
     local tooltip = GameTooltip
     local wrapText = false
 
-    local node = ns.points[mapID] and ns.points[mapID][coord]
+    local node = points[mapID] and points[mapID][coord]
     if node then
         -- Header
         GameTooltip_SetTitle(tooltip, HandyNotesPlugin.name)
@@ -1791,7 +1792,10 @@ HandyNotesPlugin:RegisterEvent("QUEST_ACCEPTED")
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
 --------------------------------------------------------------------------------
-ns.points = {}
+
+local pointOffset = 0.008
+local iconZoneStoryComplete = "common-icon-checkmark"
+local iconZoneStoryIncomplete = "common-icon-redx"
 
 -- Convert an atlas file to a texture table with coordinates suitable for
 -- HandyNotes map icons.
@@ -1813,47 +1817,44 @@ local function GetTextureInfoFromAtlas(atlasName)
     end
 end
 
-local points = {}
--- local pointOffset = 0.0125
-local pointOffset = 0.008
+local function AddAchievementPoint(mapID, x, y, achievementInfo, storyMapInfo)
+    local icon = achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
+    local scale = achievementInfo.completed and 1.5 or 1.2
+    local coord = HandyNotes:getCoord(x, y)
+    -- print(i, mapID, mapChildInfo.name, "-->", coord)
+    points[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+end
 
 local function ProcessContinentInfo(parentMapInfo)
-    local includeAllDescendants = false
-    local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone, includeAllDescendants)
+    local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone)
     -- print("numChildren:", #mapChildren)
 
     if not points[parentMapInfo.mapID] then
         points[parentMapInfo.mapID] = {}
 
         for i, mapChildInfo in ipairs(mapChildren) do
-            local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
-            if (minX == 0) then return end
-            local centerX = (maxX - minX) / 2 + minX
-            local centerY = (maxY - minY) / 2 + minY
-            -- print(format("%2d %d %4d %25s %f, %f", i, mapChildInfo.mapType, mapChildInfo.mapID, mapChildInfo.name, centerX, centerY))
-
-            -- Get achievement details
-            -- Note: only add a pin if the zone has a story achievement.
-            -- Also note: Shadowlands + Dragonflight have 2 story achievements per zone (!)
             local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
             if storyAchievementID then
+                local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
+                if (minX == 0) then return end
+                local centerX = (maxX - minX) / 2 + minX
+                local centerY = (maxY - minY) / 2 + minY
+
+                -- Get achievement details
+                -- Note: only add a pin if the zone has a story achievement.
+                -- Also note: Shadowlands + Dragonflight have 2 story achievements per zone (!)
                 local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
                 if achievementInfo then
-                    local icon = achievementInfo.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
-                    local scale = achievementInfo.completed and 1.5 or 1.2
+                    -- Adjust horizontal position if a 2nd achievement is available.
                     centerX = storyAchievementID2 and centerX-pointOffset or centerX
-                    local coord = HandyNotes:getCoord(centerX, centerY)
-                    -- print(i, mapChildInfo.mapID, mapChildInfo.name, "-->", coord)
-                    points[parentMapInfo.mapID][coord] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+                    AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo, storyMapInfo)
                 end
-            end
-            if storyAchievementID2 then
-                local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
-                if achievementInfo2 then
-                    local icon = achievementInfo2.completed and GetTextureInfoFromAtlas("common-icon-checkmark") or GetTextureInfoFromAtlas("common-icon-redx") -- or 133739
-                    local scale = achievementInfo2.completed and 1.5 or 1.2
-                    local coord2 = HandyNotes:getCoord(centerX+(pointOffset*2), centerY)
-                    points[parentMapInfo.mapID][coord2] = {mapInfo=mapChildInfo, icon=icon, scale=scale, achievementInfo=achievementInfo2}
+                if storyAchievementID2 then
+                    local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
+                    if achievementInfo2 then
+                        centerX = centerX + (pointOffset * 2)
+                        AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo2, storyMapInfo)
+                    end
                 end
             end
             -- else
@@ -1870,9 +1871,6 @@ local function ProcessContinentInfo(parentMapInfo)
     --     print("Skipping:", parentMapInfo.mapID, parentMapInfo.name)
     end
 end
--- "StoryHeader-CheevoIcon"
-
--- points[<mapID>] = { [<coordinates>] = { <quest ID>, <item name>, <notes> } }
 
 -- An iterator function that will loop over and return 5 values
 -- (coord, uiMapID, iconpath, scale, alpha)
@@ -1931,8 +1929,8 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
             ProcessContinentInfo(mapInfo)
-            if points then
-                ns.points[mapInfo.mapID] = points[mapInfo.mapID]
+            if TableHasAnyEntries(points) then
+                -- ns.points[mapInfo.mapID] = points[mapInfo.mapID]
                 return PointsDataIterator, points[mapInfo.mapID]
             end
         end
@@ -2022,6 +2020,7 @@ C_Minimap.IsTrackingHiddenQuests()
 -- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
 -- "CampaignAvailableQuestIcon"
 -- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
+-- "StoryHeader-CheevoIcon"
 
 -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
 -- ITEM_REQ_REPUTATION = "Requires %s - %s";
