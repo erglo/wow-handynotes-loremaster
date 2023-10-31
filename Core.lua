@@ -183,11 +183,11 @@ end
 
 ----- Main ---------------------------------------------------------------------
 
-local HandyNotesPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0", "AceEvent-3.0")
+local LoremasterPlugin = LibStub("AceAddon-3.0"):NewAddon("Loremaster", "AceConsole-3.0", "AceEvent-3.0")
 --> AceConsole is used for chat frame related functions, eg. printing or slash commands
 --> AceEvent is used for global event handling
 
-function HandyNotesPlugin:OnInitialize()
+function LoremasterPlugin:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("LoremasterDB", ns.pluginInfo.defaultOptions)
     --> Available AceDB sub-tables: char, realm, class, race, faction, factionrealm, factionrealmregion, profile, and global
 
@@ -214,7 +214,7 @@ function HandyNotesPlugin:OnInitialize()
     ns.lore:PrepareData()
 end
 
-function HandyNotesPlugin:OnEnable()
+function LoremasterPlugin:OnEnable()
     -- Register slash commands via AceConsole
     for i, command in ipairs(self.slash_commands) do
         self:RegisterChatCommand(command, "ProcessSlashCommands")
@@ -228,7 +228,7 @@ function HandyNotesPlugin:OnEnable()
     end
 end
 
-function HandyNotesPlugin:OnDisable()
+function LoremasterPlugin:OnDisable()
     -- Unregister slash commands from via AceConsole
     if self.hasRegisteredSlashCommands then
         for i, command in ipairs(self.slash_commands) do
@@ -250,7 +250,7 @@ local function OpenHandyNotesPluginSettings()
     LibStub('AceConfigDialog-3.0'):SelectGroup(HandyNotes.name, 'plugins', AddonID, "about")
 end
 
-function HandyNotesPlugin:ProcessSlashCommands(msg)
+function LoremasterPlugin:ProcessSlashCommands(msg)
     -- Process the slash command ('input' contains whatever follows the slash command)
     -- Registered in :OnEnable()
     local input = strtrim(msg)
@@ -279,73 +279,6 @@ function HandyNotesPlugin:ProcessSlashCommands(msg)
         LibStub("AceConfigDialog-3.0"):Open(AddonID)
 
     end
-end
-
------ Map pin tooltip handler -----
-
--- Standard functions you can provide optionally:
--- pluginHandler:OnEnter(uiMapID/mapFile, coord)
---     Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
--- pluginHandler:OnLeave(uiMapID/mapFile, coord)
---     Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
--- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
---     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
-
--- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
-function HandyNotesPlugin:OnEnter(mapID, coord)
-    if self:GetCenter() > UIParent:GetCenter() then
-		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-	else
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-	end
-
-    local tooltip = GameTooltip
-    local wrapText = false
-
-    local node = points[mapID] and points[mapID][coord]
-    if node then
-        -- Header
-        GameTooltip_SetTitle(tooltip, HandyNotesPlugin.name)
-        if debug.isActive then
-            local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
-            GameTooltip_AddColoredDoubleLine(tooltip, node.mapInfo.name, mapIDstring, NORMAL_FONT_COLOR, GRAY_FONT_COLOR)
-        else
-            GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
-        end
-
-        -- Zone Story details
-        local achievementInfo = node.achievementInfo
-        local storyAchievementID = achievementInfo.achievementID
-        GameTooltip_AddBlankLineToTooltip(tooltip)
-        debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
-        -- Achievement details
-        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), wrapText)
-        -- Chapter status
-        GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), wrapText)
-        -- Achieved by Alt
-        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
-            if not StringIsEmpty(achievementInfo.earnedBy) then
-                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), wrapText)
-            end
-        end
-
-        -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
-        -- -- LocalQuestLineUtils.questLineInfos
-        -- if questLines then
-        --     GameTooltip_AddBlankLineToTooltip(tooltip)
-        --     GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
-        --     for i, questLineInfo in ipairs(questLines) do
-        --         GameTooltip_AddNormalLine(tooltip, questLineInfo)
-        --     end
-        -- end
-    end
-
-    GameTooltip:Show()
-end
-
-function HandyNotesPlugin:OnLeave(mapID, coord)
-    -- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
-    GameTooltip:Hide()
 end
 
 ----- Database utilities ----------
@@ -1542,7 +1475,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Addon name
     if ShouldShowPluginName(pin) then
         local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
+        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, LoremasterPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
@@ -1582,7 +1515,7 @@ end
 
 --     local tooltip = GameTooltip
 --     -- GameTooltip_AddBlankLineToTooltip(tooltip)
---     GameTooltip_AddColoredDoubleLine(tooltip, " ", HandyNotesPlugin.name, NORMAL_FONT_COLOR, CATEGORY_NAME_COLOR, nil, nil)
+--     GameTooltip_AddColoredDoubleLine(tooltip, " ", LoremasterPlugin.name, NORMAL_FONT_COLOR, CATEGORY_NAME_COLOR, nil, nil)
 --     if IsShiftKeyDown() then
 --         GameTooltip_AddQuest(tooltip, pin.questID)
 --     else
@@ -1613,7 +1546,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Addon name
     if ShouldShowPluginName(pin) then
         local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, HandyNotesPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
+        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, LoremasterPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
     end
     debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
@@ -1657,7 +1590,7 @@ end
 
 ----- Ace3 Profile Handler ----------
 
-function HandyNotesPlugin:OnProfileChanged(event, ...)
+function LoremasterPlugin:OnProfileChanged(event, ...)
     -- REF.: <https://www.wowace.com/projects/ace3/pages/api/ace-db-3-0>
     debug:print(debug.hooks, event, ...)
 
@@ -1692,7 +1625,7 @@ function HandyNotesPlugin:OnProfileChanged(event, ...)
     -- REF.: <https://www.wowace.com/projects/ace3/localization>
 end
 
-function HandyNotesPlugin:OnHandyNotesStateChanged()
+function LoremasterPlugin:OnHandyNotesStateChanged()
     local parent_state = HandyNotes:IsEnabled()
     if (parent_state ~= self:IsEnabled()) then
         -- Toggle this plugin
@@ -1701,7 +1634,7 @@ function HandyNotesPlugin:OnHandyNotesStateChanged()
     end
 end
 
-function HandyNotesPlugin:RegisterHooks()
+function LoremasterPlugin:RegisterHooks()
     debug:print(debug.hooks, "Hooking active quests...")
     hooksecurefunc(QuestPinMixin, "OnMouseEnter", Hook_ActiveQuestPin_OnEnter)
     hooksecurefunc(QuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
@@ -1733,7 +1666,7 @@ end
 ----- Ace3 event handler
 
 -- Save daily and weekly quests as completed, if they are Lore related.
-function HandyNotesPlugin:QUEST_TURNED_IN(eventName, ...)
+function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
@@ -1747,7 +1680,7 @@ end
 
 -- Remove a saved active questline, if available.
 -- Note: This event fires before you turn-in or when you abort a quest.
-function HandyNotesPlugin:QUEST_REMOVED(eventName, ...)
+function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questID, wasReplayQuest = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
@@ -1766,7 +1699,7 @@ function HandyNotesPlugin:QUEST_REMOVED(eventName, ...)
 end
 
 -- Save the questline of an active quest, if available.
-function HandyNotesPlugin:QUEST_ACCEPTED(eventName, ...)
+function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest accepted:", questID, questInfo.questName)
@@ -1785,9 +1718,9 @@ function HandyNotesPlugin:QUEST_ACCEPTED(eventName, ...)
     end
 end
 
-HandyNotesPlugin:RegisterEvent("QUEST_TURNED_IN")
-HandyNotesPlugin:RegisterEvent("QUEST_REMOVED")
-HandyNotesPlugin:RegisterEvent("QUEST_ACCEPTED")
+LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
+LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
+LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
@@ -1922,7 +1855,7 @@ end
 -- REF.: <World of Warcraft\_retail_\Interface\AddOns\HandyNotes\HandyNotes.lua><br>
 -- REF.: <FrameXML/Blizzard_SharedMapDataProviders/QuestDataProvider.lua>
 --
-function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
+function LoremasterPlugin:GetNodes2(uiMapID, minimap)
     -- debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "minimap:", minimap)
     if minimap then return PointsDataIterator end  -- minimap is currently not used
 
@@ -1957,6 +1890,68 @@ function HandyNotesPlugin:GetNodes2(uiMapID, minimap)
 
     return PointsDataIterator
 end
+
+----- Map pin tooltip handler -----
+
+-- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
+function LoremasterPlugin:OnEnter(mapID, coord)
+    if self:GetCenter() > UIParent:GetCenter() then
+		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	else
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+	end
+
+    local tooltip = GameTooltip
+    local wrapText = false
+
+    local node = points[mapID] and points[mapID][coord]
+    if node then
+        -- Header
+        GameTooltip_SetTitle(tooltip, LoremasterPlugin.name)
+        if debug.isActive then
+            local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
+            GameTooltip_AddColoredDoubleLine(tooltip, node.mapInfo.name, mapIDstring, NORMAL_FONT_COLOR, GRAY_FONT_COLOR)
+        else
+            GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
+        end
+
+        -- Zone Story details
+        local achievementInfo = node.achievementInfo
+        local storyAchievementID = achievementInfo.achievementID
+        GameTooltip_AddBlankLineToTooltip(tooltip)
+        debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+        -- Achievement details
+        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), wrapText)
+        -- Chapter status
+        GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), wrapText)
+        -- Achieved by Alt
+        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
+            if not StringIsEmpty(achievementInfo.earnedBy) then
+                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), wrapText)
+            end
+        end
+
+        -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
+        -- -- LocalQuestLineUtils.questLineInfos
+        -- if questLines then
+        --     GameTooltip_AddBlankLineToTooltip(tooltip)
+        --     GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
+        --     for i, questLineInfo in ipairs(questLines) do
+        --         GameTooltip_AddNormalLine(tooltip, questLineInfo)
+        --     end
+        -- end
+    end
+
+    GameTooltip:Show()
+end
+
+-- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
+function LoremasterPlugin:OnLeave(mapID, coord)
+    GameTooltip:Hide()
+end
+
+-- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
+--     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 
 --@do-not-package@
 --------------------------------------------------------------------------------
