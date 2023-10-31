@@ -98,7 +98,8 @@ L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
 
 L.HINT_HOLD_KEY_FORMAT = "Hold %s to see details"
 L.HINT_HOLD_KEY_FORMAT_HOVER = "Hold %s and hover icon to see details"
-L.HINT_VIEW_ACHIEVEMENT = "Shift-click to view achievement"  -- KEY_BUTTON1, KEY_BUTTON2 
+L.HINT_VIEW_ACHIEVEMENT_CRITERIA = "<Shift-hover to view chapters>"
+L.HINT_VIEW_ACHIEVEMENT = "<Shift-click to view achievement>"  -- KEY_BUTTON1, KEY_BUTTON2 
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
@@ -318,6 +319,7 @@ end
 
 ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyAchievementID2, storyMapInfo}, ... }
 ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
+ZoneStoryUtils.wrapLine = false
 
 -- Return the achievement ID for given zone.  
 -- **Note:** Shadowlands + Dragonflight have 2 story achievements per zone.
@@ -382,43 +384,48 @@ end
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
-    local storyAchievementID, storyAchievementID2, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
+    local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID
     if not storyAchievementID then
-        debug:print(self, "> Nothing found.")
-        return false
+        storyAchievementID, storyAchievementID2, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
+        -- print("mapID:", pin.mapID, storyMapInfo.mapID, GetQuestUiMapID(pin.questInfo.questID))
+        if not storyAchievementID then
+            debug:print(self, "> Nothing found.")
+            return false
+        end
     end
 
-    local achievementInfo = self:GetAchievementInfo(storyAchievementID)
+    local achievementInfo = pin.achievementInfo or self:GetAchievementInfo(storyAchievementID)
 
     -- Category name
-    if ns.settings.showCategoryNames then
-        GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR)
+    if (ns.settings.showCategoryNames and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
+        GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
     else
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Zone story name
-    local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
-    local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
-    GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR)
+    if (pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
+        local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
+        local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
+        GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
+    end
 
     -- Achievement details
     if ns.settings.showAchievement then
-        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name))
+        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), self.wrapLine)
         if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
             if not StringIsEmpty(achievementInfo.earnedBy) then
-                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
+                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
             end
         end
     end
 
     -- Chapter status
-    GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), self.wrapLine)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Chapter list
     if GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory") then
-        local wrapLine = false
         local criteriaName
         for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
             criteriaName = criteriaInfo.criteriaString
@@ -430,14 +437,15 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                 end
             end
             if criteriaInfo.completed then
-                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, wrapLine)
+                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, self.wrapLine)
             else
-                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), wrapLine)
+                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
             end
         end
     else
         local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
-        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
+        textTemplate = (pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) and L.HINT_VIEW_ACHIEVEMENT_CRITERIA or textTemplate
+        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))  --, self.wrapLine)
     end
 
     debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
@@ -1314,6 +1322,7 @@ end
 
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
+LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
 LocalUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
 
 function LocalUtils:GetMapInfo(mapID)
@@ -1897,15 +1906,15 @@ local wrapText = false
 
 -- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
 function LoremasterPlugin:OnEnter(mapID, coord)
-    if self:GetCenter() > WorldMapFrame.ScrollContainer:GetCenter() then
-		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-	else
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-	end
-
     local node = points[mapID] and points[mapID][coord]
     if node then
         local tooltip = GameTooltip
+
+        if self:GetCenter() > self.owningMap.ScrollContainer:GetCenter() then
+            tooltip:SetOwner(self, "ANCHOR_LEFT")
+        else
+            tooltip:SetOwner(self, "ANCHOR_RIGHT")
+        end
 
         -- Header
         GameTooltip_SetTitle(tooltip, LoremasterPlugin.name)
@@ -1916,36 +1925,26 @@ function LoremasterPlugin:OnEnter(mapID, coord)
             GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
         end
 
-        -- Zone Story details
-        local achievementInfo = node.achievementInfo
-        local storyAchievementID = achievementInfo.achievementID
-        GameTooltip_AddBlankLineToTooltip(tooltip)
-        debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
-        -- Achievement details
-        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), wrapText)
-        -- Chapter status
-        GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), wrapText)
-        -- Achieved by Alt
-        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
-            if not StringIsEmpty(achievementInfo.earnedBy) then
-                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), wrapText)
-            end
-        end
+         -- Zone Story details
+         self.achievementInfo = node.achievementInfo
+         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, self)
 
-        GameTooltip_AddInstructionLine(tooltip, L.HINT_VIEW_ACHIEVEMENT, wrapText)
+         -- Hint to view achievement
+         GameTooltip_AddBlankLineToTooltip(tooltip)
+         GameTooltip_AddInstructionLine(tooltip, L.HINT_VIEW_ACHIEVEMENT, wrapText)
 
-        -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
-        -- -- LocalQuestLineUtils.questLineInfos
-        -- if questLines then
-        --     GameTooltip_AddBlankLineToTooltip(tooltip)
-        --     GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
-        --     for i, questLineInfo in ipairs(questLines) do
-        --         GameTooltip_AddNormalLine(tooltip, questLineInfo)
-        --     end
-        -- end
+        -- -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
+        -- -- -- LocalQuestLineUtils.questLineInfos
+        -- -- if questLines then
+        -- --     GameTooltip_AddBlankLineToTooltip(tooltip)
+        -- --     GameTooltip_AddHighlightLine(tooltip, format("Questlines: %d", #questLines))
+        -- --     for i, questLineInfo in ipairs(questLines) do
+        -- --         GameTooltip_AddNormalLine(tooltip, questLineInfo)
+        -- --     end
+        -- -- end
+
+        tooltip:Show()
     end
-
-    GameTooltip:Show()
 end
 
 -- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
