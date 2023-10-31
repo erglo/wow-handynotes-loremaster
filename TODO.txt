@@ -2,5 +2,6 @@
 (A) Auto-adjust tooltip height @tooltip +map
 (A) Add 2nd zone story to tooltip @tooltip +map
 (D) Show active QLs in world map button @questLines +map +button
-Add navigation to pin @navigation +map +pin
+Add chat message on finished achievement @achievement +chat
+Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin

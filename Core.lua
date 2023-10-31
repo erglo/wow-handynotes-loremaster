@@ -27,7 +27,6 @@
 -- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/master/HandyNotes.lua>
 --
 -- World of Warcraft API reference:
--- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/UITimerDocumentation.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/GlobalStrings.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/TableUtil.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
@@ -97,8 +96,9 @@ L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff00000
 L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
 
-L.HOLD_KEY_HINT_FORMAT = "Hold %s to see details"
-L.HOLD_KEY_HINT_FORMAT_HOVER = "Hold %s and hover icon to see details"
+L.HINT_HOLD_KEY_FORMAT = "Hold %s to see details"
+L.HINT_HOLD_KEY_FORMAT_HOVER = "Hold %s and hover icon to see details"
+L.HINT_VIEW_ACHIEVEMENT = "Shift-click to view achievement"  -- KEY_BUTTON1, KEY_BUTTON2 
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
@@ -436,7 +436,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -1303,7 +1303,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)), wrapLine)
     end
 
@@ -1411,7 +1411,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
             end
         end
     else
-        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HOLD_KEY_HINT_FORMAT or L.HOLD_KEY_HINT_FORMAT_HOVER
+        local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
@@ -1893,19 +1893,20 @@ end
 
 ----- Map pin tooltip handler -----
 
+local wrapText = false
+
 -- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
 function LoremasterPlugin:OnEnter(mapID, coord)
-    if self:GetCenter() > UIParent:GetCenter() then
+    if self:GetCenter() > WorldMapFrame.ScrollContainer:GetCenter() then
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 	else
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 	end
 
-    local tooltip = GameTooltip
-    local wrapText = false
-
     local node = points[mapID] and points[mapID][coord]
     if node then
+        local tooltip = GameTooltip
+
         -- Header
         GameTooltip_SetTitle(tooltip, LoremasterPlugin.name)
         if debug.isActive then
@@ -1931,6 +1932,8 @@ function LoremasterPlugin:OnEnter(mapID, coord)
             end
         end
 
+        GameTooltip_AddInstructionLine(tooltip, L.HINT_VIEW_ACHIEVEMENT, wrapText)
+
         -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
         -- -- LocalQuestLineUtils.questLineInfos
         -- if questLines then
@@ -1950,8 +1953,22 @@ function LoremasterPlugin:OnLeave(mapID, coord)
     GameTooltip:Hide()
 end
 
--- pluginHandler:OnClick(button, down, uiMapID/mapFile, coord)
---     Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
+-- Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
+function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
+    -- Open the achievement frame at the current button's achievement.
+    local node = points[mapID] and points[mapID][coord]
+    if node then
+        local storyAchievementID = node.achievementInfo.achievementID
+        if (IsShiftKeyDown() and button == "LeftButton") then
+            -- REF.: <https://www.townlong-yak.com/framexml/live/UIParent.lua>
+            HideUIPanel(WorldMapFrame)
+            OpenAchievementFrameToAchievement(storyAchievementID)
+        end
+        -- if (button == "RightButton") then
+        --     --> TODO - Add context menu
+        -- end
+    end
+end
 
 --@do-not-package@
 --------------------------------------------------------------------------------
