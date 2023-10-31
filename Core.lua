@@ -384,29 +384,21 @@ end
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
-    local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID
-    if not storyAchievementID then
-        storyAchievementID, storyAchievementID2, storyMapInfo = self:GetZoneStoryInfo(pin.mapID)
-        -- print("mapID:", pin.mapID, storyMapInfo.mapID, GetQuestUiMapID(pin.questInfo.questID))
-        if not storyAchievementID then
-            debug:print(self, "> Nothing found.")
-            return false
-        end
-    end
-
+    local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID or pin.achievementID
     local achievementInfo = pin.achievementInfo or self:GetAchievementInfo(storyAchievementID)
+    local is2nd = pin.achievementID == pin.achievementID2
 
     -- Category name
-    if (ns.settings.showCategoryNames and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
+    if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
         GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
     else
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
     -- Zone story name
-    if (pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
+    if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
         local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
-        local storyName = storyMapInfo and storyMapInfo.name or achievementInfo.name
+        local storyName = pin.storyMapInfo and pin.storyMapInfo.name or achievementInfo.name
         GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
     end
 
@@ -449,6 +441,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
 
     debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
+
     return true
 end
 
@@ -1501,7 +1494,12 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
 
     -- Lore
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
+        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        if pin.achievementID2 then
+            pin.achievementID = pin.achievementID2
+            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        end
     end
     if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
         --> TODO - Optimize info retrieval to load only once (!)
@@ -1571,15 +1569,17 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         return
     end
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
+        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        if pin.achievementID2 then
+            pin.achievementID = pin.achievementID2
+            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        end
     end
     if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
-        -- if pin.questInfo.hasZoneStoryInfo then GameTooltip_AddBlankLineToTooltip(tooltip) end
         LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
     end
-    if (pin.questInfo.isCampaign and ns.settings.showCampaign) then             --> TODO - Optimize info retrieval to load only once (!)
-        -- GameTooltip_AddBlankLineToTooltip(tooltip)
+    if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
 
