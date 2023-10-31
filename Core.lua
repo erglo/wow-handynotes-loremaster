@@ -403,12 +403,10 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
 
     -- Achievement details
-    if ns.settings.showAchievement then
-        GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), self.wrapLine)
-        if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
-            if not StringIsEmpty(achievementInfo.earnedBy) then
-                GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
-            end
+    GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), self.wrapLine)
+    if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
+        if not StringIsEmpty(achievementInfo.earnedBy) then
+            GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
         end
     end
 

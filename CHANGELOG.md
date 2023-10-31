@@ -11,7 +11,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Settings: added option to hide the icons over zones with a completed story.
 * Zone Story: added zone stories manually for Shadowlands and Dragonflight; their main zones have each two stories which are required for the Loremaster achievements.
 * Zone Story: added completion check to the Worldmap's `continent view` with two icons (a green checkmark for complete and a red X for incomplete achievements).
-* Zone Story: added a zone's Loremaster achievement name to the Zone tooltip details.
 * Questlines: active quests can now display chapter details; by default Blizzard does not provide any questline information for active quests.
 * Questlines: zone story quests will now optionally be highlighted in orange text color.
 * Questlines: completing recurring quests can now optionally be remembered once they have been turned in, despite the eg. daily or weekly reset.
@@ -19,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Settings: moved chat notifications to the about section.
+* Zone Story: a zone's Loremaster achievement name is now shown in the Zone tooltip details.
 
 ## [0.3.0-alpha+100107] - 2023-10-14
 

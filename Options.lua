@@ -174,14 +174,6 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
-                            show_achievement_name = {
-                                type = "toggle",
-                                name = "Show Achievement",
-                                desc = "Displays the name of the Loremaster achievement for a zone.",
-                                arg = "showAchievement",
-                                width = "double",
-                                order = 3,
-                            },
                         },
                     },
                     ql_group = {
