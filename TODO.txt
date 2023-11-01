@@ -1,6 +1,5 @@
-(A) Add Vash'jir zone stories @completionCheck +map +data
 (A) Auto-adjust tooltip height @tooltip +map +questIcon
-(D) Show active QLs in world map button @questLines +map +button
+Show active QLs in world map button @questLines +map +button
 Add chat message on finished achievement @achievement +chat
 Add right-click menu to continent pin @clickHandler +map +pin
 Add handler to track achievement @clickHandler +map +pin

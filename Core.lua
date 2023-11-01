@@ -125,7 +125,7 @@ L.SLASHCMD_USAGE = "Usage:"
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 
 local currentPin;  -- Currently hovered worldmap pin
-local points = {}
+local nodes = {}
 
 ----- Debugging -----
 
@@ -156,6 +156,7 @@ local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:"
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
 local QuestFilterUtils =    { debug = false, debug_prefix = "QFilter:" }
+local LocalMapUtils =       { debug = false, debug_prefix = "MAP:" }
 local LocalUtils = {}
 
 --> TODO: CampaignCache, QuestCache
@@ -340,7 +341,7 @@ function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
         end
         if not storyAchievementID then return end
 
-        local mapInfo = LocalUtils:GetMapInfo(storyMapID or mapID)
+        local mapInfo = LocalMapUtils:GetMapInfo(storyMapID or mapID)
         self.storiesOnMap[mapID] = {storyAchievementID, storyAchievementID2, mapInfo}
         debug:print(self, "Added zone story:", storyAchievementID, storyMapID, mapInfo.name)
         if storyAchievementID2 then
@@ -750,7 +751,7 @@ function LocalQuestUtils:IsWeekly(questID)
     if (gameQuestInfo and gameQuestInfo.frequency) then
         local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
         if (isWeekly and tContains(QuestFilterUtils.weeklyQuests, questID) and debug.isActive) then
-            -- Note: The weekly flag might be added by Blizzard at some  point. No need for duplicates.
+            -- Note: The weekly flag might be added by Blizzard at some point. No need for duplicates.
             debug:print(BLUE(format("Quest %s has been confirmed via API as weekly.", YELLOW(tostring(questID)))))
         end
         return isWeekly
@@ -1316,14 +1317,18 @@ end
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
-LocalUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
 
-function LocalUtils:GetMapInfo(mapID)
-    if not LocalUtils.mapInfoCache[mapID] then
-        LocalUtils.mapInfoCache[mapID] = C_Map.GetMapInfo(mapID)
-        debug:print("Added mapID", mapID, "to map cache")
+LocalMapUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
+LocalMapUtils.mapID = {
+    VASHJ_IR = 203,
+}
+
+function LocalMapUtils:GetMapInfo(mapID)
+    if not self.mapInfoCache[mapID] then
+        self.mapInfoCache[mapID] = C_Map.GetMapInfo(mapID)
+        debug:print(self, "Added mapID", mapID, "to map cache")
     end
-    return LocalUtils.mapInfoCache[mapID]
+    return self.mapInfoCache[mapID]
 end
 
 ----- Campaign Handler ----------
@@ -1737,8 +1742,8 @@ LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 
 local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
-local point2Offset = 0.008
-local zoneOffsetInfo = {  --> Some points are overlapping with something else on the map.
+local node2Offset = 0.008
+local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
     [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
     [69] = { x = 0.005, y = -0.02 }, -- Feralas
     [76] = { x = -0.02, y = 0 }, -- Azshara
@@ -1746,6 +1751,7 @@ local zoneOffsetInfo = {  --> Some points are overlapping with something else on
     [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
     [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
     [646] = { x = 0.025, y = 0 }, -- Broken Shore
+    -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
     [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
 }
 
@@ -1769,20 +1775,20 @@ local function GetTextureInfoFromAtlas(atlasName)
     end
 end
 
-local function AddAchievementPoint(mapID, x, y, achievementInfo, storyMapInfo)
+local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
     local icon = achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
     local scale = achievementInfo.completed and 1.5 or 1.2
     local coord = HandyNotes:getCoord(x, y)
     -- print(i, mapID, mapChildInfo.name, "-->", coord)
-    points[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+    nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
 end
 
-local function ProcessContinentInfo(parentMapInfo)
+local function GetContinentNodes(parentMapInfo)
     local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone)
     -- print("numChildren:", #mapChildren)
 
-    if not points[parentMapInfo.mapID] then
-        points[parentMapInfo.mapID] = {}
+    if not nodes[parentMapInfo.mapID] then
+        nodes[parentMapInfo.mapID] = {}
 
         for i, mapChildInfo in ipairs(mapChildren) do
             local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
@@ -1792,7 +1798,7 @@ local function ProcessContinentInfo(parentMapInfo)
                 local centerX = (maxX - minX) / 2 + minX
                 local centerY = (maxY - minY) / 2 + minY
 
-                -- Some points are overlapping with something else on the map. Use manual offset for those points.
+                -- Some nodes are overlapping with something else on the map. Use manual offset for those nodes.
                 if (zoneOffsetInfo[mapChildInfo.mapID] ~= nil) then
                     local offSet = zoneOffsetInfo[mapChildInfo.mapID]
                     centerX = centerX + offSet.x
@@ -1805,14 +1811,14 @@ local function ProcessContinentInfo(parentMapInfo)
                 local achievementInfo = ZoneStoryUtils:GetAchievementInfo(storyAchievementID)
                 if achievementInfo then
                     -- Adjust horizontal position if a 2nd achievement is available.
-                    centerX = storyAchievementID2 and centerX-point2Offset or centerX
-                    AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo, storyMapInfo)
+                    centerX = storyAchievementID2 and centerX - node2Offset or centerX
+                    AddAchievementNode(parentMapInfo.mapID, centerX, centerY, achievementInfo, storyMapInfo)
                 end
                 if storyAchievementID2 then
                     local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
                     if achievementInfo2 then
-                        centerX = centerX + (point2Offset * 2)
-                        AddAchievementPoint(parentMapInfo.mapID, centerX, centerY, achievementInfo2, storyMapInfo)
+                        centerX = centerX + (node2Offset * 2)
+                        AddAchievementNode(parentMapInfo.mapID, centerX, centerY, achievementInfo2, storyMapInfo)
                     end
                 end
             end
@@ -1837,14 +1843,12 @@ end
 -- same uiMapID as the argument passed in. Mainly used for continent uiMapID where the map passed
 -- in is a continent, and the return values are coords of subzone maps.
 --
-local function PointsDataIterator(t, prev)
+local function NodeIterator(t, prev)
     if not t then return end
-    -- debug:print("HN args -->", state, value)
+
     local coord, zoneData = next(t, prev)
-    -- print("Iter coord:", coord, type(zoneData))
     while coord do
         if zoneData then
-            -- print("Got:", coord, zoneData.icon)
             if not (ns.settings.hideCompletedZonesIcon and zoneData.achievementInfo.completed) then
                 -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
                 return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
@@ -1866,12 +1870,12 @@ end
 --
 function LoremasterPlugin:GetNodes2(uiMapID, minimap)
     -- debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "minimap:", minimap)
-    if minimap then return PointsDataIterator end  -- minimap is currently not used
+    if minimap then return NodeIterator end  -- minimap is currently not used
 
     if WorldMapFrame then
         local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
-        local mapInfo = LocalUtils:GetMapInfo(mapID)
+        local mapInfo = LocalMapUtils:GetMapInfo(mapID)
         debug:print(GRAY("GetNodes2"), "> mapID:", uiMapID, mapID, "mapType:", mapInfo.mapType)
 
         ns.activeZoneMapInfo = mapInfo
@@ -1883,21 +1887,20 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
             ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
-        if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent) then
+        if (isWorldMapShown and (mapInfo.mapType == Enum.UIMapType.Continent or mapID == LocalMapUtils.mapID.VASHJ_IR)) then
         -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
-            ProcessContinentInfo(mapInfo)
-            if TableHasAnyEntries(points) then
-                -- ns.points[mapInfo.mapID] = points[mapInfo.mapID]
-                return PointsDataIterator, points[mapInfo.mapID]
+            GetContinentNodes(mapInfo)
+            if TableHasAnyEntries(nodes) then
+                return NodeIterator, nodes[mapInfo.mapID]
             end
         end
 
-        return PointsDataIterator
+        return NodeIterator
     end
 
-    return PointsDataIterator
+    return NodeIterator
 end
 
 ----- Map pin tooltip handler -----
@@ -1906,7 +1909,7 @@ local wrapText = false
 
 -- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
 function LoremasterPlugin:OnEnter(mapID, coord)
-    local node = points[mapID] and points[mapID][coord]
+    local node = nodes[mapID] and nodes[mapID][coord]
     if node then
         local tooltip = GameTooltip
 
@@ -1955,7 +1958,7 @@ end
 -- Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
 function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
     -- Open the achievement frame at the current button's achievement.
-    local node = points[mapID] and points[mapID][coord]
+    local node = nodes[mapID] and nodes[mapID][coord]
     if node then
         if (button == "LeftButton") then
             if IsShiftKeyDown() then
