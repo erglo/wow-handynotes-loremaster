@@ -93,8 +93,9 @@ L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
 L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
 -- MINIMAP_TRACKING_TRIVIAL_QUESTS = "Niedrigstufige Quests";                   --> TODO - Add requirement to activate trivial quest tracking
 
-L.STORY_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
-L.STORY_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
+L.ZONE_NAME_FORMAT = "|T137176:16:16:0:-1|t %s"  -- 136366
+L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckmark:0:0:1:0|a"
+L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE = "%s"
 
 L.HINT_HOLD_KEY_FORMAT = "Hold %s to see details"
 L.HINT_HOLD_KEY_FORMAT_HOVER = "Hold %s and hover icon to see details"
@@ -397,13 +398,14 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     -- Zone story name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
-        local storyNameTemplate = achievementInfo.completed and L.STORY_NAME_FORMAT_COMPLETE or L.STORY_NAME_FORMAT_INCOMPLETE
         local storyName = pin.storyMapInfo and pin.storyMapInfo.name or achievementInfo.name
-        GameTooltip_AddColoredLine(tooltip, storyNameTemplate:format(achievementInfo.icon, storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
+        GameTooltip_AddColoredLine(tooltip, L.ZONE_NAME_FORMAT:format(storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
     end
 
     -- Achievement details
-    GameTooltip_AddNormalLine(tooltip, CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name), self.wrapLine)
+    local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
+    local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
+    GameTooltip_AddNormalLine(tooltip, achievementNameTemplate:format(achievementName), self.wrapLine)
     if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
         if not StringIsEmpty(achievementInfo.earnedBy) then
             GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
