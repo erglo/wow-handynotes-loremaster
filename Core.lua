@@ -1957,11 +1957,16 @@ function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
     -- Open the achievement frame at the current button's achievement.
     local node = points[mapID] and points[mapID][coord]
     if node then
-        local storyAchievementID = node.achievementInfo.achievementID
-        if (IsShiftKeyDown() and button == "LeftButton") then
-            -- REF.: <https://www.townlong-yak.com/framexml/live/UIParent.lua>
-            HideUIPanel(WorldMapFrame)
-            OpenAchievementFrameToAchievement(storyAchievementID)
+        if (button == "LeftButton") then
+            if IsShiftKeyDown() then
+                local storyAchievementID = node.achievementInfo.achievementID
+                -- REF.: <https://www.townlong-yak.com/framexml/live/UIParent.lua>
+                HideUIPanel(WorldMapFrame)
+                OpenAchievementFrameToAchievement(storyAchievementID)
+            else
+                -- Open subjacent zone map
+                self.owningMap:SetMapID(node.mapInfo.mapID)
+            end
         end
         -- if (button == "RightButton") then
         --     --> TODO - Add context menu
