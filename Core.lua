@@ -358,6 +358,8 @@ function ZoneStoryUtils:HasZoneStoryInfo(mapID)
 end
 
 function ZoneStoryUtils:GetAchievementInfo(achievementID)
+    if not achievementID then return end
+
     if not self.achievements[achievementID] then
         local achievementInfo = utils.achieve.GetWrappedAchievementInfo(achievementID)
         achievementInfo.numCriteria = utils.achieve.GetWrappedAchievementNumCriteria(achievementID)
@@ -518,9 +520,14 @@ QuestFilterUtils.dailyQuestLines = {
 -- All quests in this table have been marked obsolete by Blizzard and cannot be
 -- obtained or completed.
 QuestFilterUtils.obsoleteQuests = {
+    -- 25443,  -- Mount Hyjal, The Name Never Spoken
+    44886, 44887, 44944, 44556,  -- Legion, "Return to Karazhan" questline quests
+    56065,  -- BfA, Nazjatar, (???)
     62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
     72943,  -- Dragonflight, United Again
 }
+
+-- 25328 (quest giver is inside a cave @ 27003601)                              --> TODO: Add hint to cave entrance ???
 
 ----- Player Race ----------
 
@@ -530,19 +537,21 @@ local playerRaceID = select(3, UnitRace("player"))
 -- All quests in this table are bound to a specific player race.
 -- REF.: <https://wowpedia.fandom.com/wiki/RaceId>
 local raceQuests = {
-    ["8325"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Reclaiming Sunstrider Isle" (Horde)
-    ["8326"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Unfortunate Measures" (Horde)
-    ["8334"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Aggression" (Horde)
-    ["8335"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Felendren the Banished" (Horde)
-    ["8347"] = {10},  -- Eastern Kingdoms, Sunstrider Isle, "Aiding the Outrunners" (Horde)
-    ["9327"] = {10},  -- Eastern Kingdoms, Ghostlands, "The Forsaken"
-    ["28202"] = {3, 29, 34},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
-    ["28204"] = {7, 9},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
-    ["28205"] = {4},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
-    ["28428"] = {2, 5, 36},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
-    ["28429"] = {6, 24, 25, 26, 28},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
-    ["28430"] = {9, 35},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
-    ["28431"] = {8, 10, 27},  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["8325"] = { 10 },  -- Eastern Kingdoms, Sunstrider Isle, "Reclaiming Sunstrider Isle" (Horde)
+    ["8326"] = { 10 },  -- Eastern Kingdoms, Sunstrider Isle, "Unfortunate Measures" (Horde)
+    ["8334"] = { 10 },  -- Eastern Kingdoms, Sunstrider Isle, "Aggression" (Horde)
+    ["8335"] = { 10 },  -- Eastern Kingdoms, Sunstrider Isle, "Felendren the Banished" (Horde)
+    ["8347"] = { 10 },  -- Eastern Kingdoms, Sunstrider Isle, "Aiding the Outrunners" (Horde)
+    ["9327"] = { 10 },  -- Eastern Kingdoms, Ghostlands, "The Forsaken"
+    ["9762"] = { 11 },  -- Kalimdor, Bloodmyst Isle, "The Unwritten Prophecy"
+    ["28202"] = { 3, 29, 34 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28204"] = { 7, 9 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28205"] = { 4 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Alliance)
+    ["28428"] = { 2, 5, 36 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28429"] = { 6, 24, 25, 26, 28 }, -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28430"] = { 9, 35 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["28431"] = { 8, 10, 27 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
+    ["31139"] = { 32 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
 }
 
 -- Quests which are not bound to a specific player race are considered playable.
@@ -558,13 +567,21 @@ end
 -- local playerClassName, classFilename, playerClassID = UnitClass("player")
 local playerClassID = select(3, UnitClass("player"))
 
--- All quests in this table are specific to aka player class.
+-- All quests in this table are specific to aka player class.  
 -- REF.: <https://wowpedia.fandom.com/wiki/ClassId>
 local classQuests = {
-    ["54058"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Unintended Consequences" (Neutral)
-    ["54118"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
-    ["54433"] = {5},  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
+    ["28757"] = { 8 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Night Elf,  Gnome, Draenei)
+    ["28762"] = { 2 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Draenei)
+    ["28763"] = { 5 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["28764"] = { 4 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Night Elf,  Gnome, Worgen)
+    ["28765"] = { 9 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Gnome)
+    ["28766"] = { 1 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["28767"] = { 3 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["54058"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Unintended Consequences" (Neutral)
+    ["54118"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
+    ["54433"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
 }
+-- 29078  -- Eastern Kingdoms, Northshire, "Beating Them Back!"  (Auto-Accept, Worgen, Warrior)  --> TODO - Handle auto-accept types
 
 -- Quests which are not bound to a specific player class are considered playable.
 function QuestFilterUtils:ShouldShowClassQuest(questID)
@@ -580,6 +597,25 @@ local playerFactionGroup = UnitFactionGroup("player")
 
 -- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
 local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+
+-- Sometime `GetQuestFactionGroup()` does not return the correct faction group ID, eg. Neutral instead of Horde.
+local correctFactionGroupQuests = {
+    -- ["26334"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Northern Stranglethorn, "Bloodlord Mandokir"
+    -- ["26554"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, The Cape of Stranglethorn, "Plunging Into Zul'Gurub"
+    ["26081"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Arathi Highlands, "Alina's Reward"
+    -- ["26090"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "I Brought You This Egg"
+    -- ["26091"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "Here Fishie Fishie 2: Eel-Egg-Trick Boogaloo"
+    -- ["26149"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "Prisoners"
+    ["27090"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Western Plaguelands, "Andorhal, Once and For All"
+}
+
+-- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
+function QuestFilterUtils:GetQuestFactionGroup(questID)
+    local questFactionGroup = GetQuestFactionGroup(questID)
+    local correctedQuestFactionGroup = correctFactionGroupQuests[tostring(questID)]
+
+    return correctedQuestFactionGroup or questFactionGroup or QuestFactionGroupID.Neutral
+end
 
 -----
 
@@ -783,12 +819,6 @@ function LocalQuestUtils:IsStory(questID)
     return tContains(ns.lore.storyQuests, tostring(questID)) or IsStoryQuest(questID)
 end
 
--- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
-function LocalQuestUtils:GetQuestFactionGroup(questID)
-    local questFactionGroup = GetQuestFactionGroup(questID) or QuestFactionGroupID.Neutral
-    return questFactionGroup
-end
-
 -- Add daily and weekly quests to known quest types.
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     local tagInfo = questInfo.questTagInfo
@@ -855,7 +885,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isWeekly = self:IsWeekly(questID),
             -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
-            questFactionGroup = self:GetQuestFactionGroup(questID),
+            questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
@@ -907,7 +937,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isWorldQuest = C_QuestLog.IsWorldQuest(questID),
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
-            questFactionGroup = self:GetQuestFactionGroup(questID),
+            questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
@@ -1745,12 +1775,14 @@ local iconZoneStoryIncomplete = "common-icon-redx"
 local node2Offset = 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
     [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
+    [62] = { x = -0.015, y = 0 }, -- Darkshore
     [69] = { x = 0.005, y = -0.02 }, -- Feralas
     [76] = { x = -0.02, y = 0 }, -- Azshara
     [77] = { x = -0.015, y = -0.01 }, -- Felwood
     [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
     [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
     [646] = { x = 0.025, y = 0 }, -- Broken Shore
+    [895] = { x = 0.08, y = -0.04 }, -- Tiragarde Sound
     -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
     [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
 }
@@ -2085,6 +2117,9 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 -- GENERIC_FRACTION_STRING = "%d/%d";
 -- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
 -- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
+
+
+-- HandyNotes:getCoord(C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player"):GetXY())
 
 ]]
 --@end-do-not-package@

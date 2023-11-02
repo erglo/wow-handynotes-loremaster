@@ -4,3 +4,4 @@ Add chat message on finished achievement @achievement +chat
 Add right-click menu to continent pin @clickHandler +map +pin
 Add handler to track achievement @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
+Handle or mark quick-accept type quests @questLines +questPin +tooltip
