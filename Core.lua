@@ -97,10 +97,11 @@ L.ZONE_NAME_FORMAT = "|T137176:16:16:0:-1|t %s"  -- 136366
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckmark:0:0:1:0|a"
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE = "%s"
 
-L.HINT_HOLD_KEY_FORMAT = "Hold %s to see details"
-L.HINT_HOLD_KEY_FORMAT_HOVER = "Hold %s and hover icon to see details"
+L.HINT_HOLD_KEY_FORMAT = "<Hold %s to see details>"
+L.HINT_HOLD_KEY_FORMAT_HOVER = "<Hold %s and hover icon to see details>"
 L.HINT_VIEW_ACHIEVEMENT_CRITERIA = "<Shift-hover to view chapters>"
 L.HINT_VIEW_ACHIEVEMENT = "<Shift-click to view achievement>"  -- KEY_BUTTON1, KEY_BUTTON2 
+L.HINT_SET_WAYPOINT = "<Alt-click to create waypoint>"
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
@@ -145,10 +146,8 @@ debug.print = function(self, ...)
         print(YELLOW(prefix..":"), ...)
     end
 end
-debug.hooks = {}
-debug.hooks.debug = false
-debug.hooks.debug_prefix = "HOOKS:"
 
+local HookUtils =           { debug = false, debug_prefix = "HOOKS:" }
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
 local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
@@ -157,6 +156,7 @@ local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
 local QuestFilterUtils =    { debug = false, debug_prefix = "QFilter:" }
 local LocalMapUtils =       { debug = false, debug_prefix = "MAP:" }
+-- local TooltipUtils =        { debug = true, debug_prefix = "TTU:" }
 local LocalUtils = {}
 
 --> TODO: CampaignCache, QuestCache
@@ -581,7 +581,10 @@ local classQuests = {
     ["54118"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
     ["54433"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
 }
--- 29078  -- Eastern Kingdoms, Northshire, "Beating Them Back!"  (Auto-Accept, Worgen, Warrior)  --> TODO - Handle auto-accept types
+
+--> TODO - Handle auto-accept quest types
+-- 29078  -- Eastern Kingdoms, Northshire, "Beating Them Back!" (Auto-Accept, Worgen, Warrior)
+-- 29066  -- Kalimdor, Mount Hyjal, "Good News... and Bad News" (Auto-Accept, only finish-able before #25462 "The Bears Up There")
 
 -- Quests which are not bound to a specific player class are considered playable.
 function QuestFilterUtils:ShouldShowClassQuest(questID)
@@ -598,7 +601,7 @@ local playerFactionGroup = UnitFactionGroup("player")
 -- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
 local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
 
--- Sometime `GetQuestFactionGroup()` does not return the correct faction group ID, eg. Neutral instead of Horde.
+-- Sometimes `GetQuestFactionGroup()` does not return the correct faction group ID, eg. Neutral instead of Horde.
 local correctFactionGroupQuests = {
     -- ["26334"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Northern Stranglethorn, "Bloodlord Mandokir"
     -- ["26554"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, The Cape of Stranglethorn, "Plunging Into Zul'Gurub"
@@ -963,7 +966,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
     end
 
     if (targetType == "event") then
-        local playerMapID = C_Map.GetBestMapForUnit("player")
+        local playerMapID = LocalMapUtils:GetBestMapForPlayer()
         return {
             questName = questName,
             isDaily = self:IsDaily(questID),
@@ -1348,6 +1351,8 @@ LocalUtils.QuestPinTemplate = "QuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
 
+----- Map Utilities ----------
+
 LocalMapUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
 LocalMapUtils.mapID = {
     VASHJ_IR = 203,
@@ -1359,6 +1364,45 @@ function LocalMapUtils:GetMapInfo(mapID)
         debug:print(self, "Added mapID", mapID, "to map cache")
     end
     return self.mapInfoCache[mapID]
+end
+
+function LocalMapUtils:GetBestMapForPlayer()
+    -- Note: "Only works for the player and party members."
+    return C_Map.GetBestMapForUnit("player")
+end
+
+function LocalMapUtils:GetPlayerPosition()
+    -- Note: "Only works for the player and party members."
+    return C_Map.GetPlayerMapPosition(self:GetBestMapForPlayer(), "player")
+end
+
+-- Set a user waypoint on given map at given position.
+--
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/MapDocumentation.lua></br>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WaypointLocationDataProvider.lua></br>
+-- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/UiMapPoint.lua>
+-- 
+function LocalMapUtils:SetUserWaypointXY(mapID, posX, posY)
+    if C_Map.CanSetUserWaypointOnMap(mapID) then
+        local uiMapPoint = UiMapPoint.CreateFromCoordinates(mapID, posX, posY)
+        C_Map.SetUserWaypoint(uiMapPoint)
+        debug:print(self, "UserWayPoint has been set.")
+        return uiMapPoint
+    else
+        UIErrorsFrame:AddMessage(MAP_PIN_INVALID_MAP, RED_FONT_COLOR:GetRGBA())
+        ns.cprint(RED(MAP_PIN_INVALID_MAP))
+    end
+end
+-- local position = C_Map.GetUserWaypointPositionForMap(mapID)
+-- local uiMapPoint = C_Map.GetUserWaypoint()
+-- local uiMapPoint = C_Map.GetUserWaypointFromHyperlink(hyperlink)
+-- local hyperlink = C_Map.GetUserWaypointHyperlink()
+-- C_Map.HasUserWaypoint()
+
+-- local mapInfo = C_Map.GetMapInfoAtPosition(uiMapID, x, y, ignoreZoneMapPositionData)
+
+function LocalMapUtils:ClearUserWaypoint()
+    C_Map.ClearUserWaypoint()
 end
 
 ----- Campaign Handler ----------
@@ -1544,9 +1588,13 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
 
+    -- Waypoint hint
+    GameTooltip_AddBlankLineToTooltip(tooltip)
+    GameTooltip_AddInstructionLine(tooltip, L.HINT_SET_WAYPOINT)
+
     GameTooltip:Show()
 
-    -- print("tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
+    -- debug:print(TooltipUtils, "tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
 end
 
 -- local function HNQH_TaskPOI_OnEnter(pin, skipSetOwner)
@@ -1576,7 +1624,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Extend quest meta data
     pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    debug:print(debug.hooks, "isPreviousPin:", pin.isPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
+    debug:print(HookUtils, "isPreviousPin:", pin.isPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
     if not pin.isPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
@@ -1619,11 +1667,15 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
 
     GameTooltip:Show()
+
+    -- debug:print(TooltipUtils, "tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
 end
 
 local function Hook_OnClick(pin, mouseButton)                                   --> TODO - Needed ???
     if IsAltKeyDown() then
-        debug:print("Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
+        debug:print(HookUtils, "Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
+
+        LocalMapUtils:SetUserWaypointXY(pin.mapID, pin:GetPosition())
     end
 end
 
@@ -1636,7 +1688,7 @@ end
 
 function LoremasterPlugin:OnProfileChanged(event, ...)
     -- REF.: <https://www.wowace.com/projects/ace3/pages/api/ace-db-3-0>
-    debug:print(debug.hooks, event, ...)
+    debug:print(HookUtils, event, ...)
 
     if (event == "OnProfileReset") then
         -- local database = ...
@@ -1679,12 +1731,12 @@ function LoremasterPlugin:OnHandyNotesStateChanged()
 end
 
 function LoremasterPlugin:RegisterHooks()
-    debug:print(debug.hooks, "Hooking active quests...")
+    debug:print(HookUtils, "Hooking active quests...")
     hooksecurefunc(QuestPinMixin, "OnMouseEnter", Hook_ActiveQuestPin_OnEnter)
     hooksecurefunc(QuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(QuestPinMixin, "OnClick", Hook_OnClick)
 
-    debug:print(debug.hooks, "Hooking storyline quests...")
+    debug:print(HookUtils, "Hooking storyline quests...")
     hooksecurefunc(StorylineQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
     hooksecurefunc(StorylineQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(StorylineQuestPinMixin, "OnClick", Hook_OnClick)
@@ -2117,9 +2169,6 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 -- GENERIC_FRACTION_STRING = "%d/%d";
 -- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
 -- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
-
-
--- HandyNotes:getCoord(C_Map.GetPlayerMapPosition(C_Map.GetBestMapForUnit("player"), "player"):GetXY())
 
 ]]
 --@end-do-not-package@
