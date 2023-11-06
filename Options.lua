@@ -46,7 +46,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_questline"] = "show",
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
-        ["saveRecurringQuests"] = false,
+        -- ["saveRecurringQuests"] = false,
         ["hideCompletedZonesIcon"] = false,
 	},
 }

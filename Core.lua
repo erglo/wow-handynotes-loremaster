@@ -389,8 +389,10 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
     local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID or pin.achievementID
-    local achievementInfo = pin.achievementInfo or self:GetAchievementInfo(storyAchievementID)
     local is2nd = pin.achievementID == pin.achievementID2
+    local achievementInfo = pin.achievementInfo or self:GetAchievementInfo(storyAchievementID)
+
+    if not achievementInfo then return false end
 
     -- Category name
     if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
@@ -1767,11 +1769,23 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if QuestFilterUtils:ShouldSaveRecurringQuest(questInfo) then
         local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
         QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     end
+    -- if questInfo.hasQuestLineInfo then
+    --     -- local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
+    --     local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
+    --     if questLineInfo then
+    --         if C_QuestLine.IsComplete(questLineInfo.questLineID) then
+    --             local questLineName = L.QUESTLINE_NAME_FORMAT:format(QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName))
+    --             ns.cprint(SPLASH_BOOST_HEADER, format("You have completed the questline %s.", questLineName))
+    --         else
+    --             print("> Not complete, yet.")
+    --         end
+    --     end
+    -- end
 end
 
 -- Remove a saved active questline, if available.
@@ -1782,7 +1796,7 @@ function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
         local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
         for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
@@ -1800,7 +1814,7 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest accepted:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    debug:print(QuestFilterUtils, "> isStory-isCampaign-hasQuestLineInfo:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if questInfo.hasQuestLineInfo then
         -- local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
