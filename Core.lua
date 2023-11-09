@@ -475,7 +475,8 @@ end
 
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
-    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75861, 77254, 77976, 75860,  -- Dragonflight, "Aiding the Accord" quests
+    70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
+    78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
     61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
