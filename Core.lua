@@ -437,6 +437,13 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                 GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, self.wrapLine)
             else
                 GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
+                if (debug.isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                    local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
+                    local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
+                    local lineTemplate = "|A: :16:12:0:0|a %s"  --> needed for indention
+                    GameTooltip_AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                    -- GameTooltip_AddHighlightLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                end
             end
         end
     else
@@ -691,7 +698,7 @@ local QuestTagNames = {
 local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, 109}
 
 -- Add quest type tags (text or icon) to a quest name.
-local function FormatQuestName(questInfo)
+function LocalQuestUtils:FormatQuestName(questInfo)
     local iconString;
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
@@ -759,6 +766,19 @@ local function FormatQuestName(questInfo)
     end
 
     return questTitle
+end
+
+function LocalQuestUtils:FormatAchievementQuestName(questInfo, fallbackName)
+    if not StringIsEmpty(questInfo.questName) then
+        local iconString = CreateAtlasMarkup("SmallQuestBang", 16, 16, 1, -1)   --> TODO - Also show trivial quest icon
+        local questTitle = iconString..QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
+        if (questInfo.questType ~= 0) then
+            iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
+            questTitle = questTitle..iconString
+        end
+        return questTitle
+    end
+    return fallbackName
 end
 
 ----- Quest Handler ----------
@@ -974,9 +994,26 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDaily = self:IsDaily(questID),
             isWeekly = self:IsWeekly(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
-            isStory = IsStoryQuest(questID),
+            isStory = self:IsStory(questID),
             hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, playerMapID),
             playerMapID = playerMapID
+        }
+    end
+
+    if (targetType == "basic") then
+        local playerMapID = LocalMapUtils:GetBestMapForPlayer()
+        return {
+            -- isCalling = C_QuestLog.IsQuestCalling(questID),
+            -- isDaily = self:IsDaily(questID),
+            -- isImportant = C_QuestLog.IsImportantQuest(questID),
+            -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
+            -- isWeekly = self:IsWeekly(questID),
+            questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
+            questID = questID,
+            questMapID = pinMapID or playerMapID,
+            questName = questName,
+            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
+            questType = C_QuestLog.GetQuestType(questID),
         }
     end
 end
@@ -1324,7 +1361,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                 end
             end
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
-            local questTitle = FormatQuestName(questInfo)
+            local questTitle = LocalQuestUtils:FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
                 if (questInfo.isFlaggedCompleted and isActiveQuest) then
                     GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle), GREEN_FONT_COLOR, wrapLine)
@@ -1352,6 +1389,10 @@ end
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
+LocalUtils.CriteriaType = {
+    Achievement = 8,
+    Quest = 27,
+}
 
 ----- Map Utilities ----------
 
@@ -1392,7 +1433,7 @@ function LocalMapUtils:SetUserWaypointXY(mapID, posX, posY)
         return uiMapPoint
     else
         UIErrorsFrame:AddMessage(MAP_PIN_INVALID_MAP, RED_FONT_COLOR:GetRGBA())
-        ns.cprint(RED(MAP_PIN_INVALID_MAP))
+        ns:cprint(RED(MAP_PIN_INVALID_MAP))
     end
 end
 -- local position = C_Map.GetUserWaypointPositionForMap(mapID)
@@ -1780,7 +1821,7 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     --     if questLineInfo then
     --         if C_QuestLine.IsComplete(questLineInfo.questLineID) then
     --             local questLineName = L.QUESTLINE_NAME_FORMAT:format(QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName))
-    --             ns.cprint(SPLASH_BOOST_HEADER, format("You have completed the questline %s.", questLineName))
+    --             ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the questline %s.", questLineName))
     --         else
     --             print("> Not complete, yet.")
     --         end
@@ -1826,11 +1867,50 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
             end
         end
     end
+    -- if questInfo.isStory then
+    --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
+    --     ns:cprint(nameTemplate:format(ORANGE("This quest ist part of a story.")))
+    -- end
 end
+
+-- function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
+--     local achievementID, alreadyEarned = ...
+--     local playerMapID = LocalMapUtils:GetBestMapForPlayer()
+--     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+--     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
+--         local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
+--         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
+--         local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo and achievementInfo.achievementName or mapInfo.name))
+--         ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the story %s in %s.", achievementName, mapInfo.name))
+--     end
+-- end
+
+-- function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
+--     local achievementID, description = ...
+--     local playerMapID = LocalMapUtils:GetBestMapForPlayer()
+--     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+--     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
+--         local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
+--         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
+--         if achievementInfo then 
+--             local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo.achievementName))
+--             ns:cprintf("You have completed \"%s\". This is part of the zone story %s of %s.", description, achievementName, mapInfo.name)
+--             local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
+--             if (numLeft > 0) then
+--                 ns:cprintf("%d more to go to complete this achievement.", numLeft)
+--             end
+--             if achievementInfo.completed then
+--                 ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the story %s in %s.", achievementName, mapInfo.name))
+--             end
+--         end
+--     end
+-- end
 
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
+-- -- LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
+-- LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
