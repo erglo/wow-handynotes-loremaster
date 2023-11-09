@@ -46,7 +46,6 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_questline"] = "show",
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
-        -- ["saveRecurringQuests"] = false,
         ["hideCompletedZonesIcon"] = false,
 	},
 }
@@ -90,28 +89,12 @@ ns.pluginInfo.options = function(HandyNotes)
                         name = LocalOptionUtils:CreateAboutBody(),
                         order = 2,
                     },
-                    chat_notifications_group = {
-                        type = "group",
-                        name = SHOW_TOAST_CONVERSATION_TEXT,  -- CHAT_LABEL,
-                        inline = true,
-                        order = 10,
-                        args = {
-                            welcome_msg = {
-                                type = "toggle",
-                                name = "Plugin-is-Ready Message",
-                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
-                                arg = "showWelcomeMessage",
-                                width ="double",
-                                order = 3,
-                            },
-                        },
-                    },
                 }
             },  --> about
             tooltip_details_zone = {
                 type = "group",
-                name = "Tooltip Content",
-                -- name = "Tooltip"..ITEM_NAME_DESCRIPTION_DELIMITER..PARENS_TEMPLATE:format(ZONE),
+                -- name = "Tooltip Content",
+                name = "Tooltip"..ITEM_NAME_DESCRIPTION_DELIMITER..PARENS_TEMPLATE:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
                 order = 1,
                 args = {
@@ -270,6 +253,70 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                 },
             },  --> tooltip_details_continent
+            notification_settings = {
+                type = "group",
+                name = "Notifications",
+                desc = "Choose how or whether you want to be notified of lore relevant content.",
+                order = 3,
+                args = {
+                    description = {
+                        type = "description",
+                        name = "Choose how or whether you want to be notified of plugin changes.".."|n|n",
+                        order = 0,
+                    },
+                    chat_notifications_group = {
+                        type = "group",
+                        name = CHAT_LABEL,
+                        inline = true,
+                        order = 10,
+                        args = {
+                            welcome_msg = {
+                                type = "toggle",
+                                name = "Show Plugin-is-Ready Message",
+                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
+                                arg = "showWelcomeMessage",
+                                width ="double",
+                                order = 1,
+                            },
+                            criteria_earned_msg = {
+                                type = "toggle",
+                                name = "Show Progress Message",
+                                desc = "Notifies you in chat when you earned a lore-relevant achievement or criteria.",
+                                arg = "showCriteriaEarnedMessage",
+                                width ="double",
+                                order = 2,
+                            },
+                            -- incomplete_zone_stories_msg = {
+                            --     type = "toggle",
+                            --     name = "Incomplete Zone Stories",
+                            --     desc = "Notifies you of Zone Stories which haven't been completed on the currently viewed map.",
+                            --     arg = "showIncompleteZoneStories",
+                            --     width ="double",
+                            --     order = 10,
+                            --     disabled = true,
+                            -- },
+                            -- incomplete_questlines_msg = {
+                            --     type = "toggle",
+                            --     name = "Incomplete Questlines",
+                            --     desc = "Notifies you of questlines which haven't been completed on the currently viewed map.",
+                            --     arg = "showIncompleteQuestLines",
+                            --     width ="double",
+                            --     order = 20,
+                            --     disabled = true,
+                            -- },
+                            -- incomplete_campaigns_msg = {
+                            --     type = "toggle",
+                            --     name = "Incomplete Campaigns",
+                            --     desc = "Notifies you of story campaigns which haven't been completed, yet.",
+                            --     arg = "showIncompleteCampaigns",
+                            --     width ="double",
+                            --     order = 30,
+                            --     disabled = true,
+                            -- },
+                        },
+                    },  --> chat_notifications
+                },
+            },  --> notification_settings
         } --> root parent group
     }
 end

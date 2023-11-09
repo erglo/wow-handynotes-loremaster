@@ -1885,32 +1885,35 @@ end
 --     end
 -- end
 
--- function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
---     local achievementID, description = ...
---     local playerMapID = LocalMapUtils:GetBestMapForPlayer()
---     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
---     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
---         local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
---         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
---         if achievementInfo then 
---             local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo.achievementName))
---             ns:cprintf("You have completed \"%s\". This is part of the zone story %s of %s.", description, achievementName, mapInfo.name)
---             local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
---             if (numLeft > 0) then
---                 ns:cprintf("%d more to go to complete this achievement.", numLeft)
---             end
---             if achievementInfo.completed then
---                 ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the story %s in %s.", achievementName, mapInfo.name))
---             end
---         end
---     end
--- end
+function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
+    if not ns.settings.showCriteriaEarnedMessage then return end
+
+    local achievementID, description = ...
+    local playerMapID = LocalMapUtils:GetBestMapForPlayer()
+    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+    if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
+        local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
+        local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
+        if achievementInfo then
+            local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo.name))
+            ns:cprintf("You have completed \"%s\".", description)
+            ns:cprintf("> This is part of the zone story %s of %s.", achievementName, mapInfo.name)
+            local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
+            if (numLeft == 0) then
+                ns:cprintf("> %d more to go to complete this achievement.", numLeft)
+            end
+            if achievementInfo.completed then
+                ns:cprint(ORANGE(SPLASH_BOOST_HEADER), format("You have completed the story %s in %s.", achievementName, mapInfo.name))
+            end
+        end
+    end
+end
 
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
--- -- LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
--- LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
+-- LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
+LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
