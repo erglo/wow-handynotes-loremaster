@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Settings: moved chat notifications to the about section.
+* Zone Story: an story achievement can now be displayed in a single line or in multiple (auto-collapsible) lines.
 * Zone Story: a zone's Loremaster achievement name is now shown in the Zone tooltip details.
 
 ## [0.3.0-alpha+100107] - 2023-10-14

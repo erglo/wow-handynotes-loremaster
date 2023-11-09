@@ -397,11 +397,11 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     -- Category name
     if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
         GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
-    else
+    elseif not ns.settings.showSingleLineAchievements then
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
-    -- Zone story name
+    -- Zone name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
         local storyName = pin.storyMapInfo and pin.storyMapInfo.name or achievementInfo.name
         GameTooltip_AddColoredLine(tooltip, L.ZONE_NAME_FORMAT:format(storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
@@ -411,6 +411,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
     local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
     GameTooltip_AddNormalLine(tooltip, achievementNameTemplate:format(achievementName), self.wrapLine)
+    if ns.settings.showSingleLineAchievements then return true end
+
     if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
         if not StringIsEmpty(achievementInfo.earnedBy) then
             GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
@@ -1587,7 +1589,8 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     currentPin = pin
 
     -- Extend quest meta data
-    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+    -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+    pin.mapID = pin:GetMap():GetMapID()
     pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
     if not pin.isPreviousPin then
         -- Only update (once) when hovering a different quest pin
@@ -1666,7 +1669,8 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     currentPin = pin
 
     -- Extend quest meta data
-    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+    -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+    pin.mapID = pin:GetMap():GetMapID()
     pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
     debug:print(HookUtils, "isPreviousPin:", pin.isPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
     if not pin.isPreviousPin then
@@ -2109,10 +2113,17 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         else
             GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
         end
+        if ns.settings.showSingleLineAchievements then                          --> TODO - Separate continent "zone" settings
+            GameTooltip_AddBlankLineToTooltip(tooltip)
+        end
 
          -- Zone Story details
-         self.achievementInfo = node.achievementInfo
-         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, self)
+         local fakePin = {
+            mapID = mapID,
+            achievementInfo = node.achievementInfo,
+            pinTemplate = LocalUtils.HandyNotesPinTemplate,
+         }
+         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, fakePin)
 
          -- Hint to view achievement
          GameTooltip_AddBlankLineToTooltip(tooltip)

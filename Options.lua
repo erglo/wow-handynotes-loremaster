@@ -46,6 +46,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_questline"] = "show",
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
+        ["showSingleLineAchievements"] = false,
         ["hideCompletedZonesIcon"] = false,
 	},
 }
@@ -156,6 +157,14 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "collapseType_zonestory",
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
+                            },
+                            single_line_achievements = {
+                                type = "toggle",
+                                name = "Single Line Achievements",
+                                desc = "Displays earned story achievements in a single line instead of multiple (auto-collapsible) lines.",
+                                arg = "showSingleLineAchievements",
+                                width = "double",
+                                order = 3,
                             },
                         },
                     },
