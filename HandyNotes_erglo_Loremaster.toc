@@ -1,4 +1,4 @@
-## Interface: 100107
+## Interface: 100200
 ## Title: HandyNotes: Loremaster
 ## Notes: Helps you keep track of the Loremaster and story quest achievements as well as other questlines.
 ## Notes-deDE: Hilft euch die "Meister der Lehren" Erfolge, Geschichtsquests und sonstige Questreihen im Blick zu behalten.
