@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * A waypoint can now be created to the currently hovered quest icon.
 * Settings: added option to get notified in chat whenever a lore-relevant achievement or criteria has been earned.
 * Settings: added option to hide the icons over zones with a completed story.
-* Zone Story: added zone stories manually for Shadowlands and Dragonflight; their main zones have each two stories which are required for the Loremaster achievements.
+* Zone Story: added zone stories manually for Shadowlands and Dragonflight; their main zones have each two stories which are required for the Loremaster achievements (Dragonflight is not yet part of the achievement).
 * Zone Story: added completion check to the Worldmap's `continent view` with two icons (a green checkmark for complete and a red X for incomplete achievements).
 * Questlines: active quests can now display chapter details; by default Blizzard does not provide any questline information for active quests.
 * Questlines: zone story quests will now optionally be highlighted in orange text color.
@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Settings: moved chat notifications to the about section.
-* Zone Story: an story achievement can now be displayed in a single line or in multiple (auto-collapsible) lines.
+* Zone Story: a story achievement can now be displayed in a single line or in more detailed multiple auto-collapsible lines.
 * Zone Story: a zone's Loremaster achievement name is now shown in the Zone tooltip details.
 
 ## [0.3.0-alpha+100107] - 2023-10-14

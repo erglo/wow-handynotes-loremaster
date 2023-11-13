@@ -993,7 +993,9 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
     if (targetType == "event") then
         local playerMapID = LocalMapUtils:GetBestMapForPlayer()
         return {
+            questID = questID,
             questName = questName,
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
             isDaily = self:IsDaily(questID),
             isWeekly = self:IsWeekly(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
@@ -1006,15 +1008,10 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
     if (targetType == "basic") then
         local playerMapID = LocalMapUtils:GetBestMapForPlayer()
         return {
-            -- isCalling = C_QuestLog.IsQuestCalling(questID),
-            -- isDaily = self:IsDaily(questID),
-            -- isImportant = C_QuestLog.IsImportantQuest(questID),
-            -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
-            -- isWeekly = self:IsWeekly(questID),
-            questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questID = questID,
-            questMapID = pinMapID or playerMapID,
             questName = questName,
+            questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
+            questMapID = pinMapID or playerMapID,
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
             questType = C_QuestLog.GetQuestType(questID),
         }
@@ -1244,8 +1241,23 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     return filteredQuestInfos
 end
 
+-- Check if given quest is part of a questline.
+---@param questID number
+---@param mapID number
+---@return boolean hasQuestLineInfo
+--
 function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
-    return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
+    local hasInfo = (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
+    if hasInfo then return true end
+
+    -- Also search DB for active questlines
+    local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+    for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
+        if (questID == activeQuestLineInfo.questID) then
+            return true
+        end
+    end
+    return false
 end
 
 -- function LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
@@ -1591,8 +1603,8 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Extend quest meta data
     -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.mapID = pin:GetMap():GetMapID()
-    pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not pin.isPreviousPin then
+    pin.isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not pin.isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
     end
@@ -1671,9 +1683,9 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Extend quest meta data
     -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.mapID = pin:GetMap():GetMapID()
-    pin.isPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    debug:print(HookUtils, "isPreviousPin:", pin.isPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
-    if not pin.isPreviousPin then
+    pin.isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    debug:print(HookUtils, "isSameAsPreviousPin:", pin.isSameAsPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
+    if not pin.isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
     end
@@ -1846,8 +1858,9 @@ function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
         local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
         for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            if (questID == activeQuestLineInfo.questID) then
-                debug:print(LocalQuestLineUtils, "> Removing active QL:", activeQuestLineInfo.questLineID)
+            if (questID == activeQuestLineInfo.questID or questInfo.isFlaggedCompleted) then
+                -- Remove current completed quest's questline as well as any possible "slipped through" ones
+                debug:print(DBUtil, "> Removing active QL:", activeQuestLineInfo.questLineID,  questInfo.isFlaggedCompleted)
                 activeQuestlinesDB[i] = nil
             end
         end
@@ -1862,13 +1875,12 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if questInfo.hasQuestLineInfo then
-        -- local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
         if questLineInfo then
-            debug:print(LocalQuestLineUtils, "> Saving active QL", questLineInfo.questLineID)
             local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
             if not tContains(activeQuestlinesDB, questLineInfo) then
                 tInsert(activeQuestlinesDB, questLineInfo)
+                debug:print(DBUtil, "> Saved active QL", questLineInfo.questLineID)
             end
         end
     end
@@ -1877,18 +1889,6 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     --     ns:cprint(nameTemplate:format(ORANGE("This quest ist part of a story.")))
     -- end
 end
-
--- function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
---     local achievementID, alreadyEarned = ...
---     local playerMapID = LocalMapUtils:GetBestMapForPlayer()
---     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
---     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
---         local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
---         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
---         local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo and achievementInfo.achievementName or mapInfo.name))
---         ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the story %s in %s.", achievementName, mapInfo.name))
---     end
--- end
 
 function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
     if not ns.settings.showCriteriaEarnedMessage then return end
@@ -1917,7 +1917,6 @@ end
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
--- LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
 LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 --------------------------------------------------------------------------------
