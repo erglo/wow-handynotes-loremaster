@@ -64,9 +64,6 @@ ns.pluginInfo.options = function(HandyNotes)
             else
                 LocalOptionUtils:printOption(info.option.name, value)
             end
-            if (info.arg == "hideCompletedZonesIcon") then
-                HandyNotes.WorldMapDataProvider:RefreshAllData()
-            end
         end,
         args = {
             about = {
@@ -256,6 +253,10 @@ ns.pluginInfo.options = function(HandyNotes)
                         name = "Hide Completed Zone Icon",
                         desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
                         arg = "hideCompletedZonesIcon",
+                        set = function(info, value)
+                            ns.settings[info.arg] = value
+                            HandyNotes.WorldMapDataProvider:RefreshAllData()
+                        end,
                         width ="double",
                         order = 1,
                         -- disabled = true,
