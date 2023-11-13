@@ -233,6 +233,14 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
+                            alt_chapter_names = {
+                                type = "toggle",
+                                name = "Show Alternative Chapter Names",
+                                desc = "Some chapters have an alternative chapter name, eg. when they are linked with other campaigns.|nIf activated, they will be shown below the default chapter name.",
+                                arg = "showAltChapterNames",
+                                width = "double",
+                                order = 3,
+                            },
                         },
                     },
                 }

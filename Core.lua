@@ -478,7 +478,7 @@ end
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
     70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
-    78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
+    78447, 78861,  -- Dragonflight, "Aiding the Accord" quests  78446,
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
     61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
@@ -1544,7 +1544,16 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
                 else
                     GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
                 end
-                if DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
+                if ns.settings.showAltChapterNames and not StringIsEmpty(chapterInfo.description) then
+                    local lineTemplate = "|A: :16:16:0:0|a "..PARENS_TEMPLATE  --> needed for indention
+                    local lineText = chapterInfo.description
+                    if (chapterIsComplete and isActive) or chapterIsComplete then
+                        GameTooltip_AddColoredLine(tooltip, lineTemplate:format(lineText), GREEN_FONT_COLOR, self.wrap_chapterName)
+                    else
+                        GameTooltip_AddHighlightLine(tooltip, lineTemplate:format(lineText), self.wrap_chapterName)
+                    end
+                end
+                if not ns.settings.showAltChapterNames and DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
                     GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
                 end
             end

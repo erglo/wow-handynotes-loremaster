@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * A waypoint can now be created to the currently hovered quest icon.
+* Campaign: alternative chapter names can now optionally be shown. Only some chapters have those, eg. when they are linked with other campaigns.
 * Settings: added option to get notified in chat whenever a lore-relevant achievement or criteria has been earned.
 * Settings: added option to hide the icons over zones with a completed story.
 * Zone Story: added zone stories manually for Shadowlands and Dragonflight; their main zones have each two stories which are required for the Loremaster achievements (Dragonflight is not yet part of the achievement).
