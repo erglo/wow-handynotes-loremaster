@@ -917,8 +917,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
-            questType = C_QuestLog.GetQuestType(questID),
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
+            questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
+            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
         }
         -- if not (StringIsEmpty(questName) and self.cache[questID]) then
         --     -- Should not be cached w/o a name
@@ -969,8 +969,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questID = questID,
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
-            questType = C_QuestLog.GetQuestType(questID),
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
+            questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
+            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
             -- Test
             questWatchType = C_QuestLog.GetQuestWatchType(questID),
             isFailed = C_QuestLog.IsFailed(questID),
@@ -995,6 +995,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         return {
             questID = questID,
             questName = questName,
+            questLevel = C_QuestLog.GetQuestDifficultyLevel(questID),
             isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
             isDaily = self:IsDaily(questID),
             isWeekly = self:IsWeekly(questID),
@@ -1012,10 +1013,27 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questMapID = pinMapID or playerMapID,
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),
-            questType = C_QuestLog.GetQuestType(questID),
+            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
         }
     end
+end
+
+-- Return a QuestLink string for given quest.
+---@param questInfo table
+---@return string questLink
+--
+-- REF.: <https://warcraft.wiki.gg/wiki/API_GetQuestLink><br>
+-- REF.: <https://warcraft.wiki.gg/wiki/QuestLink><br>
+-- REF.: <https://warcraft.wiki.gg/wiki/Hyperlinks#quest>
+--
+function LocalQuestUtils:GetCreateQuestLink(questInfo)
+    local questLink = GetQuestLink(questInfo.questID)
+    if not StringIsEmpty(questLink) then return questLink end
+
+    -- Create manually; need at least questID, questLevel, questName
+    local templateString = "|cff808080|Hquest:%d:%d|h[%s]|h|r"
+    return templateString:format(questInfo.questID, questInfo.questLevel, questInfo.questName)
 end
 
 -- -- Retrieve different (mostly cached) quest details.
@@ -1853,6 +1871,22 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     --         end
     --     end
     -- end
+    if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
+        -- local mapInfo = LocalMapUtils:GetMapInfo(questInfo.playerMapID)
+        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
+            if (questID == activeQuestLineInfo.questID) then
+                -- Inform user
+                local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
+                ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
+                -- ns:cprintf("This quest is part of the questline \"%s\" in %s.", activeQuestLineInfo.questLineName, mapInfo.name)
+                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
+                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                ns:cprintf("This quest is part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
+                break
+            end
+        end
+    end
 end
 
 -- Remove a saved active questline, if available.
@@ -1862,15 +1896,23 @@ function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
-    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+    -- debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+    -- debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
         local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+        debug:print(DBUtil, "Removing active questlines...", activeQuestlinesDB and activeQuestlinesDB, activeQuestlinesDB and #activeQuestlinesDB)
         for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            if (questID == activeQuestLineInfo.questID or questInfo.isFlaggedCompleted) then
-                -- Remove current completed quest's questline as well as any possible "slipped through" ones
-                debug:print(DBUtil, "> Removing active QL:", activeQuestLineInfo.questLineID,  questInfo.isFlaggedCompleted)
+            -- print(i, activeQuestLineInfo.questLineID, questID, activeQuestLineInfo.questID, questInfo.questID)
+            if (questID == activeQuestLineInfo.questID) then
+                -- Remove current completed quest's questline
+                debug:print(DBUtil, "> Removing active QL:", activeQuestLineInfo.questLineID)
                 activeQuestlinesDB[i] = nil
+            elseif C_QuestLog.IsQuestFlaggedCompleted(activeQuestLineInfo.questID) then
+                -- Remove any possibly "slipped through" questline info
+                debug:print(DBUtil, "> Removing completed QL:", activeQuestLineInfo.questLineID)
+                activeQuestlinesDB[i] = nil
+            else
+                debug:print(DBUtil, "Skipped:", activeQuestLineInfo.questID, questID, questID == activeQuestLineInfo.questID)
             end
         end
     end
@@ -1890,6 +1932,10 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
             if not tContains(activeQuestlinesDB, questLineInfo) then
                 tInsert(activeQuestlinesDB, questLineInfo)
                 debug:print(DBUtil, "> Saved active QL", questLineInfo.questLineID)
+                -- Inform user
+                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                ns:cprintf("This quest is part of the questline \"%s\" (%s).", questLineInfo.questLineName, questLineCountString)
             end
         end
     end
@@ -1899,6 +1945,22 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     -- end
 end
 
+function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
+    if not ns.settings.showCriteriaEarnedMessage then return end
+
+    local achievementID, alreadyEarned = ...
+    local playerMapID = LocalMapUtils:GetBestMapForPlayer()
+    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+    if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
+        local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
+        if achievementInfo then
+            local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
+            local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
+            ns:cprint(ORANGE(SPLASH_BOOST_HEADER), format("You have completed %s in %s.", achievementLink, mapInfo.name))
+        end
+    end
+end
+
 function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
     if not ns.settings.showCriteriaEarnedMessage then return end
 
@@ -1906,26 +1968,25 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
     local playerMapID = LocalMapUtils:GetBestMapForPlayer()
     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
-        local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
-            local achievementName = L.ZONE_NAME_FORMAT:format(ZONE_STORY_HEADER_COLOR:WrapTextInColorCode(achievementInfo.name))
-            ns:cprintf("You have completed \"%s\".", description)
-            ns:cprintf("> This is part of the zone story %s of %s.", achievementName, mapInfo.name)
+            local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
+            local criteriaAmount = PARENS_TEMPLATE:format(GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+            ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
             local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
-            if (numLeft == 0) then
-                ns:cprintf("> %d more to go to complete this achievement.", numLeft)
-            end
-            if achievementInfo.completed then
-                ns:cprint(ORANGE(SPLASH_BOOST_HEADER), format("You have completed the story %s in %s.", achievementName, mapInfo.name))
+            if (numLeft > 0) then
+                ns:cprintf(YELLOW("> %d more to go to complete this achievement."), numLeft)
             end
         end
     end
 end
+-- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
+-- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 1195, "Schattenmond") end
 
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
+LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
 LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 --------------------------------------------------------------------------------
@@ -2211,12 +2272,6 @@ end
 -- end
 
 -----
-
-GetQuestLink(questID)
-
-C_QuestLog.GetQuestDifficultyLevel(questID)  --> 60
-C_QuestLog.GetQuestTagInfo(questID)  --> QuestTagInfo table
-C_QuestLog.GetQuestType(questID)  --> Enum.QuestTag
 
 -- local percent = math.floor((numFulfilled/numRequired) * 100);                --> TODO - Add progress percentage ???
 -- GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));

@@ -350,7 +350,7 @@ LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
     local msg = isEnabled and self.statusEnabledString or self.statusDisabledString
-    ns:cprintf(self.statusFormatString, text, NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
+    ns:cprintf(self.statusFormatString, text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
 end
 
 LocalOptionUtils.CreateAboutHeader = function(self)
