@@ -205,7 +205,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             save_recurring_quests = {
                                 type = "toggle",
                                 name = "Remember Recurring Quests",
-                                desc = "By default Blizzard resets recurring quests eg. daily or weekly.|nActivate to display recurring quests as completed, once they've been turned in.",
+                                desc = "By default Blizzard resets recurring quests eg. daily or weekly.|nActivate to display recurring quests as completed, once you've turned them in.",
                                 arg = "saveRecurringQuests",
                                 width = "double",
                                 order = 5,
@@ -298,9 +298,17 @@ ns.pluginInfo.options = function(HandyNotes)
                             },
                             criteria_earned_msg = {
                                 type = "toggle",
-                                name = "Show Progress Message",
+                                name = "Show Achievement Progress Message",
                                 desc = "Notifies you in chat when you earned a lore-relevant achievement or criteria.",
                                 arg = "showCriteriaEarnedMessage",
+                                width ="double",
+                                order = 2,
+                            },
+                            quest_turned_in_msg = {
+                                type = "toggle",
+                                name = "Show Questline Progress Message",
+                                desc = "Notifies you in chat when you completed a lore-relevant quest.",
+                                arg = "showQuestlineQuestProgressMessage",
                                 width ="double",
                                 order = 2,
                             },

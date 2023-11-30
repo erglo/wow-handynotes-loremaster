@@ -1859,27 +1859,16 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
         local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
         QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     end
-    -- if questInfo.hasQuestLineInfo then
-    --     -- local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
-    --     local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
-    --     if questLineInfo then
-    --         if C_QuestLine.IsComplete(questLineInfo.questLineID) then
-    --             local questLineName = L.QUESTLINE_NAME_FORMAT:format(QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName))
-    --             ns:cprint(SPLASH_BOOST_HEADER, format("You have completed the questline %s.", questLineName))
-    --         else
-    --             print("> Not complete, yet.")
-    --         end
-    --     end
-    -- end
+
+    if not ns.settings.showQuestlineQuestProgressMessage then return end
+
     if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
-        -- local mapInfo = LocalMapUtils:GetMapInfo(questInfo.playerMapID)
         local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
         for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
             if (questID == activeQuestLineInfo.questID) then
                 -- Inform user
                 local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
                 ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
-                -- ns:cprintf("This quest is part of the questline \"%s\" in %s.", activeQuestLineInfo.questLineName, mapInfo.name)
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
                 local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
                 ns:cprintf("This quest is part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
@@ -1896,15 +1885,21 @@ function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
-    -- debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    -- debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
     if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
         local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
         debug:print(DBUtil, "Removing active questlines...", activeQuestlinesDB and activeQuestlinesDB, activeQuestlinesDB and #activeQuestlinesDB)
         for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            -- print(i, activeQuestLineInfo.questLineID, questID, activeQuestLineInfo.questID, questInfo.questID)
             if (questID == activeQuestLineInfo.questID) then
-                -- Remove current completed quest's questline
+                -- print(RED("isFlaggedCompleted:"), questInfo.isFlaggedCompleted)
+                -- Inform user
+                -- if ns.settings.showQuestlineQuestProgressMessage then
+                --     local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
+                --     ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
+                --     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
+                --     local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                --     ns:cprintf("This quest is part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
+                -- end
+                -- Remove current completed or aborted quest's questline
                 debug:print(DBUtil, "> Removing active QL:", activeQuestLineInfo.questLineID)
                 activeQuestlinesDB[i] = nil
             elseif C_QuestLog.IsQuestFlaggedCompleted(activeQuestLineInfo.questID) then
@@ -1929,19 +1924,21 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
         if questLineInfo then
             local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-            if not tContains(activeQuestlinesDB, questLineInfo) then
+            if activeQuestlinesDB and not tContains(activeQuestlinesDB, questLineInfo) then
                 tInsert(activeQuestlinesDB, questLineInfo)
                 debug:print(DBUtil, "> Saved active QL", questLineInfo.questLineID)
                 -- Inform user
-                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
-                ns:cprintf("This quest is part of the questline \"%s\" (%s).", questLineInfo.questLineName, questLineCountString)
+                if ns.settings.showQuestlineQuestProgressMessage then
+                    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                    local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                    ns:cprintf("This quest is part of the questline \"%s\" (%s).", questLineInfo.questLineName, questLineCountString)
+                end
             end
         end
     end
     -- if questInfo.isStory then
     --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
-    --     ns:cprint(nameTemplate:format(ORANGE("This quest ist part of a story.")))
+    --     ns:cprint(nameTemplate:format(ORANGE("This quest is part of a story.")))
     -- end
 end
 
