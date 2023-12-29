@@ -2101,8 +2101,8 @@ local function NodeIterator(t, prev)
 
     local coord, zoneData = next(t, prev)
     while coord do
-        if (zoneData and ns.settings.showZoneIcons) then
-            if not (ns.settings.hideCompletedZonesIcon and zoneData.achievementInfo.completed) then
+        if (zoneData and ns.settings.showContinentZoneIcons) then
+            if not (ns.settings.hideCompletedContinentZoneIcons and zoneData.achievementInfo.completed) then
                 -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
                 return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
             end

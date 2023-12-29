@@ -47,7 +47,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
         ["showSingleLineAchievements"] = false,
-        ["hideCompletedZonesIcon"] = false,
+        ["hideCompletedContinentZoneIcons"] = false,
 	},
 }
 ns.pluginInfo.options = function(HandyNotes)
@@ -260,7 +260,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Show Zone Icon",
                         desc = "Shows the check mark icons on a continent for zones with at least one achievement.",
-                        arg = "showZoneIcons",
+                        arg = "showContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes.WorldMapDataProvider:RefreshAllData()
@@ -272,12 +272,12 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Hide Completed Zone Icon",
                         desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
-                        arg = "hideCompletedZonesIcon",
+                        arg = "hideCompletedContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes.WorldMapDataProvider:RefreshAllData()
                         end,
-                        disabled = function() return not ns.settings["showZoneIcons"] end,
+                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
                         order = 2,
                     },
