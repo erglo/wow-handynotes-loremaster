@@ -2090,17 +2090,18 @@ local function GetContinentNodes(parentMapInfo)
 end
 
 -- An iterator function that will loop over and return 5 values
--- (coord, uiMapID, iconpath, scale, alpha)
--- for every node in the requested zone. If the uiMapID return value is nil, we assume it is the
--- same uiMapID as the argument passed in. Mainly used for continent uiMapID where the map passed
--- in is a continent, and the return values are coords of subzone maps.
+-- (coord, uiMapID, iconpath, scale, alpha) for every node in the requested
+-- zone. If the uiMapID return value is nil, we (HandyNotes devs) assume it is
+-- the same uiMapID as the argument passed in. Mainly used for continent
+-- uiMapID where the map passed in is a continent, and the return values are
+-- coords of subzone maps.
 --
 local function NodeIterator(t, prev)
     if not t then return end
 
     local coord, zoneData = next(t, prev)
     while coord do
-        if zoneData then
+        if (zoneData and ns.settings.showZoneIcons) then
             if not (ns.settings.hideCompletedZonesIcon and zoneData.achievementInfo.completed) then
                 -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
                 return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0

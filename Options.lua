@@ -256,6 +256,18 @@ ns.pluginInfo.options = function(HandyNotes)
                         name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map."..LocalOptionUtils.new_paragraph,
                         order = 0,
                     },
+                    show_zone_icons = {
+                        type = "toggle",
+                        name = "Show Zone Icon",
+                        desc = "Shows the check mark icons on a continent for zones with at least one achievement.",
+                        arg = "showZoneIcons",
+                        set = function(info, value)
+                            ns.settings[info.arg] = value
+                            HandyNotes.WorldMapDataProvider:RefreshAllData()
+                        end,
+                        width ="double",
+                        order = 1,
+                    },
                     completed_zone_icons = {
                         type = "toggle",
                         name = "Hide Completed Zone Icon",
@@ -265,9 +277,9 @@ ns.pluginInfo.options = function(HandyNotes)
                             ns.settings[info.arg] = value
                             HandyNotes.WorldMapDataProvider:RefreshAllData()
                         end,
+                        disabled = function() return not ns.settings["showZoneIcons"] end,
                         width ="double",
-                        order = 1,
-                        -- disabled = true,
+                        order = 2,
                     },
                 },
             },  --> tooltip_details_continent
