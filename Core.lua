@@ -683,6 +683,8 @@ local QuestNameFactionGroupTemplate = {
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua> 
 QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
 QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  --> escort
+-- QUEST_TAG_ATLAS[107] = "Rune-06-purple"  -- "ArtifactQuest"
+QUEST_TAG_ATLAS[107] = "ArtifactQuest"
 QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"  -- "worldquest-questmarker-dragon"  --> elite world quest (!)
 QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
@@ -728,14 +730,6 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             end
         end
-        if questInfo.isLegendary then
-            if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
-            else
-                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
-                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
-            end
-        end
         if questInfo.isStory then
             if ns.settings.highlightStoryQuests then
                 questTitle = ORANGE(questTitle)
@@ -750,6 +744,9 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            elseif (QUEST_TAG_ATLAS[questInfo.questType] == nil) then
+                -- This quest type is neither part of Blizzard's tag atlas variable, nor have I added it, yet.
+                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
             elseif tContains(leftSidedTags, questInfo.questType) then
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 questTitle = iconString..questTitle
@@ -758,12 +755,20 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = questTitle..iconString
             end
         end
+        if questInfo.isLegendary then
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            else
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
+                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+            end
+        end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
-            questTitle = format(colorCodeString.."%02d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+            questTitle = format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
         end
     else
-        debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
+        -- debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
         questTitle = RETRIEVING_DATA
         if debug.isActive then
             questTitle = format("> isDisabled: %s, questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.isDisabledForSession), tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
@@ -1877,7 +1882,7 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
                 ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
                 local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
-                ns:cprintf("This quest is part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
+                ns:cprintf("This quest was part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
                 break
             end
         end
