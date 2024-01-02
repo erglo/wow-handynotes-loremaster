@@ -1859,6 +1859,16 @@ end
 
 ----- Ace3 event handler
 
+local function CountActiveQuestlineQuests(activeQuestlinesDB, questLineID)
+    local numActiveQuests = 0
+    for index, questLineInfo in ipairs(activeQuestlinesDB) do
+        if (questLineInfo.questLineID == questLineID) then
+            numActiveQuests = numActiveQuests + 1
+        end
+    end
+    return numActiveQuests
+end
+
 -- Save daily and weekly quests as completed, if they are Lore related.
 function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
@@ -1881,7 +1891,7 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
                 local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
                 ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
-                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal)
                 ns:cprintf("This quest was part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
                 break
             end
@@ -1935,13 +1945,14 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
         if questLineInfo then
             local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+            local numActiveQuests = CountActiveQuestlineQuests(activeQuestlinesDB, questLineInfo.questLineID) + 1  -- also count self
             if activeQuestlinesDB and not tContains(activeQuestlinesDB, questLineInfo) then
                 tInsert(activeQuestlinesDB, questLineInfo)
                 debug:print(DBUtil, "> Saved active QL", questLineInfo.questLineID)
                 -- Inform user
                 if ns.settings.showQuestlineQuestProgressMessage then
                     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                    local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+                    local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted + numActiveQuests, filteredQuestInfos.numTotal)
                     ns:cprintf("This quest is part of the questline \"%s\" (%s).", questLineInfo.questLineName, questLineCountString)
                 end
             end
