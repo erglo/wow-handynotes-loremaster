@@ -385,6 +385,17 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
     return self.achievements[achievementID]
 end
 
+function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
+    local isActive = pin.questInfo and pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString
+
+    if (not isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
+        isActive = questID == pin.questID
+    end
+
+    return isActive
+end
+
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
@@ -444,13 +455,18 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             if criteriaInfo.completed then
                 GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, self.wrapLine)
             else
-                GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
-                if (debug.isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                    local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
-                    local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
-                    local lineTemplate = "|A: :16:12:0:0|a %s"  --> needed for indention
-                    GameTooltip_AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
-                    -- GameTooltip_AddHighlightLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
+                if isActive then
+                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName), self.wrapLine)
+                else
+                    GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
+                    if (debug.isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                        local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
+                        local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
+                        local lineTemplate = "|A: :16:12:0:0|a %s"  --> needed for indention
+                        GameTooltip_AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                        -- GameTooltip_AddHighlightLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                    end
                 end
             end
         end
@@ -570,6 +586,7 @@ local raceQuests = {
     ["28430"] = { 9, 35 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
     ["28431"] = { 8, 10, 27 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
     ["31139"] = { 32 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["50694"] = { 4, 7, 22 },  -- Battle for Azeroth, Stormsong Valley, "A Bloody Mess" (Alliance)
 }
 
 -- Quests which are not bound to a specific player race are considered playable.
@@ -595,8 +612,11 @@ local classQuests = {
     ["28765"] = { 9 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Gnome)
     ["28766"] = { 1 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
     ["28767"] = { 3 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["40815"] = { 12 }, -- Legion, Azsuna, "From Within"
     ["43503"] = { 8 },  -- Legion, Suramar, "The Power Within"
     ["43505"] = { 8 },  -- Legion, Suramar, "The Power Within"
+    ["44137"] = { 12 }, -- Legion, Azsuna, "Into the Fray"
+    ["44140"] = { 12 }, -- Legion, Azsuna, "From Within"
     ["54058"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Unintended Consequences" (Neutral)
     ["54118"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
     ["54433"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
@@ -696,10 +716,10 @@ local QuestNameFactionGroupTemplate = {
 -- Expand the default quest tag atlas map 
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua> 
 QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
-QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  -- "questlog-questtypeicon-group"  --> escort
--- QUEST_TAG_ATLAS[107] = "Rune-06-purple"  -- "ArtifactQuest"
-QUEST_TAG_ATLAS[107] = "ArtifactQuest"
+QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  --> escort
+QUEST_TAG_ATLAS[107] = "ArtifactQuest"  -- "Rune-06-purple"  -- "ArtifactQuest"
 QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"  -- "worldquest-questmarker-dragon"  --> elite world quest (!)
+QUEST_TAG_ATLAS[145] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
 QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
@@ -789,7 +809,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
-            questTitle = format(colorCodeString.."%02d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+            questTitle = format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
         end
     end
 
@@ -1375,6 +1395,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- Note: This is later needed for the currentChapterID in quest campaigns.
     -- The actual `C_CampaignInfo.GetCurrentChapterID(campaignID)` refers only
     -- to active quest campaigns.
+    pin.questInfo.currentQuestLineName = questLineInfo.questLineName
+    -- Note: This is used to identify the currently active zone story.
 
     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     if (filteredQuestInfos.numTotalUnfiltered > 1 and filteredQuestInfos.numTotal <= 1 and numRebuildTooltip <= 3) then
@@ -1733,7 +1755,6 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     currentPin = pin
 
     -- Extend quest meta data
-    -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.mapID = pin:GetMap():GetMapID()
     pin.isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
     debug:print(HookUtils, "isSameAsPreviousPin:", pin.isSameAsPreviousPin, pin.questInfo and pin.questInfo.questID or "nil", pin.questID)
@@ -1764,7 +1785,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         return
     end
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
-        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
+        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.questInfo.questMapID)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
