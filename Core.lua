@@ -395,9 +395,13 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if not achievementInfo then return false end
 
     -- Category name
-    if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
-        GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
-    elseif not ns.settings.showSingleLineAchievements then
+    if (not pin.isOnContinent) then
+        if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
+            GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
+        elseif not ns.settings.showSingleLineAchievements then
+            GameTooltip_AddBlankLineToTooltip(tooltip)
+        end
+    elseif not ns.settings.showContinentSingleLineAchievements then
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
@@ -411,7 +415,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
     local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
     GameTooltip_AddNormalLine(tooltip, achievementNameTemplate:format(achievementName), self.wrapLine)
-    if ns.settings.showSingleLineAchievements then return true end
+    if (not pin.isOnContinent and ns.settings.showSingleLineAchievements) then return true end
+    if (pin.isOnContinent and ns.settings.showContinentSingleLineAchievements) then return true end
 
     if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
         if not StringIsEmpty(achievementInfo.earnedBy) then
@@ -2164,6 +2169,8 @@ local wrapText = false
 function LoremasterPlugin:OnEnter(mapID, coord)
     local node = nodes[mapID] and nodes[mapID][coord]
     if node then
+        local continentMapInfo = LocalMapUtils:GetMapInfo(mapID)
+        local isPinOnContinent = continentMapInfo.mapType == Enum.UIMapType.Continent
         local tooltip = GameTooltip
 
         if self:GetCenter() > self.owningMap.ScrollContainer:GetCenter() then
@@ -2180,7 +2187,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         else
             GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
         end
-        if ns.settings.showSingleLineAchievements then                          --> TODO - Separate continent "zone" settings
+        if (isPinOnContinent and ns.settings.showContinentSingleLineAchievements) then
             GameTooltip_AddBlankLineToTooltip(tooltip)
         end
 
@@ -2189,6 +2196,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
             mapID = mapID,
             achievementInfo = node.achievementInfo,
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
+            isOnContinent = isPinOnContinent,
          }
          ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, fakePin)
 

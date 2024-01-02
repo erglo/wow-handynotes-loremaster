@@ -47,6 +47,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_campaign"] = "auto",
         ["showQuestTypeAsText"] = false,
         ["showSingleLineAchievements"] = false,
+        ["showContinentSingleLineAchievements"] = false,
         ["hideCompletedContinentZoneIcons"] = false,
 	},
 }
@@ -79,7 +80,7 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                     description = {
                         type = "description",
-                        name = "|n"..ns.pluginInfo.description,
+                        name = LocalOptionUtils.newline..ns.pluginInfo.description,
                         order = 1,
                     },
                     body = {
@@ -189,7 +190,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             quest_type_in_names = {
                                 type = "toggle",
                                 name = "Show Quest Type as Text",
-                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddExampleLine("Quest Name", WEEKLY, true, true).."|n"..PET_BATTLE_UI_VS..LocalOptionUtils:AddExampleLine("Quest Name", "WEEKLY", true, false, true),
+                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddExampleLine("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 width = "double",
                                 order = 3,
@@ -281,6 +282,43 @@ ns.pluginInfo.options = function(HandyNotes)
                         width ="double",
                         order = 2,
                     },
+                    zs_cont_group = {
+                        type = "group",
+                        name = "Tooltip",
+                        inline = true,
+                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
+                        order = 10,
+                        args = {
+                            description = {
+                                type = "description",
+                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map."..LocalOptionUtils.new_paragraph,
+                                order = 0,
+                            },
+                            -- show_zone_story = {
+                            --     type = "toggle",
+                            --     name = "Show Zone Story",
+                            --     desc = "Show or hide story details of the currently viewed zone.",
+                            --     arg = "showZoneStory",
+                            --     order = 1,
+                            -- },
+                            -- collapse_type = {
+                            --     type = "select",
+                            --     name = "Select Display Type...",
+                            --     desc = LocalOptionUtils.GetCollapseTypeDescription,
+                            --     arg = "collapseType_zonestory",
+                            --     values = LocalOptionUtils.collapseTypeList,
+                            --     order = 2,
+                            -- },
+                            single_line_achievements = {
+                                type = "toggle",
+                                name = "Single Line Achievements",
+                                desc = "Displays earned story achievements in a single line instead of multiple (auto-collapsible) lines.",
+                                arg = "showContinentSingleLineAchievements",
+                                width = "double",
+                                order = 1,
+                            },
+                        },
+                    },
                 },
             },  --> tooltip_details_continent
             notification_settings = {
@@ -291,7 +329,7 @@ ns.pluginInfo.options = function(HandyNotes)
                 args = {
                     description = {
                         type = "description",
-                        name = "Choose how or whether you want to be notified of plugin changes.".."|n|n",
+                        name = "Choose how or whether you want to be notified of plugin changes."..LocalOptionUtils.new_paragraph,
                         order = 0,
                     },
                     chat_notifications_group = {
