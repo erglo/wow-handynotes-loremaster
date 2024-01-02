@@ -429,7 +429,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Chapter list
-    if GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory") then
+    if (not pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory")) or
+       (pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zoneStoryOnContinent")) then
         local criteriaName
         for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
             criteriaName = criteriaInfo.criteriaString
