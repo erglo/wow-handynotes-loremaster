@@ -595,9 +595,23 @@ local classQuests = {
     ["28765"] = { 9 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"   (Gnome)
     ["28766"] = { 1 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
     ["28767"] = { 3 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
+    ["43503"] = { 8 },  -- Legion, Suramar, "The Power Within"
+    ["43505"] = { 8 },  -- Legion, Suramar, "The Power Within"
     ["54058"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Unintended Consequences" (Neutral)
     ["54118"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Horde)
     ["54433"] = { 5 },  -- Battle for Azeroth, Crucible of Storms, "Orders from Azshara" (Horde)
+    ["57715"] = { 6 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60217"] = { 12 },  -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60218"] = { 11 },  -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60219"] = { 3 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60220"] = { 8 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60221"] = { 10 },  -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60222"] = { 2 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60223"] = { 5 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60224"] = { 4 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60225"] = { 7 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60226"] = { 9 },   -- Shadowlands, Bastion, "The Archon's Answer"
+    ["60229"] = { 1 },   -- Shadowlands, Bastion, "The Archon's Answer"
 }
 
 --> TODO - Handle auto-accept quest types
