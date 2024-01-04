@@ -4,10 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.4.0-alpha+100200] - 2024-01-04
 
 ### Added
 
+* Zone Story: added optional `chapter quests`. Some story chapter are directly linked to a quest which can be displayed.
 * A `waypoint` can now be created to the currently hovered quest icon.
 * Campaign: added optional `chapter description`. Only some campaign chapters have those, eg. when they are linked to other campaigns.
 * Settings: added option to get notified in `chat` whenever a `lore-relevant quest` has been accepted or turned-in.
@@ -16,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Zone Story: added manually `zone stories for Shadowlands and Dragonflight`; their main zones have each two stories which are required for the Loremaster achievements (Dragonflight is not yet part of the achievement).
 * Zone Story: added completion check to the Worldmap's `continent view` with two icons (a green checkmark for complete and a red X for incomplete achievements).
 * Questlines: `active quests` can now display chapter details; by default Blizzard does not provide any questline information for active quests.
-* Questlines: zone story quests will now optionally be highlighted in orange text color.
+* Questlines: story quests can now optionally be highlighted in a distinctive text color.
 * Questlines: completing `recurring quests` can now optionally be remembered once they have been turned in, despite the eg. daily or weekly reset.
 
 ### Changed

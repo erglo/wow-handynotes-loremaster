@@ -4,7 +4,7 @@
 ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/erglo/wow-handynotes-loremaster?logo=github&label=latest&color=brightgreen)
 ![CurseForge Game Versions](https://img.shields.io/curseforge/game-versions/461804?logo=battle.net&label=WoW-retail&color=%23148EFF)
 
-This World of Warcraft™ addon helps you keep track of the Loremaster and story quest achievements as well as other questlines.  
+This World of Warcraft™ addon helps you keep track of the Loremaster story quest achievements as well as questlines and campaigns.  
 Simply **hover a quest icon** on the world map, if it is part of a questline or a story campaign additional details about your progress will appear in the icon's tooltip.
 
 ⚠️**Required addon:** [HandyNotes](https://www.curseforge.com/wow/addons/handynotes "Visit CurseForge.com")
@@ -19,9 +19,9 @@ _(**Note:** This is a playable release. Activate visibility for **alpha** releas
 ## Features (_alpha_)
 
 * Extends quest icon tooltips on the worldmap with details about zone stories, questlines and campaigns.
-* _(Optional)_ See the quest type in a quest's tooltip when hovering its icon.
-* _TODO_: Shows in continent view whether you finished a zone's story or not, or if you have incomplete questlines or campaigns.
+* Shows an icon in continent view indicating whether you finished a zone's story achievement or not.
 * _TODO_: Adds an icon on the right top corner of the worldmap with details about available questlines on the active zone.
+* **Many options**: eg. see the quest type in a quest's tooltip when hovering its icon or hide the details you're not interested in.
 
 ----
 
