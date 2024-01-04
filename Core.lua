@@ -1609,16 +1609,13 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
                 else
                     GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName), self.wrap_chapterName)
                 end
-                if ns.settings.showAltChapterNames and not StringIsEmpty(chapterInfo.description) then
-                    local lineTemplate = "|A: :16:16:0:0|a "..PARENS_TEMPLATE  --> needed for indention
-                    local lineText = chapterInfo.description
-                    if (chapterIsComplete and isActive) or chapterIsComplete then
-                        GameTooltip_AddColoredLine(tooltip, lineTemplate:format(lineText), GREEN_FONT_COLOR, self.wrap_chapterName)
-                    else
-                        GameTooltip_AddHighlightLine(tooltip, lineTemplate:format(lineText), self.wrap_chapterName)
-                    end
+                if ns.settings.showCampaignChapterDescription and not StringIsEmpty(chapterInfo.description) then
+                    local lineWrap = true
+                    local lineIndention = "|A: :16:16:0:0|a"
+                    local lineTemplate = lineIndention.."|TInterface\\GossipFrame\\GossipGossipIcon:16:16:0:0|t %s"
+                    GameTooltip_AddDisabledLine(tooltip, lineTemplate:format(chapterInfo.description), lineWrap)
                 end
-                if not ns.settings.showAltChapterNames and DEV_MODE and not StringIsEmpty(chapterInfo.description) then     --> TODO - Needed ???
+                if not ns.settings.showCampaignChapterDescription and DEV_MODE and not StringIsEmpty(chapterInfo.description) then
                     GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
                 end
             end

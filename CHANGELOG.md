@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * A `waypoint` can now be created to the currently hovered quest icon.
-* Campaign: `alternative chapter names` can now optionally be shown. Only some chapters have those, eg. when they are linked with other campaigns.
+* Campaign: added optional `chapter description`. Only some campaign chapters have those, eg. when they are linked to other campaigns.
 * Settings: added option to get notified in `chat` whenever a `lore-relevant quest` has been accepted or turned-in.
 * Settings: added option to get notified in `chat` whenever a `lore-relevant achievement` or criteria has been earned.
 * Settings: added option to hide the icons over zones with a completed story.

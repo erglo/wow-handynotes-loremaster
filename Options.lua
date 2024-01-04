@@ -48,6 +48,7 @@ ns.pluginInfo.defaultOptions = {
         ["collapseType_zoneStoryOnContinent"] = "auto",
         ["showQuestTypeAsText"] = false,
         ["showSingleLineAchievements"] = false,
+        ["showCampaignChapterDescription"] = false,
         ["showContinentSingleLineAchievements"] = false,
         ["hideCompletedContinentZoneIcons"] = false,
 	},
@@ -235,11 +236,11 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
-                            alt_chapter_names = {
+                            chapter_description = {
                                 type = "toggle",
-                                name = "Show Alternative Chapter Names",
-                                desc = "Some chapters have an alternative chapter name, eg. when they are linked with other campaigns.|nIf activated, they will be shown below the default chapter name.",
-                                arg = "showAltChapterNames",
+                                name = "Show Chapter Description",
+                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name.",
+                                arg = "showCampaignChapterDescription",
                                 width = "double",
                                 order = 3,
                             },
