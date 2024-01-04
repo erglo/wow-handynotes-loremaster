@@ -33,6 +33,7 @@ local format = string.format
 local LocalOptionUtils = {}
 LocalOptionUtils.new_paragraph = "|n|n"
 LocalOptionUtils.newline = "|n"
+LocalOptionUtils.stringDelimiter = ITEM_NAME_DESCRIPTION_DELIMITER
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -95,7 +96,7 @@ ns.pluginInfo.options = function(HandyNotes)
             tooltip_details_zone = {
                 type = "group",
                 -- name = "Tooltip Content",
-                name = "Tooltip"..ITEM_NAME_DESCRIPTION_DELIMITER..PARENS_TEMPLATE:format(ZONE),
+                name = "Tooltip"..LocalOptionUtils.stringDelimiter..PARENS_TEMPLATE:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
                 order = 1,
                 args = {
@@ -124,7 +125,7 @@ ns.pluginInfo.options = function(HandyNotes)
                     quest_type = {
                         type = "toggle",
                         name = "Show Quest Type",
-                        desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddExampleLine(CALENDAR_TYPE_RAID, "raid"),
+                        desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddQuestTypeExampleLine(CALENDAR_TYPE_RAID, "raid"),
                         arg = "showQuestType",
                         -- width = "double",
                         order = 3,
@@ -168,6 +169,15 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width = "double",
                                 order = 3,
                             },
+                            show_chapter_quests = {
+                                type = "toggle",
+                                name = "Show Chapter Quests",
+                                desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
+                                arg = "showStoryChapterQuests",
+                                disabled = function() return ns.settings["showSingleLineAchievements"] or not ns.settings["showZoneStory"] end,
+                                width = "double",
+                                order = 4,
+                            },
                         },
                     },
                     ql_group = {
@@ -195,7 +205,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             quest_type_in_names = {
                                 type = "toggle",
                                 name = "Show Quest Type as Text",
-                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddExampleLine("Quest Name", "WEEKLY", true, false, true),
+                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
@@ -204,7 +214,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             highlight_story_quests = {
                                 type = "toggle",
                                 name = "Highlight Story Quests",
-                                desc = format("Quests needed for a zone's Loremaster achievement will be displayed in an %s text color.", ORANGE_FONT_COLOR:WrapTextInColorCode("orange")),
+                                desc = "Lore-related quests will be highlighted in a different text color, if activated."..LocalOptionUtils:AddExampleLine("QuestName", nil, nil, nil, ORANGE_FONT_COLOR),
                                 arg = "highlightStoryQuests",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
@@ -246,7 +256,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             chapter_description = {
                                 type = "toggle",
                                 name = "Show Chapter Description",
-                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name.",
+                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("Description", 132053),
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -367,7 +377,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             quest_turned_in_msg = {
                                 type = "toggle",
                                 name = "Show Questline Progress Message",
-                                desc = "Notifies you in chat when you completed a lore-relevant quest.",
+                                desc = "Notifies you in chat when you accepted or completed a lore-relevant quest.",
                                 arg = "showQuestlineQuestProgressMessage",
                                 width ="double",
                                 order = 2,
@@ -414,6 +424,7 @@ LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
 LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
 LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
 LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
+LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
@@ -438,16 +449,28 @@ LocalOptionUtils.CreateAboutBody = function(self)
     return text..self.new_paragraph
 end
 
-LocalOptionUtils.AddExampleLine = function(self, text, tagName, prepend, asText, skipHeader)
+LocalOptionUtils.AddQuestTypeExampleLine = function(self, text, tagName, prepend, asText, skipHeader)
     local exampleText = skipHeader and self.newline or self.new_paragraph..EXAMPLE_TEXT..self.newline
     local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(tagName)) or format("|A:questlog-questtypeicon-%s:16:16:0:-1|a", tagName)
     if (tagName == "raid") then
-        return exampleText..tagString..ITEM_NAME_DESCRIPTION_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..tagString..self.stringDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
     if prepend then
-        return exampleText..format(self.dashLine, tagString)..ITEM_NAME_DESCRIPTION_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..format(self.dashLine, tagString)..self.stringDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
-    return exampleText..format(self.dashLine, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..ITEM_NAME_DESCRIPTION_DELIMITER..tagString
+    return exampleText..format(self.dashLine, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..self.stringDelimiter..tagString
+end
+
+LocalOptionUtils.AddExampleLine = function(self, text, icon, iconWidth, iconHeight, textColor)
+    local exampleText = self.new_paragraph..EXAMPLE_TEXT..self.newline
+    local TextColor = textColor or GRAY_FONT_COLOR
+    if not icon then
+        return exampleText..self.dashIconString..self.stringDelimiter..TextColor:WrapTextInColorCode(text)
+    end
+    local CreateMarkupFunction = type(icon) == "number" and CreateSimpleTextureMarkup or CreateAtlasMarkup
+    local width = iconWidth or 16
+    local height = iconHeight or 16
+    return exampleText..CreateMarkupFunction(icon, width, height)..self.stringDelimiter..TextColor:WrapTextInColorCode(text)
 end
 
 ----- Collapse Type ----------
@@ -493,17 +516,17 @@ end
 --         type_icons_quests = {
 --             type = "toggle",
 --             name = "Quest Type",
---             desc = "Show or hide the quest type icon."..LocalOptionUtils:AddExampleLine("Quest Name", "dungeon"),
+--             desc = "Show or hide the quest type icon."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "dungeon"),
 --         },
 --         type_icons_factions = {
 --             type = "toggle",
 --             name = "Faction Type",
---             desc = "Show or hide the faction group icon."..LocalOptionUtils:AddExampleLine("Quest Name", "horde"),
+--             desc = "Show or hide the faction group icon."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "horde"),
 --         },
 --         type_icons_recurring = {
 --             type = "toggle",
 --             name = "Recurring Type",
---             desc = "Show or hide the quest type icon for recurring quests."..LocalOptionUtils:AddExampleLine("Quest Name", "monthly"),
+--             desc = "Show or hide the quest type icon for recurring quests."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "monthly"),
 --         },
 --     },
 -- },  --> type_icons_settings
