@@ -500,7 +500,7 @@ end
 -- All quests in this table are weekly quests of different questlines.
 QuestFilterUtils.weeklyQuests = {
     70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
-    78447, 78861,  -- Dragonflight, "Aiding the Accord" quests  78446,
+    78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
     61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
@@ -554,8 +554,13 @@ QuestFilterUtils.dailyQuestLines = {
 -- All quests in this table have been marked obsolete by Blizzard and cannot be
 -- obtained or completed.
 QuestFilterUtils.obsoleteQuests = {
-    -- 25443,  -- Mount Hyjal, The Name Never Spoken
-    44886, 44887, 44944, 44556,  -- Legion, "Return to Karazhan" questline quests
+    -- 25443,  -- Mount Hyjal, The Name Never Spoken (alternative Version of #25412)
+    26398,  -- Kalimdor, Mulgore (previously Orgrimmar), "Walk With The Earth Mother"
+    44556, 44886, 44887, 44944,  -- Legion, "Return to Karazhan"
+    48017, 49970,  -- Battle for Azeroth, Zuldazar, "The Sunken City"
+    48325, 48328,  -- Battle for Azeroth, Vol'dun, "Port of Zem'lan"
+    49976, 50056, 50057, 50341,  -- Eastern Kingdom, Stormwind City, "Silithus: The Wound"
+    53031,  -- Battle for Azeroth, Hall of Communion, "The Speaker's Imperative"
     56065,  -- BfA, Nazjatar, (???)
     62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
     72943,  -- Dragonflight, United Again
@@ -662,6 +667,7 @@ local correctFactionGroupQuests = {
     -- ["26091"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "Here Fishie Fishie 2: Eel-Egg-Trick Boogaloo"
     -- ["26149"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "Prisoners"
     ["27090"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Western Plaguelands, "Andorhal, Once and For All"
+    -- ["25561"] = QuestFactionGroupID.Alliance,  -- Kalimdor, Thousand Needles, "Circle the Wagons... er, Boats"
 }
 
 -- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
