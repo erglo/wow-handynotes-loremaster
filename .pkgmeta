@@ -16,6 +16,7 @@ plain-copy:
     - utils/*.lua
     - libs/Ace*
     - libs/LibStub/LibStub.lua
+    - libs/CallbackHandler*
 
 # The manual changelog will be created via GitHub action
 manual-changelog:
