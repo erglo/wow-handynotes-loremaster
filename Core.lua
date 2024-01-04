@@ -411,6 +411,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
         elseif not ns.settings.showSingleLineAchievements then
             GameTooltip_AddBlankLineToTooltip(tooltip)
+        elseif not (ns.settings.showPluginName or is2nd) then
+            GameTooltip_AddBlankLineToTooltip(tooltip)
         end
     elseif not ns.settings.showContinentSingleLineAchievements then
         GameTooltip_AddBlankLineToTooltip(tooltip)
@@ -460,7 +462,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                     GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName), self.wrapLine)
                 else
                     GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
-                    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive) then
+                    if (not pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive)) or
+                       (pin.isOnContinent and ns.settings.showContinentStoryChapterQuests) then
                         -- Format quest name and optionally show to user
                         local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
                         local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)

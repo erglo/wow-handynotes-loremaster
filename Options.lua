@@ -163,7 +163,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             single_line_achievements = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
-                                desc = "Displays earned story achievements in a single line instead of multiple (auto-collapsible) lines.",
+                                desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
                                 arg = "showSingleLineAchievements",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
@@ -266,15 +266,15 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                 }
             },  --> tooltip_details_zone
-            tooltip_details_continent = {
+            details_continent = {
                 type = "group",
                 name = CONTINENT,
-                desc = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map.",
+                desc = "Select the details for the continent view on the world map.",
                 order = 2,
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map."..LocalOptionUtils.new_paragraph,
+                        name = "Select the details for the continent view on the world map."..LocalOptionUtils.new_paragraph,
                         order = 0,
                     },
                     show_zone_icons = {
@@ -311,7 +311,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         args = {
                             description = {
                                 type = "description",
-                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map."..LocalOptionUtils.new_paragraph,
+                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map.", --..LocalOptionUtils.new_paragraph,
                                 order = 0,
                             },
                             -- show_zone_story = {
@@ -324,9 +324,9 @@ ns.pluginInfo.options = function(HandyNotes)
                             single_line_achievements = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
-                                desc = "Displays earned story achievements in a single line instead of multiple (auto-collapsible) lines.",
+                                desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
                                 arg = "showContinentSingleLineAchievements",
-                                width = "double",
+                                width = 1.5,  -- "double",
                                 order = 1,
                             },
                             collapse_type = {
@@ -337,10 +337,19 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
+                            show_chapter_quests = {
+                                type = "toggle",
+                                name = "Show Chapter Quests",
+                                desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
+                                arg = "showContinentStoryChapterQuests",
+                                disabled = function() return ns.settings["showContinentSingleLineAchievements"] or not ns.settings["showContinentZoneIcons"] end,
+                                width = "double",
+                                order = 3,
+                            },
                         },
                     },
                 },
-            },  --> tooltip_details_continent
+            },  --> details_continent
             notification_settings = {
                 type = "group",
                 name = "Notifications",
