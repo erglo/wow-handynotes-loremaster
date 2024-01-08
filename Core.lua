@@ -1664,8 +1664,8 @@ end
 -- end
 
 local function ShouldShowPluginName(pin)
-    return ns.settings.showPluginName and (pin.questInfo.isReadyForTurnIn
-        or pin.questType or IsShiftKeyDown()
+    return ns.settings.showPluginName and (pin.questType or IsShiftKeyDown()
+        or (ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn)
         or pin.questInfo.hasQuestLineInfo or pin.questInfo.isCampaign
         or DEV_MODE)
 end
