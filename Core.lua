@@ -111,8 +111,8 @@ L.QUESTLINE_PROGRESS_FORMAT = string_gsub(QUEST_LOG_COUNT_TEMPLATE, "%%s", "|cff
 L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s"
 L.CAMPAIGN_PROGRESS_FORMAT = "|"..string_gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1)
-L.CAMPAIGN_TYPE_FORMAT_QUEST = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest is part of the %s campaign."
-L.CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This quest line is part of the %s campaign."
+L.CAMPAIGN_TYPE_FORMAT_QUEST = "This quest is part of the %s campaign."
+-- L.CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This questline is part of the %s campaign."
 
 L.CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s"
 L.CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
@@ -1584,15 +1584,6 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
         GameTooltip_AddBlankLineToTooltip(tooltip)
     end
 
-    -- -- Show hint that quest (line) is part of this campaign
-    -- if DEV_MODE or showHintOnly then
-    --     local hintTextFormat = pin.questInfo.hasQuestLineInfo and L.CAMPAIGN_TYPE_FORMAT_QUESTLINE or L.CAMPAIGN_TYPE_FORMAT_QUEST
-    --     GameTooltip_AddNormalLine(tooltip, format(hintTextFormat, SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
-    --     debug:AddDebugLineToTooltip(tooltip, {addBlankLine=debug.isActive})
-
-    --     -- return
-    -- end
-
     -- Campaign header - name + progress
     local campaignNameTemplate = campaignInfo.isComplete and L.CAMPAIGN_NAME_FORMAT_COMPLETE or L.CAMPAIGN_NAME_FORMAT_INCOMPLETE
     GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_HEADER_COLOR)
@@ -2003,6 +1994,13 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
     --     ns:cprint(nameTemplate:format(ORANGE("This quest is part of a story.")))
     -- end
+    if (questInfo.isCampaign and ns.settings.showQuestIsCampaignMessage) then
+        local campaignID = C_CampaignInfo.GetCampaignID(questID)
+        local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
+        if campaignInfo then
+            ns:cprint(L.CAMPAIGN_TYPE_FORMAT_QUEST:format(SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
+        end
+    end
 end
 
 function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)

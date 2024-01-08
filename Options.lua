@@ -383,13 +383,21 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width ="double",
                                 order = 2,
                             },
-                            quest_turned_in_msg = {
+                            quest_is_questline_msg = {
                                 type = "toggle",
                                 name = "Show Questline Progress Message",
                                 desc = "Notifies you in chat when you accepted or completed a lore-relevant quest.",
                                 arg = "showQuestlineQuestProgressMessage",
                                 width ="double",
-                                order = 2,
+                                order = 3,
+                            },
+                            quest_is_campaign_msg = {
+                                type = "toggle",
+                                name = "Notify if Quest is Campaign",
+                                desc = "Notifies you in chat when you accepted or completed a quest which is part of a campaign.",
+                                arg = "showQuestIsCampaignMessage",
+                                width ="double",
+                                order = 4,
                             },
                             -- incomplete_zone_stories_msg = {
                             --     type = "toggle",
