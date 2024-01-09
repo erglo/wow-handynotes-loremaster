@@ -1925,6 +1925,8 @@ end
 ---@param campaignID number|nil
 --
 local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
+    local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+    local numThreshold = not isQuestCompleted and 1 or 0
     if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
         if campaignInfo then
@@ -1932,7 +1934,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
             if questLineInfo then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("This was quest %s of the campaign %s from the chapter %s.",
-                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -1948,11 +1950,24 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
             ns:cprintf("This was quest %s from the questline %s.",
-                       GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                       GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
         end
     end
+end
+
+local function CountActiveQuestlineQuests(questLineID)
+    local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
+    local count = 0
+    for questIDstring, data in pairs(activeQuests) do
+        local activeQuestLineID = data[1]
+        if (questLineID == activeQuestLineID) then
+            count = count + 1
+        end
+    end
+    debug:print(DBUtil, format("Found %d active |4questline:questlines;.", count))
+    return count
 end
 
 -- Inform user about adding a lore quest with a chat message
@@ -1968,8 +1983,9 @@ local function PrintQuestAddedMessage(questInfo)
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, ns.activeZoneMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s of the campaign %s from the chapter %s.",
-                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -1982,8 +1998,9 @@ local function PrintQuestAddedMessage(questInfo)
         if questLineInfo then
             if ns.settings.showQuestlineQuestProgressMessage then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the questline %s.",
-                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
