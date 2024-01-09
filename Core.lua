@@ -978,10 +978,10 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
             QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, NORMAL_FONT_COLOR)
         end
     end
-    if questInfo.isCampaign then
+    if (questInfo.isCampaign and not questInfo.isTrivial) then
         QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["CAMPAIGN"], "CAMPAIGN", nil, NORMAL_FONT_COLOR)
     end
-    if questInfo.isLegendary then
+    if (questInfo.isLegendary and not questInfo.isTrivial) then
         QuestUtils_AddQuestTagLineToTooltip(tooltip, QuestTagNames["LEGENDARY"], Enum.QuestTag.Legendary, nil, NORMAL_FONT_COLOR)
     end
 end
@@ -2100,11 +2100,17 @@ end
 -- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
 -- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 1195, "Schattenmond") end
 
+-- function LoremasterPlugin:CRITERIA_COMPLETE(eventName, ...)
+--     local criteriaID = ...
+--     print("TEST -", eventName, criteriaID)
+-- end
+
+LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
-LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
 LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
+-- LoremasterPlugin:RegisterEvent("CRITERIA_COMPLETE")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
