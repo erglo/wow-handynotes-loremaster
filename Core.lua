@@ -230,6 +230,10 @@ function LoremasterPlugin:OnEnable()
         Temp_ConvertActiveQuestlineQuests()
         DBUtil:DeleteDbCategory("activeQuestlines")
     end
+    -- if (Temp_CountOldActiveQuests() > 0) then
+    --     Temp_RemoveOldActiveQuests()
+    --     Temp_CountOldActiveQuests()
+    -- end
 
     if ns.settings.showWelcomeMessage then
         self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
@@ -353,6 +357,10 @@ function DBUtil:RemoveActiveLoreQuest(questID)
     -- Remove from DB
     activeQuests[questIDstring] = nil
     debug:print(self, "Removed active lore quest", questID)
+    -- Remove DB itself if empty
+    if not self:HasCategoryTableAnyEntries("activeLoreQuests") then
+        DBUtil:DeleteDbCategory("activeLoreQuests")
+    end
 
     return questLineID, campaignID
 end
@@ -1958,6 +1966,8 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
 end
 
 local function CountActiveQuestlineQuests(questLineID)
+    if not DBUtil:HasCategoryTableAnyEntries("activeLoreQuests") then return 0 end
+
     local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
     local count = 0
     for questIDstring, data in pairs(activeQuests) do
@@ -2370,24 +2380,57 @@ end
 
 function Temp_ConvertActiveQuestlineQuests()
     local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-    debug:print(DBUtil, "Processing active questlines...", activeQuestlinesDB and #activeQuestlinesDB)
+    debug:print("Processing active questlines...", activeQuestlinesDB and #activeQuestlinesDB)
     local count = 0
     for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
         local campaignID = activeQuestLineInfo.isCampaign and C_CampaignInfo.GetCampaignID(activeQuestLineInfo.questID)
-        local success = DBUtil:AddActiveLoreQuest(activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
+        local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(activeQuestLineInfo.questID)
+        local success = not isQuestCompleted and DBUtil:AddActiveLoreQuest(activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
         if success then
             count = count + 1
         else
-            debug:print(DBUtil, "Skipped", activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
+            debug:print("Skipped", activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID, isQuestCompleted)
         end
     end
-    debug:print(DBUtil, format("Converted %d |4entry:entries;", count))
+    debug:print(format("Converted %d |4entry:entries;", count))
 end
 
 --@do-not-package@
 --------------------------------------------------------------------------------
 --[[ Tests
 --------------------------------------------------------------------------------
+
+function Temp_CountOldActiveQuests()
+    local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
+    local count = 0
+    for questIDstring, data in pairs(activeQuests) do
+        local questID = tonumber(questIDstring)
+        local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+        if isQuestCompleted then
+            count = count + 1
+        end
+        -- print(questID, isQuestCompleted)
+    end
+    debug:print(format("Found %d completed |4quest:quests;.", count))
+    return count
+end
+
+function Temp_RemoveOldActiveQuests()
+    local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
+    local count = 0
+    for questIDstring, data in pairs(activeQuests) do
+        local questID = tonumber(questIDstring)
+        local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+        if isQuestCompleted then
+            activeQuests[questIDstring] = nil
+            count = count + 1
+        end
+        -- print(questID, isQuestCompleted)
+    end
+    debug:print(format("Removed %d old completed |4quest:quests;.", count))
+    return count
+end
+
 
 -- function DeleteTestDB()
 --     if DBUtil:HasCategoryTableAnyEntries("TEST_Zones") then
