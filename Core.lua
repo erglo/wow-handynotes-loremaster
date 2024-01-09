@@ -105,7 +105,6 @@ L.HINT_SET_WAYPOINT = "<Alt-click to create waypoint>"
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
--- L.QUESTLINE_PROGRESS_FORMAT = MAJOR_FACTION_RENOWN_CURRENT_PROGRESS
 L.QUESTLINE_PROGRESS_FORMAT = string_gsub(QUEST_LOG_COUNT_TEMPLATE, "%%s", "|cffffffff")
 
 L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
@@ -226,6 +225,12 @@ function LoremasterPlugin:OnEnable()
 
     QuestFilterUtils:Init()
 
+    -- Clean-up
+    if ns.charDB["activeQuestlines"] then
+        Temp_ConvertActiveQuestlineQuests()
+        DBUtil:DeleteDbCategory("activeQuestlines")
+    end
+
     if ns.settings.showWelcomeMessage then
         self:Printf(L.OPTION_STATUS_FORMAT_READY, YELLOW(ns.pluginInfo.title))
     end
@@ -294,13 +299,62 @@ function DBUtil:GetInitDbCategory(categoryName, database)
     end
     return db[categoryName]
 end
-DBUtil.CheckInitDbCategory = DBUtil.GetInitDbCategory                           --> TODO - Remove/change occurrences
 
 function DBUtil:HasCategoryTableAnyEntries(categoryName, database)
     local db = database or ns.charDB
     local value = db[categoryName] and TableHasAnyEntries(db[categoryName])
     debug:print(self, "Has", categoryName, "table any entries:", value)
     return value
+end
+
+function DBUtil:DeleteDbCategory(categoryName, database)
+    local db = database or ns.charDB
+    if not db[categoryName] then
+        debug:print(self, format("DB category '%s' not found.", categoryName))
+        return
+    end
+    db[categoryName] = nil
+    debug:print(self, format("DB category '%s' has been removed.", categoryName))
+end
+
+-- Save active lore quest to database.
+function DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
+    if not questID then return false end
+    if not questLineID then return false end
+
+    local questIDstring = tostring(questID)
+    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+    if not activeQuests[questIDstring] then
+        activeQuests[questIDstring] = {questLineID, campaignID}
+        debug:print(self, "Added active lore quest", questID, questLineID, campaignID)
+        return true
+    end
+
+    return false
+end
+
+-- Check whether given quest is an active lore quest.
+function DBUtil:IsQuestActiveLoreQuest(questID)
+    if not questID then return false end
+    if not self:HasCategoryTableAnyEntries("activeLoreQuests") then return false end
+
+    local questIDstring = tostring(questID)
+    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+    return activeQuests[questIDstring] ~= nil
+end
+
+-- Remove an active lore quest from database.
+function DBUtil:RemoveActiveLoreQuest(questID)
+    if not questID then return end
+
+    local questIDstring = tostring(questID)
+    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+    local questLineID, campaignID = SafeUnpack(activeQuests[questIDstring])
+    -- Remove from DB
+    activeQuests[questIDstring] = nil
+    debug:print(self, "Removed active lore quest", questID)
+
+    return questLineID, campaignID
 end
 
 --------------------------------------------------------------------------------
@@ -515,7 +569,7 @@ QuestFilterUtils.weeklyQuests = {
 
 function QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
     local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
-    DBUtil:CheckInitDbCategory(catName_recurringQuest, ns.charDB)
+    DBUtil:GetInitDbCategory(catName_recurringQuest, ns.charDB)
 
     if not tContains(ns.charDB[catName_recurringQuest], questID) then
         tInsert(ns.charDB[catName_recurringQuest], questID)
@@ -1319,30 +1373,8 @@ end
 ---@return boolean hasQuestLineInfo
 --
 function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
-    local hasInfo = (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
-    if hasInfo then return true end
-
-    -- Also search DB for active questlines
-    local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-    for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-        if (questID == activeQuestLineInfo.questID) then
-            return true
-        end
-    end
-    return false
+    return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
-
--- function LocalQuestLineUtils:GetCachedQuestLineInfoForQuest(questID)
---     debug:print(self, questID, "Looking for cached QL for quest")
---     for cachedQuestLineID, cachedQuestLineData in pairs(self.questLineInfos) do
---         debug:print(self, questID, "==", cachedQuestLineData.questLineInfo.questID, cachedQuestLineData.questLineInfo.questID == questID)
---         if (cachedQuestLineData.questLineInfo.questID == questID) then
---             debug:print(self, questID, "Found cached QL:", cachedQuestLineID)
---             return cachedQuestLineData.questLineInfo
---         end
---     end
---     debug:print(self, questID, "Nothing found. :(")
--- end
 
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
     debug:print(self, questID, "Searching questLineQuestsOnMap", mapID)
@@ -1372,14 +1404,6 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     if questLineInfo then
         debug:print(self, format("%d Found QL %d", pin.questID, pin.questLineID or questLineInfo.questLineID))
         return questLineInfo
-    elseif DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
-        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            if (pin.questID == activeQuestLineInfo.questID) or (pin.questLineID and pin.questLineID == activeQuestLineInfo.questLineID) then
-                debug:print(self, format("%d Found active QL %d", pin.questID, pin.questLineID or activeQuestLineInfo.questLineID))
-                return activeQuestLineInfo
-            end
-        end
     end
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
 end
@@ -1389,7 +1413,7 @@ local wrapLine = false
 local lineLimit = 48
 
 LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, campaignChapterID)
-    local questLineInfo = self:GetQuestLineInfoByPin(pin)
+    local questLineInfo;
     if campaignChapterID then
         local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(campaignChapterID)
         local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
@@ -1397,6 +1421,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             questLineID = campaignChapterID,
             questLineName = chapterName,
         }
+    else
+        questLineInfo = self:GetQuestLineInfoByPin(pin)
     end
     if not questLineInfo then return false end
 
@@ -1550,10 +1576,12 @@ CampaignUtils.GetCampaignInfo = function(self, campaignID)
     local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
     if not campaignInfo then return end
 
+    campaignInfo.campaignID = campaignID
     campaignInfo.campaignState = C_CampaignInfo.GetState(campaignID)  --> Enum.CampaignState
     campaignInfo.isComplete = campaignInfo.campaignState == Enum.CampaignState.Complete
     campaignInfo.chapterIDs = C_CampaignInfo.GetChapterIDs(campaignID)
-    campaignInfo.currentChapterID = C_CampaignInfo.GetCurrentChapterID(campaignID)  --> This refers to the currently active quest campaign only (!)
+    campaignInfo.currentChapterID = C_CampaignInfo.GetCurrentChapterID(campaignID)  --> This refers to the currently active campaign's questline
+    campaignInfo.chapterIndex = tIndexOf(campaignInfo.chapterIDs, campaignInfo.currentChapterID)
     campaignInfo.numChaptersTotal = #campaignInfo.chapterIDs
     campaignInfo.numChaptersCompleted = 0
     for i, chapterID in ipairs(campaignInfo.chapterIDs) do
@@ -1588,7 +1616,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     local campaignNameTemplate = campaignInfo.isComplete and L.CAMPAIGN_NAME_FORMAT_COMPLETE or L.CAMPAIGN_NAME_FORMAT_INCOMPLETE
     GameTooltip_AddColoredLine(tooltip,campaignNameTemplate:format(campaignInfo.name), CAMPAIGN_HEADER_COLOR)
     GameTooltip_AddNormalLine(tooltip, L.CAMPAIGN_PROGRESS_FORMAT:format(campaignInfo.numChaptersCompleted, campaignInfo.numChaptersTotal))
-    debug:AddDebugLineToTooltip(tooltip, {text=format("> C:%d, state: %d, isWarCampaign: %d|n> > currentChapterID: %d", campaignID, campaignInfo.campaignState, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
+    debug:AddDebugLineToTooltip(tooltip, {text=format("> C:%d, isWarCampaign: %d, currentChapterID: %d", campaignID, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
 
     -- Campaign chapters
     if GetCollapseTypeModifier(campaignInfo.isComplete, "collapseType_campaign") then
@@ -1891,77 +1919,75 @@ end
 
 ----- Ace3 event handler
 
-local function CountActiveQuestlineQuests(activeQuestlinesDB, questLineID)
-    local numActiveQuests = 0
-    for index, questLineInfo in ipairs(activeQuestlinesDB) do
-        if (questLineInfo.questLineID == questLineID) then
-            numActiveQuests = numActiveQuests + 1
+-- Inform user; print user-visible chat message
+---@param questID number
+---@param questLineID number|nil
+---@param campaignID number|nil
+--
+local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
+    if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
+        local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
+        if campaignInfo then
+            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
+            if questLineInfo then
+                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                ns:cprintf("This was quest %s of the campaign %s from the chapter %s.",
+                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                           CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
+                           QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
+                )
+            -- else
+            --     ns:cprintf("This quest was part of the campaign %s.", CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name))
+            end
+
+            return
         end
     end
-    return numActiveQuests
-end
-
--- Save daily and weekly quests as completed, if they are Lore related.
-function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
-    local questID, xpReward, moneyReward = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
-    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
-    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
-    if QuestFilterUtils:ShouldSaveRecurringQuest(questInfo) then
-        local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
-        QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
-    end
-
-    if not ns.settings.showQuestlineQuestProgressMessage then return end
-
-    if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
-        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            if (questID == activeQuestLineInfo.questID) then
-                -- Inform user
-                local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
-                ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
-                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
-                local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal)
-                ns:cprintf("This quest was part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
-                break
-            end
+    if (questLineID and ns.settings.showQuestlineQuestProgressMessage) then
+        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
+        if questLineInfo then
+            local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+            ns:cprintf("This was quest %s from the questline %s.",
+                       GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                       QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
+            )
         end
     end
 end
 
--- Remove a saved active questline, if available.
--- Note: This event fires before you turn-in or when you abort a quest.
-function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
-    local questID, wasReplayQuest = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
-    debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
-    if questInfo.hasQuestLineInfo and DBUtil:HasCategoryTableAnyEntries("activeQuestlines") then
-        local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-        debug:print(DBUtil, "Removing active questlines...", activeQuestlinesDB and activeQuestlinesDB, activeQuestlinesDB and #activeQuestlinesDB)
-        for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
-            if (questID == activeQuestLineInfo.questID) then
-                -- print(RED("isFlaggedCompleted:"), questInfo.isFlaggedCompleted)
-                -- Inform user
-                -- if ns.settings.showQuestlineQuestProgressMessage then
-                --     local questLink = LocalQuestUtils:GetCreateQuestLink(questInfo)
-                --     ns:cprintf("You have completed %s.", questLink or YELLOW(activeQuestLineInfo.questName))
-                --     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(activeQuestLineInfo)
-                --     local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
-                --     ns:cprintf("This quest is part of the questline \"%s\" (%s).", activeQuestLineInfo.questLineName, questLineCountString)
-                -- end
-                -- Remove current completed or aborted quest's questline
-                debug:print(DBUtil, "> Removing active QL:", activeQuestLineInfo.questLineID)
-                activeQuestlinesDB[i] = nil
-            elseif C_QuestLog.IsQuestFlaggedCompleted(activeQuestLineInfo.questID) then
-                -- Remove any possibly "slipped through" questline info
-                debug:print(DBUtil, "> Removing completed QL:", activeQuestLineInfo.questLineID)
-                activeQuestlinesDB[i] = nil
-            else
-                debug:print(DBUtil, "Skipped:", activeQuestLineInfo.questID, questID, questID == activeQuestLineInfo.questID)
+-- Inform user about adding a lore quest with a chat message
+---@param questInfo table
+---@return number|nil questLineID
+---@return number|nil campaignID
+--
+local function PrintQuestAddedMessage(questInfo)
+    if questInfo.isCampaign then
+        local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+        local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
+        if campaignInfo then
+            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, ns.activeZoneMapInfo.mapID)
+            if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
+                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                ns:cprintf("This is quest %s of the campaign %s from the chapter %s.",
+                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                           CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
+                           QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
+                )
             end
+            return campaignInfo.currentChapterID, campaignInfo.campaignID  --> questLineID, campaignID
+        end
+    end
+    if questInfo.hasQuestLineInfo then
+        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, questInfo.playerMapID)
+        if questLineInfo then
+            if ns.settings.showQuestlineQuestProgressMessage then
+                local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+                ns:cprintf("This is quest %s from the questline %s.",
+                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + 1, filteredQuestInfos.numTotal),
+                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
+                )
+            end
+            return questLineInfo.questLineID
         end
     end
 end
@@ -1973,33 +1999,49 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     debug:print(QuestFilterUtils, "Quest accepted:", questID, questInfo.questName)
     debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
-    if questInfo.hasQuestLineInfo then
-        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, questInfo.playerMapID)
-        if questLineInfo then
-            local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
-            local numActiveQuests = CountActiveQuestlineQuests(activeQuestlinesDB, questLineInfo.questLineID) + 1  -- also count self
-            if activeQuestlinesDB and not tContains(activeQuestlinesDB, questLineInfo) then
-                tInsert(activeQuestlinesDB, questLineInfo)
-                debug:print(DBUtil, "> Saved active QL", questLineInfo.questLineID)
-                -- Inform user
-                if ns.settings.showQuestlineQuestProgressMessage then
-                    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                    local questLineCountString = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted + numActiveQuests, filteredQuestInfos.numTotal)
-                    ns:cprintf("This quest is part of the questline \"%s\" (%s).", questLineInfo.questLineName, questLineCountString)
-                end
-            end
-        end
+
+    if tContains({questInfo.isWeekly, questInfo.isDaily}, true) then return end  -- Not lore relevant; do nothing.
+
+    if (questInfo.isCampaign or questInfo.hasQuestLineInfo) then
+        local questLineID, campaignID = PrintQuestAddedMessage(questInfo)
+        DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
     end
     -- if questInfo.isStory then
     --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
     --     ns:cprint(nameTemplate:format(ORANGE("This quest is part of a story.")))
     -- end
-    if (questInfo.isCampaign and ns.settings.showQuestIsCampaignMessage) then
-        local campaignID = C_CampaignInfo.GetCampaignID(questID)
-        local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
-        if campaignInfo then
-            ns:cprint(L.CAMPAIGN_TYPE_FORMAT_QUEST:format(SCENARIO_STAGE_COLOR:WrapTextInColorCode(campaignInfo.name)))
-        end
+end
+
+-- Save daily and weekly quests as completed, if they are lore relevant.
+function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
+    local questID, xpReward, moneyReward = ...
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    debug:print(QuestFilterUtils, "Quest turned in:", questID, questInfo.questName)
+    debug:print(QuestFilterUtils, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+    debug:print(QuestFilterUtils, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+
+    if QuestFilterUtils:ShouldSaveRecurringQuest(questInfo) then
+        local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
+        QuestFilterUtils:SetRecurringQuestCompleted(recurringTypeName, questID)
+    end
+
+    if DBUtil:IsQuestActiveLoreQuest(questID) then
+        local questLineID, campaignID = DBUtil:RemoveActiveLoreQuest(questID)
+        PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
+    end
+end
+
+-- Remove saved active quests.
+-- Note: This event fires before and sometimes after you turn-in a quest or when you abort a quest.
+function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
+    local questID, wasReplayQuest = ...
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    debug:print(QuestFilterUtils, "Quest removed:", questID, questInfo.questName)
+    debug:print(QuestFilterUtils, "> wasReplayQuest:", wasReplayQuest)
+
+    if DBUtil:IsQuestActiveLoreQuest(questID) then
+        local questLineID, campaignID = DBUtil:RemoveActiveLoreQuest(questID)
+        PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
     end
 end
 
@@ -2031,10 +2073,10 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
             local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
             local criteriaAmount = PARENS_TEMPLATE:format(GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
-            local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
-            if (numLeft > 0) then
-                ns:cprintf(YELLOW("> %d more to go to complete this achievement."), numLeft)
-            end
+            -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
+            -- if (numLeft > 0) then
+            --     ns:cprintf(YELLOW("> %d more to go to complete this achievement."), numLeft)
+            -- end
         end
     end
 end
@@ -2299,6 +2341,24 @@ function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
         --     --> TODO - Add context menu
         -- end
     end
+end
+
+----- Temporary solutions - Can be removed later
+
+function Temp_ConvertActiveQuestlineQuests()
+    local activeQuestlinesDB = DBUtil:GetInitDbCategory("activeQuestlines")
+    debug:print(DBUtil, "Processing active questlines...", activeQuestlinesDB and #activeQuestlinesDB)
+    local count = 0
+    for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
+        local campaignID = activeQuestLineInfo.isCampaign and C_CampaignInfo.GetCampaignID(activeQuestLineInfo.questID)
+        local success = DBUtil:AddActiveLoreQuest(activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
+        if success then
+            count = count + 1
+        else
+            debug:print(DBUtil, "Skipped", activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
+        end
+    end
+    debug:print(DBUtil, format("Converted %d |4entry:entries;", count))
 end
 
 --@do-not-package@
