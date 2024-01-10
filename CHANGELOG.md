@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+* New `tooltip handler` for better organizing and displaying the tooltip content.
+
 ### Changed
 
 * The plugin name in active quest icon tooltips is now only showing when at least the "Ready for turn-in" message is activated. Without any tooltip content there's no need for the plugin name to be shown.
