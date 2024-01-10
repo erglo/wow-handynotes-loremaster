@@ -45,6 +45,10 @@ local loadSilent = true
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", loadSilent)
 if not HandyNotes then return end
 
+local LibQTip = LibStub('LibQTip-1.0')
+local tipZone, tipQuestline, tipCampaign
+local qtip, qtip2  --> TODO - Remove after tests
+
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
@@ -1681,15 +1685,6 @@ end
 ----- Hooking Functions --------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- local function ShouldHookQuestPin(pin)
---     return tContains({LocalUtils.StorylineQuestPinTemplate, LocalUtils.QuestPinTemplate}, pin.pinTemplate)
--- end
-
--- local function ShouldHookWorldQuestPin(pin)
---     return pin.pinTemplate ~= WorldMap_WorldQuestDataProviderMixin:GetPinTemplate()
---     -- "BonusObjectivePinTemplate", "ThreatObjectivePinTemplate"
--- end
-
 local function ShouldShowPluginName(pin)
     return ns.settings.showPluginName and (pin.questType or IsShiftKeyDown()
         or (ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn)
@@ -1717,7 +1712,36 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
 
     local tooltip = GameTooltip
-    -- tooltip:SetCustomLineSpacing(0.75)
+    -- local tooltip = GetAppropriateTooltip()
+    qtip = LibQTip:Acquire(AddonID.."LibQTooltip", 3, "LEFT", "LEFT", "RIGHT")
+    qtip:AddLine(nil, nil, LoremasterPlugin.name)
+    -- Copy the GameTooltip's content
+    local line, text;
+    for i = 1, tooltip:NumLines() do
+        line = _G[tooltip:GetName() .. "TextLeft" .. i]
+        text = line and line:GetText() or ''
+        if (i == 1) then qtip:AddHeader(text) else qtip:AddLine(text) end
+    end
+    qtip:SetLineTextColor(2, NORMAL_FONT_COLOR:GetRGBA())
+    qtip:AddLine(nil, nil, ZONE)
+    qtip:AddLine(nil, nil, L.CATEGORY_NAME_QUESTLINE)
+    qtip:SetColumnTextColor(3, CATEGORY_NAME_COLOR:GetRGBA())
+    -- qtip:SetColumnColor(2, CATEGORY_NAME_COLOR:GetRGBA())
+    qtip:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT")
+    qtip:Show()
+
+    qtip2 = LibQTip:Acquire(AddonID.."LibQTooltip2", 3, "LEFT", "CENTER", "RIGHT")
+    qtip2:AddLine('Hello', "Test", 'World')
+    qtip2:AddSeparator(20)
+    qtip2:AddLine('Hello', "Line 2")
+    -- qtip2:SetAutoHideDelay(3)
+    qtip2:SetLineTextColor(3, GREEN_FONT_COLOR:GetRGBA())
+    qtip2:SetPoint("TOPLEFT", qtip, "BOTTOMLEFT")
+    qtip2:Show()
+
+    debug:print("qtip:", qtip:GetName(), qtip.name, GameTooltip:GetName(), tooltip:GetName())
+    debug:print("qtip:", qtip:GetHeight(), GameTooltip:GetHeight(), GetScreenHeight())
+    -- print("qtip2:", qtip2:GetName(), qtip2:GetHeight())
 
     -- Addon name
     if ShouldShowPluginName(pin) then
@@ -1758,9 +1782,9 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     GameTooltip_AddBlankLineToTooltip(tooltip)
     GameTooltip_AddInstructionLine(tooltip, L.HINT_SET_WAYPOINT)
 
-    GameTooltip:Show()
+    tooltip:Show()
 
-    -- debug:print(TooltipUtils, "tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
+    debug:print("qtip:", qtip:GetHeight(), GameTooltip:GetHeight(), GetScreenHeight())
 end
 
 -- local function HNQH_TaskPOI_OnEnter(pin, skipSetOwner)
@@ -1832,7 +1856,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
     end
 
-    GameTooltip:Show()
+    tooltip:Show()
 
     -- debug:print(TooltipUtils, "tooltip:", tooltip:NumLines(), GameTooltip:GetCustomLineSpacing())
 end
@@ -1847,7 +1871,12 @@ end
 
 local function Hook_QuestPin_OnLeave()
     currentPin = nil
-    -- GameTooltip:Hide()
+    GameTooltip:Hide()
+    -- Release the tooltip
+    LibQTip:Release(qtip)
+    LibQTip:Release(qtip2)
+    qtip = nil
+    qtip2 = nil
 end
 
 ----- Ace3 Profile Handler ----------
