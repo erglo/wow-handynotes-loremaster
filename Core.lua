@@ -3,7 +3,7 @@
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
--- Copyright (C) 2023  Erwin D. Glockner (aka erglo)
+-- Copyright (C) 2024  Erwin D. Glockner (aka erglo)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", loadSilent)
 if not HandyNotes then return end
 
 local LibQTip = LibStub('LibQTip-1.0')
+local LibQTipUtil = ns.utils.LibQTipUtil
 local tipZone, tipQuestline, tipCampaign
 local qtip, qtip2  --> TODO - Remove after tests
 
@@ -87,6 +88,7 @@ L.OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED
 L.OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
 L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready."
 
+L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global stringDelimiter
 L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
 
 L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a"
@@ -172,6 +174,14 @@ function debug:AddDebugLineToTooltip(tooltip, debugInfo)
     if DEV_MODE then
         if text then GameTooltip_AddDisabledLine(tooltip, text, false) end
         if addBlankLine then GameTooltip_AddBlankLineToTooltip(tooltip) end
+    end
+end
+function debug:AddDebugLineToLibQTooltip(tooltip, debugInfo)
+    local text = debugInfo and debugInfo.text
+    local addBlankLine = debugInfo and debugInfo.addBlankLine
+    if DEV_MODE then
+        if text then LibQTipUtil:AddDisabledLine(tooltip, text) end
+        if addBlankLine then LibQTipUtil:AddBlankLineToTooltip(tooltip) end
     end
 end
 
@@ -471,41 +481,30 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     if not achievementInfo then return false end
 
-    -- Category name
-    if (not pin.isOnContinent) then
-        if (ns.settings.showCategoryNames and not is2nd and pin.pinTemplate ~= LocalUtils.HandyNotesPinTemplate) then
-            GameTooltip_AddColoredDoubleLine(tooltip, " ", ZONE, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, self.wrapLine)
-        elseif not ns.settings.showSingleLineAchievements then
-            GameTooltip_AddBlankLineToTooltip(tooltip)
-        elseif not (ns.settings.showPluginName or is2nd) then
-            GameTooltip_AddBlankLineToTooltip(tooltip)
-        end
-    elseif not ns.settings.showContinentSingleLineAchievements then
-        GameTooltip_AddBlankLineToTooltip(tooltip)
-    end
-
     -- Zone name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
         local storyName = pin.storyMapInfo and pin.storyMapInfo.name or achievementInfo.name
-        GameTooltip_AddColoredLine(tooltip, L.ZONE_NAME_FORMAT:format(storyName), ZONE_STORY_HEADER_COLOR, self.wrapLine)
+        -- LibQTipUtil:AddColoredLine(tooltip, ZONE_STORY_HEADER_COLOR, L.ZONE_NAME_FORMAT:format(storyName))
+        local lineIndex, columnIndex = tooltip:AddHeader(L.ZONE_NAME_FORMAT:format(storyName))
+        tooltip:SetLineTextColor(lineIndex, ZONE_STORY_HEADER_COLOR:GetRGBA())
     end
 
     -- Achievement details
     local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
     local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
-    GameTooltip_AddNormalLine(tooltip, achievementNameTemplate:format(achievementName), self.wrapLine)
+    LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
     if (not pin.isOnContinent and ns.settings.showSingleLineAchievements) then return true end
     if (pin.isOnContinent and ns.settings.showContinentSingleLineAchievements) then return true end
 
     if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
         if not StringIsEmpty(achievementInfo.earnedBy) then
-            GameTooltip_AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy), self.wrapLine)
+            LibQTipUtil:AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
         end
     end
 
     -- Chapter status
-    GameTooltip_AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria), self.wrapLine)
-    debug:AddDebugLineToTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+    LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Chapter list
     if (not pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory")) or
@@ -521,20 +520,20 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                 end
             end
             if criteriaInfo.completed then
-                GameTooltip_AddColoredLine(tooltip, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName), GREEN_FONT_COLOR, self.wrapLine)
+                LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName))
             else
                 local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
                 if isActive then
-                    GameTooltip_AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName), self.wrapLine)
+                    LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
                 else
-                    GameTooltip_AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName), self.wrapLine)
+                    LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName))
                     if (not pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive)) or
-                       (pin.isOnContinent and ns.settings.showContinentStoryChapterQuests) then
+                       (pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and ns.settings.showContinentStoryChapterQuests) then
                         -- Format quest name and optionally show to user
                         local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
                         local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
                         local lineTemplate = "|A: :16:12:0:0|a %s"  --> needed for indention
-                        GameTooltip_AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName), self.wrapLine)
+                        LibQTipUtil:AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName))
                     end
                 end
             end
@@ -542,7 +541,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     else
         local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
         textTemplate = (pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) and L.HINT_VIEW_ACHIEVEMENT_CRITERIA or textTemplate
-        GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))  --, self.wrapLine)
+        LibQTipUtil:AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
     debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
@@ -1685,6 +1684,22 @@ end
 ----- Hooking Functions --------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local function SetPrimaryTooltipAnchorPoint(pin, frame, anchorFrame)
+    if pin:GetCenter() < pin.owningMap.ScrollContainer:GetCenter() then
+        frame:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT")
+    else
+        frame:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT")
+    end
+end
+local function SetSecondaryTooltipAnchorPoint(pin, frame, anchorFrame)
+    if pin:GetCenter() < pin.owningMap.ScrollContainer:GetCenter() then
+        frame:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT")
+    else
+        frame:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT")
+    end
+end
+--> TODO - tertiary 
+
 local function ShouldShowPluginName(pin)
     return ns.settings.showPluginName and (pin.questType or IsShiftKeyDown()
         or (ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn)
@@ -1703,87 +1718,77 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     currentPin = pin
 
     -- Extend quest meta data
-    -- pin.mapID = pin.mapID or pin:GetMap():GetMapID()
     pin.mapID = pin:GetMap():GetMapID()
-    pin.isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not pin.isSameAsPreviousPin then
+    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
     end
 
-    local tooltip = GameTooltip
-    -- local tooltip = GetAppropriateTooltip()
-    qtip = LibQTip:Acquire(AddonID.."LibQTooltip", 3, "LEFT", "LEFT", "RIGHT")
-    qtip:AddLine(nil, nil, LoremasterPlugin.name)
-    -- Copy the GameTooltip's content
-    local line, text;
-    for i = 1, tooltip:NumLines() do
-        line = _G[tooltip:GetName() .. "TextLeft" .. i]
-        text = line and line:GetText() or ''
-        if (i == 1) then qtip:AddHeader(text) else qtip:AddLine(text) end
+    -- Display Blizzard's original tooltip with eg. quest name and future details.
+    GameTooltip:Show()
+
+
+    local lineIndex1, columnIndex1
+    qtip = LibQTip:Acquire(AddonID.."LibQTooltip", 2, "LEFT", "RIGHT")
+
+    local lineIndex2, columnIndex2
+    qtip2 = LibQTip:Acquire(AddonID.."LibQTooltip2", 3, "LEFT", "LEFT", "RIGHT")
+    SetPrimaryTooltipAnchorPoint(pin, qtip2, GetAppropriateTooltip())  -- GameTooltip)
+    SetSecondaryTooltipAnchorPoint(pin, qtip, qtip2)
+
+    -- Addon and category names
+    if (ns.settings.showPluginName or ns.settings.showCategoryNames) then
+        local pluginName = ns.settings.showPluginName and LoremasterPlugin.name or ''
+        lineIndex1, columnIndex1 = qtip:AddLine(pluginName, ns.settings.showCategoryNames and L.CATEGORY_NAME_ZONE_STORY or '')
+        qtip:SetLineTextColor(lineIndex1, CATEGORY_NAME_COLOR:GetRGBA())
+
+        lineIndex2, columnIndex2 = qtip2:AddLine(pluginName, '', ns.settings.showCategoryNames and L.CATEGORY_NAME_QUESTLINE or '')
+        qtip2:SetLineTextColor(lineIndex2, CATEGORY_NAME_COLOR:GetRGBA())
     end
-    qtip:SetLineTextColor(2, NORMAL_FONT_COLOR:GetRGBA())
-    qtip:AddLine(nil, nil, ZONE)
-    qtip:AddLine(nil, nil, L.CATEGORY_NAME_QUESTLINE)
-    qtip:SetColumnTextColor(3, CATEGORY_NAME_COLOR:GetRGBA())
-    -- qtip:SetColumnColor(2, CATEGORY_NAME_COLOR:GetRGBA())
-    qtip:SetPoint("TOPLEFT", GameTooltip, "TOPRIGHT")
-    qtip:Show()
+    local questTypeText = DEV_MODE and tostring(pin.questType) or " "
+    debug:AddDebugLineToLibQTooltip(qtip,  {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
+    debug:AddDebugLineToLibQTooltip(qtip2, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
 
-    qtip2 = LibQTip:Acquire(AddonID.."LibQTooltip2", 3, "LEFT", "CENTER", "RIGHT")
-    qtip2:AddLine('Hello', "Test", 'World')
-    qtip2:AddSeparator(20)
-    qtip2:AddLine('Hello', "Line 2")
-    -- qtip2:SetAutoHideDelay(3)
-    qtip2:SetLineTextColor(3, GREEN_FONT_COLOR:GetRGBA())
-    qtip2:SetPoint("TOPLEFT", qtip, "BOTTOMLEFT")
-    qtip2:Show()
+    -- -- Quest Types
+    -- if (pin.questType and ns.settings.showQuestType) then
+    --     LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, pin.questInfo)
+    -- end
 
-    debug:print("qtip:", qtip:GetName(), qtip.name, GameTooltip:GetName(), tooltip:GetName())
-    debug:print("qtip:", qtip:GetHeight(), GameTooltip:GetHeight(), GetScreenHeight())
-    -- print("qtip2:", qtip2:GetName(), qtip2:GetHeight())
+    -- if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
+    --     debug:AddDebugQuestInfoLineToTooltip(tooltip, pin)
+    --     GameTooltip:Show()
+    --     return
+    -- end
 
-    -- Addon name
-    if ShouldShowPluginName(pin) then
-        local questTypeText = DEV_MODE and tostring(pin.questType) or " "
-        GameTooltip_AddColoredDoubleLine(tooltip, questTypeText, LoremasterPlugin.name, CATEGORY_NAME_COLOR, CATEGORY_NAME_COLOR, nil, nil)
-    end
-    debug:AddDebugLineToTooltip(tooltip, {text=format("> Q:%d - %s", pin.questID, pin.pinTemplate)})
-
-    -- Quest Types
-    if (pin.questType and ns.settings.showQuestType) then
-        LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, pin.questInfo)
-    end
-
-    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
-        debug:AddDebugQuestInfoLineToTooltip(tooltip, pin)
-        GameTooltip:Show()
-        return
-    end
-
-    -- Lore
+    -- Lore content
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
         pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
-        ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+        ZoneStoryUtils:AddZoneStoryDetailsToTooltip(qtip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
+            if not ns.settings.showSingleLineAchievements then
+                LibQTipUtil:AddBlankLineToTooltip(qtip)
+            end
+            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(qtip, pin)
         end
     end
-    if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
-        --> TODO - Optimize info retrieval to load only once (!)
-        LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
-    end
-    if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
-        CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
-    end
+    -- if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
+    --     --> TODO - Optimize info retrieval to load only once (!)
+    --     LocalQuestLineUtils:AddQuestLineDetailsToTooltip(tooltip, pin)
+    -- end
+    -- if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
+    --     CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin)
+    -- end
 
     -- Waypoint hint
-    GameTooltip_AddBlankLineToTooltip(tooltip)
-    GameTooltip_AddInstructionLine(tooltip, L.HINT_SET_WAYPOINT)
+    LibQTipUtil:AddBlankLineToTooltip(qtip2)
+    LibQTipUtil:AddInstructionLine(qtip2, L.HINT_SET_WAYPOINT)
 
-    tooltip:Show()
+    qtip:Show()
+    qtip2:Show()
 
+    debug:print("qtip:", qtip:GetName(), GameTooltip:GetName())
     debug:print("qtip:", qtip:GetHeight(), GameTooltip:GetHeight(), GetScreenHeight())
 end
 
@@ -1866,6 +1871,7 @@ local function Hook_OnClick(pin, mouseButton)                                   
         debug:print(HookUtils, "Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
 
         LocalMapUtils:SetUserWaypointXY(pin.mapID, pin:GetPosition())
+        C_SuperTrack.SetSuperTrackedUserWaypoint(true)  -- select it as active
     end
 end
 
@@ -2329,40 +2335,38 @@ local wrapText = false
 function LoremasterPlugin:OnEnter(mapID, coord)
     local node = nodes[mapID] and nodes[mapID][coord]
     if node then
-        local continentMapInfo = LocalMapUtils:GetMapInfo(mapID)
-        local isPinOnContinent = continentMapInfo.mapType == Enum.UIMapType.Continent
-        local tooltip = GameTooltip
+        -- Create tooltip
+        self.tooltip = LibQTip:Acquire(AddonID.."LibQTooltipContinent", 1, "LEFT")
 
-        if self:GetCenter() > self.owningMap.ScrollContainer:GetCenter() then
-            tooltip:SetOwner(self, "ANCHOR_LEFT")
+        if self:GetCenter() < self.owningMap.ScrollContainer:GetCenter() then
+            self.tooltip:SetPoint("TOPLEFT", self, "TOPRIGHT", 10, 0)
         else
-            tooltip:SetOwner(self, "ANCHOR_RIGHT")
+            self.tooltip:SetPoint("TOPRIGHT", self, "TOPLEFT")
         end
 
-        -- Header
-        GameTooltip_SetTitle(tooltip, LoremasterPlugin.name)
+        -- Header: Plugin + zone name
+        LibQTipUtil:SetTitle(self.tooltip, LoremasterPlugin.name)
+        LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
             local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
-            GameTooltip_AddColoredDoubleLine(tooltip, node.mapInfo.name, mapIDstring, NORMAL_FONT_COLOR, GRAY_FONT_COLOR)
+            LibQTipUtil:AddDisabledLine(self.tooltip, mapIDstring)
         else
-            GameTooltip_AddNormalLine(tooltip, node.mapInfo.name, wrapText)
-        end
-        if (isPinOnContinent and ns.settings.showContinentSingleLineAchievements) then
-            GameTooltip_AddBlankLineToTooltip(tooltip)
+            LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
         end
 
          -- Zone Story details
+        local continentMapInfo = LocalMapUtils:GetMapInfo(mapID)
          local fakePin = {
             mapID = mapID,
             achievementInfo = node.achievementInfo,
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
-            isOnContinent = isPinOnContinent,
+            isOnContinent = continentMapInfo.mapType == Enum.UIMapType.Continent,
          }
-         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, fakePin)
+         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(self.tooltip, fakePin)
 
-         -- Hint to view achievement
-         GameTooltip_AddBlankLineToTooltip(tooltip)
-         GameTooltip_AddInstructionLine(tooltip, L.HINT_VIEW_ACHIEVEMENT, wrapText)
+         -- Hint to open achievement frame
+        LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
+        LibQTipUtil:AddInstructionLine(self.tooltip, L.HINT_VIEW_ACHIEVEMENT)
 
         -- -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
         -- -- -- LocalQuestLineUtils.questLineInfos
@@ -2374,13 +2378,15 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         -- --     end
         -- -- end
 
-        tooltip:Show()
+        self.tooltip:Show()
     end
 end
 
 -- Function we will call when the mouse leaves a HandyNote, you will generally hide the tooltip here.
 function LoremasterPlugin:OnLeave(mapID, coord)
-    GameTooltip:Hide()
+    -- Release the tooltip
+   LibQTip:Release(self.tooltip)
+   self.tooltip = nil
 end
 
 -- Function we will call when the user clicks on a HandyNote, you will generally produce a menu here on right-click.
