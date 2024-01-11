@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 --[[ LibQTipUtil.lua ]]--
 --
--- by erglo <erglo.coder+HNLM@gmail.com>
+-- by erglo <erglo.coder+WAU@gmail.com>
 --
 -- Copyright (C) 2024  Erwin D. Glockner (aka erglo)
 --
@@ -20,21 +20,25 @@
 --
 --------------------------------------------------------------------------------
 -- 
--- This is a collection of wrapper functions around LibQTip tooltip functions.
--- Many of these functions are heavily inspired by the WoW GameTooltip API. See
--- <SharedTooltipTemplates.lua> for more.
+-- This is a collection of simple wrapper functions around LibQTip's tooltip
+-- methods. Many of these functions are heavily inspired by the WoW GameTooltip
+-- API. See <SharedTooltipTemplates.lua> for more.
 --
+-- Further reading:
 -- REF.: <https://www.wowace.com/projects/libqtip-1-0/pages/api-reference>  <br>
 -- REF.: <https://www.townlong-yak.com/framexml/live/SharedTooltipTemplates.lua>
---
+-- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Helix/GlobalColors.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/SharedColorConstants.lua>
+-- 
 --------------------------------------------------------------------------------
 
 local AddonID, ns = ...
 
 local LibQTipUtil = {}
 ns.utils.LibQTipUtil = LibQTipUtil
+
+----- Wrapper ------------------------------------------------------------------
 
 -- Adds a new empty line to the bottom of the LibQTip tooltip.
 --> See `LibQTip.Tooltip.AddLine` for more.
@@ -68,6 +72,18 @@ end
 function LibQTipUtil:AddDisabledLine(tooltip, ...)
     local lineIndex, columnIndex = tooltip:AddLine(...)
     tooltip:SetLineTextColor(lineIndex, DISABLED_FONT_COLOR:GetRGBA())
+    return lineIndex, columnIndex
+end
+
+-- Adds a new line with RED text to the bottom of the LibQTip tooltip.
+--> See `LibQTip.Tooltip.AddLine` for more.
+---@param tooltip LibQTip.Tooltip The `LibQTip.Tooltip` frame.
+---@param ... any Values redirected to `LibQTip.Tooltip.AddLine`.
+---@return number lineIndex The index of the newly added line.
+---@return number columnIndex The index of the next empty cell in the line or nil if it is full.
+function LibQTipUtil:AddErrorLine(tooltip, ...)
+    local lineIndex, columnIndex = tooltip:AddLine(...)
+    tooltip:SetLineTextColor(lineIndex, RED_FONT_COLOR:GetRGBA())
     return lineIndex, columnIndex
 end
 
@@ -117,3 +133,40 @@ function LibQTipUtil:SetTitle(tooltip, ...)
     tooltip:SetLineTextColor(lineIndex, HIGHLIGHT_FONT_COLOR:GetRGBA())
     return lineIndex, columnIndex
 end
+
+----- Quest Type Tags ----------------------------------------------------------
+
+-- Retrieve the quest type icon from given tag ID and decorate a text with it.
+-- Needed for `LibQTipUtil.AddQuestTagTooltipLine`, but borrowed from REF. below.
+-- Credits go to the authors of that file.
+-- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
+local function GetQuestTypeIconMarkupStringFromTagData(tagID, worldQuestType, text, iconWidth, iconHeight)
+	local atlasName = QuestUtils_GetQuestTagAtlas(tagID, worldQuestType)
+	if atlasName then
+		-- Use reasonable defaults if nothing is specified
+		iconWidth = iconWidth or 20;
+		iconHeight = iconHeight or 20;
+		local atlasMarkup = CreateAtlasMarkup(atlasName, iconWidth, iconHeight);
+		return string.format("%s %s", atlasMarkup, text); -- Convert to localized string to handle dynamic icon placement?
+	end
+end
+
+-- Adds a new line with given quest type tag in 'normal' (golden) text color to
+-- the bottom of the LibQTip tooltip.
+--> See `LibQTip.Tooltip.AddLine` for more.<br>
+--> Also see <QuestUtils.lua> for more.
+---@param tooltip LibQTip.Tooltip The `LibQTip.Tooltip` frame.
+---@param ... any Values redirected to `LibQTip.Tooltip.AddLine`.
+---@return number|nil lineIndex The index of the newly added line.
+---@return number|nil columnIndex The index of the next empty cell in the line or nil if it is full.
+function LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, worldQuestType, color, iconWidth, iconHeight, ...)
+    local tooltipLine = GetQuestTypeIconMarkupStringFromTagData(tagID, worldQuestType, tagName, iconWidth, iconHeight);
+	if tooltipLine then
+        local lineIndex, columnIndex = tooltip:AddLine(tooltipLine, ...)
+        local LineColor = color or NORMAL_FONT_COLOR
+        tooltip:SetLineTextColor(lineIndex, LineColor:GetRGBA())
+        return lineIndex, columnIndex
+	end
+end
+
+--------------------------------------------------------------------------------
