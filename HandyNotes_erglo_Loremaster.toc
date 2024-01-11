@@ -26,6 +26,7 @@
 # Load embedded (external) libraries
 embeds.xml
 utils/achievements.lua
+LibQTipUtil.lua
 
 # Load main files
 Data.lua
