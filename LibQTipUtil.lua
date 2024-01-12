@@ -124,6 +124,7 @@ function LibQTipUtil:AddNormalLine(tooltip, ...)
 end
 
 -- Adds a new header line with 'highlighted' (white) text color to the bottom of the LibQTip tooltip.
+--> See `LibQTip.Tooltip.AddHeader` for more.
 ---@param tooltip LibQTip.Tooltip The `LibQTip.Tooltip` frame.
 ---@param ... any Values redirected to `LibQTip.Tooltip.AddHeader`.
 ---@return number lineIndex The index of the newly added line.
@@ -131,6 +132,19 @@ end
 function LibQTipUtil:SetTitle(tooltip, ...)
     local lineIndex, columnIndex = tooltip:AddHeader(...)
     tooltip:SetLineTextColor(lineIndex, HIGHLIGHT_FONT_COLOR:GetRGBA())
+    return lineIndex, columnIndex
+end
+
+-- Adds a new header line with text in given font color to the bottom of the LibQTip tooltip.
+--> See `LibQTip.Tooltip.AddHeader` for more.
+---@param tooltip LibQTip.Tooltip The `LibQTip.Tooltip` frame.
+---@param FontColor ColorMixin A color from eg. <GlobalColors.lua> or <SharedColorConstants.lua>
+---@param ... any Values redirected to `LibQTip.Tooltip.AddLine`.
+---@return number lineIndex The index of the newly added line.
+---@return number columnIndex The index of the next empty cell in the line or nil if it is full.
+function LibQTipUtil:SetColoredTitle(tooltip, FontColor, ...)
+    local lineIndex, columnIndex = tooltip:AddHeader(...)
+    tooltip:SetLineTextColor(lineIndex, FontColor:GetRGBA())
     return lineIndex, columnIndex
 end
 
