@@ -183,4 +183,19 @@ function LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, worldQuestT
 	end
 end
 
---------------------------------------------------------------------------------
+----- Convenience Tools --------------------------------------------------------
+
+-- Copy the GameTooltip's content to the given `LibQTip.Tooltip`.
+---@param tooltip LibQTip.Tooltip The `LibQTip.Tooltip` frame.
+---@param FontColor ColorMixin|nil An optional color for the header from eg. <GlobalColors.lua> or <SharedColorConstants.lua>. Defaults to NORMAL_FONT_COLOR.
+function LibQTipUtil:CopyGameTooltipTo(tooltip, FontColor)
+    local GameTooltip = _G.GameTooltip
+    local headerLine = _G[GameTooltip:GetName() .. "TextLeft" .. 1]:GetText()
+    self:SetColoredTitle(tooltip, FontColor or NORMAL_FONT_COLOR, headerLine)
+    local line, text
+    for i = 2, GameTooltip:NumLines() do
+        line = _G[GameTooltip:GetName() .. "TextLeft" .. i]
+        text = line and line:GetText() or ''
+        tooltip:AddLine(text)
+    end
+end
