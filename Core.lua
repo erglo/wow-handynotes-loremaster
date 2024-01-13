@@ -87,6 +87,8 @@ L.OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED
 L.OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
 L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready."
 
+L.CONGRATULATIONS = SPLASH_BOOST_HEADER
+
 L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global string
 L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
 L.CATEGORY_NAME_CAMPAIGN = TRACKER_HEADER_CAMPAIGN_QUESTS  --> WoW global string
@@ -1725,19 +1727,22 @@ local function SetPrimaryTooltipAnchorPoint(pin, frame, anchorFrame)
     end
 end
 
-local function SetQuestlineTooltipAnchorPoint(pin, frame)
-    frame:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-    -- GameTooltip  -- GetAppropriateTooltip()
-end
-
 local function SetZoneStoryTooltipAnchorPoint(pin, frame)
+    -- print("Scale:", QuestlineTooltip:GetScale(), GetScreenHeight(), 768/GetScreenHeight())
     local anchorFrame = UIParent  -- pin.owningMap.ScrollContainer
     if pin:GetCenter() < anchorFrame:GetCenter() then
-        -- frame:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT")
         frame:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT")
     else
-        -- frame:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT")
         frame:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT")
+    end
+end
+
+-- If a quest is too far on the right side of the map the CampaignTooltip will
+-- be shown on the left side of the primary tooltip.
+local function AdjustCampaignTooltipAnchorPoint(anchorFrame)
+    if (CampaignTooltip:GetRight() > GetScreenWidth()) then
+        CampaignTooltip:ClearAllPoints()
+        return CampaignTooltip:SetPoint("BOTTOMRIGHT", anchorFrame, "BOTTOMLEFT")
     end
 end
 
@@ -1778,9 +1783,14 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Questline (primary tooltip)
     if (pin.questInfo.hasQuestLineInfo and ns.settings.showQuestLine) then
         QuestlineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestline", 1, "LEFT")
-        SetQuestlineTooltipAnchorPoint(pin, QuestlineTooltip)                   -- GetDefaultScale()  --> 0.639999
+        QuestlineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
+        -- QuestlineTooltip:SetCellMarginV(6)                                   --> TODO - Add to options
         LibQTipUtil:CopyGameTooltipTo(QuestlineTooltip)
-        -- Original tooltip no longer needed.
+        -- QuestlineTooltip:AddSeparator(1, TOOLTIP_DEFAULT_COLOR:GetRGBA())    --> TODO - Keep ???
+        -- CampaignTooltip:SetScale(0.6)                                        --> TODO - Add to options
+        -- GetDefaultScale()  --> 0.639999
+
+        -- Original tooltip is no longer needed.
         GameTooltip:Hide()
     end
     -- Zone Story (secondary)
@@ -1792,7 +1802,6 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
         CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaign", 1, "LEFT")
         CampaignTooltip:SetPoint("BOTTOMLEFT", QuestlineTooltip, "BOTTOMRIGHT")
-        -- CampaignTooltip:SetScale(0.6)
     end
     ----------------------------------------------------------------------------
 
@@ -1845,7 +1854,10 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         QuestlineTooltip:Show()
     end
     if ZoneStoryTooltip then ZoneStoryTooltip:Show() end
-    if CampaignTooltip then CampaignTooltip:Show() end
+    if CampaignTooltip then
+        CampaignTooltip:Show()
+        AdjustCampaignTooltipAnchorPoint(QuestlineTooltip)
+    end
 end
 
 -- local function HNQH_TaskPOI_OnEnter(pin, skipSetOwner)
@@ -2059,10 +2071,13 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-            ns:cprintf("This was quest %s from the questline %s.",
+            ns:cprintf("This was quest %s from the %s questline.",
                        GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
+            if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
+                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), ns.activeZoneMapInfo.name))
+            end
         end
     end
 end
@@ -2096,7 +2111,7 @@ local function PrintQuestAddedMessage(questInfo)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
-                ns:cprintf("This is quest %s of the campaign %s from the chapter %s.",
+                ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
@@ -2111,7 +2126,7 @@ local function PrintQuestAddedMessage(questInfo)
             if ns.settings.showQuestlineQuestProgressMessage then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
-                ns:cprintf("This is quest %s from the questline %s.",
+                ns:cprintf("This is quest %s from the %s questline.",
                             GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2185,7 +2200,7 @@ function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
         if achievementInfo then
             local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
             local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
-            ns:cprint(ORANGE(SPLASH_BOOST_HEADER), format("You have completed %s in %s.", achievementLink, mapInfo.name))
+            ns:cprint(ORANGE(L.CONGRATULATIONS), format("You have completed %s in %s.", achievementLink, mapInfo.name))
         end
     end
 end
