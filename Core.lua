@@ -201,9 +201,9 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     pin.questInfo.pinMapID = GRAY(tostring(pin.mapID))
     debug.tooltip = LibQTip:Acquire(AddonID.."DebugLibQTooltip", 2, "LEFT", "RIGHT")
     LibQTipUtil:SetTitle(debug.tooltip, ns.pluginInfo.title, GRAY("questInfo"))
-    local lineIndex, columnIndex, Column1Color, Column2Color
+    local lineIndex, Column1Color, Column2Color
     for k, v in pairs(pin.questInfo) do
-        lineIndex, columnIndex = debug.tooltip:AddLine(k, tostring(v))
+        lineIndex = debug.tooltip:AddLine(k, tostring(v))
         Column1Color = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
         Column2Color = (v == true) and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR
         debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
@@ -407,6 +407,35 @@ local function GetCollapseTypeModifier(isComplete, varName)
     return types[ns.settings[varName]]
 end
 
+-- function LibQTipUtil:AddCategoryNameLine(tooltip, name, lineIndex, columnIndex)
+--     local categoryName = ns.settings.showCategoryNames and name or " " --> string must not be empty or line won't be created
+--     local rowIndex = lineIndex or LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
+--     tooltip:SetCell(rowIndex, columnIndex or 1, categoryName, nil, "RIGHT")  -- replaces line above with new adjustments
+-- end
+
+-- Adds a custom line with a category name to a `LibQTip.Tooltip`.
+function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
+    local lineText, lineIndex
+    if categoryNameOnly then
+        lineText = ns.settings.showCategoryNames and name or " " --> string must not be empty or line won't be created
+
+    elseif (ns.settings.showPluginName or ns.settings.showCategoryNames) then
+        local pluginName = ns.settings.showPluginName and LoremasterPlugin.name or ''
+        local delimiter = (ns.settings.showPluginName and ns.settings.showCategoryNames) and "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t" or ''
+        local categoryName = ns.settings.showCategoryNames and name or ''
+        lineText = pluginName .. delimiter .. categoryName
+    end
+    lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
+    tooltip:SetCell(lineIndex, 1, lineText, nil, "RIGHT")  -- replaces line above with new adjustments
+end
+
+-- Adds a custom line with an indention before a GRAY text to a `LibQTip.Tooltip`.
+function LibQTipUtil:AddDescriptionLine(tooltip, text, leftPadding, justify, maxWidth)
+    local lineIndex = LibQTipUtil:AddDisabledLine(tooltip, '')
+    -- REF.: qTip:SetCell(lineNum, colNum, value[, font][, justification][, colSpan][, provider][, leftPadding][, rightPadding][, maxWidth][, minWidth][, ...])
+    tooltip:SetCell(lineIndex, 1, text, nil, justify or "LEFT", nil, nil, leftPadding or 16, nil, maxWidth or 400)
+end
+
 ----- Zone Story ----------
 
 ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyAchievementID2, storyMapInfo}, ... }
@@ -495,7 +524,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     if not achievementInfo then return false end
 
-    debug:AddDebugLineToLibQTooltip(tooltip,  {text=format("> Q:%d - %s - %s", pin.questID, pin.pinTemplate, pin.questType)})
+    -- Plugin + category name
+    if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
+        LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_ZONE_STORY)
+
+        debug:AddDebugLineToLibQTooltip(tooltip,  {text=format("> Q:%d - %s - %s", pin.questID, pin.pinTemplate, pin.questType)})
+    end
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
 
     -- Zone name
@@ -541,13 +575,13 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                     LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
                 else
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName))
+                    -- Show chapter quests
                     if (not pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive)) or
                        (pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and ns.settings.showContinentStoryChapterQuests) then
                         -- Format quest name and optionally show to user
                         local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
                         local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
-                        local lineTemplate = "|A: :16:12:0:0|a %s"  --> needed for indention
-                        LibQTipUtil:AddDisabledLine(tooltip, lineTemplate:format(criteriaQuestName))
+                        LibQTipUtil:AddDescriptionLine(tooltip, criteriaQuestName, 15)
                     end
                 end
             end
@@ -1466,12 +1500,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- end
 
     -- Category name
-    if ns.settings.showCategoryNames then
-        local lineIndex, columnIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, " ")
-        QuestlineTooltip:SetCell(lineIndex, 1, L.CATEGORY_NAME_QUESTLINE, nil, "RIGHT")
-    else
-        LibQTipUtil:AddBlankLineToTooltip(tooltip)
-    end
+    local categoryNameOnly = true
+    LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_QUESTLINE, categoryNameOnly)
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s", pin.questID, pin.pinTemplate, pin.questType or "N/A")})
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
@@ -1621,13 +1651,8 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
         -- LocalQuestLineUtils:AddQuestLineDetailsToTooltip(QuestlineTooltip, pin, campaignInfo.currentChapterID)
     end
 
-    -- Category name
-    if ns.settings.showCategoryNames then
-        local lineIndex, columnIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, " ")
-        tooltip:SetCell(lineIndex, 1, L.CATEGORY_NAME_CAMPAIGN, nil, "RIGHT")
-    else
-        LibQTipUtil:AddBlankLineToTooltip(tooltip)
-    end
+    -- Plugin + category name
+    LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_CAMPAIGN)
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s", pin.questID, pin.pinTemplate, pin.questType)})
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> C:%d, isWarCampaign: %d, currentChapterID: %d", campaignID, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
@@ -1657,15 +1682,11 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName))
                 end
                 if ns.settings.showCampaignChapterDescription and not StringIsEmpty(chapterInfo.description) then
-                    local lineWrap = true
-                    local lineIndention = "|A: :16:16:0:0|a"
-                    local lineTemplate = lineIndention.."|TInterface\\GossipFrame\\GossipGossipIcon:16:16:0:0|t %s"
-                    LibQTipUtil:AddDisabledLine(tooltip, lineTemplate:format(chapterInfo.description))
+                    local lineTextTemplate = "|TInterface\\GossipFrame\\GossipGossipIcon:16:16:0:0|t %s"
+                    LibQTipUtil:AddDescriptionLine(tooltip, lineTextTemplate:format(chapterInfo.description), 20)
                 end
                 if not ns.settings.showCampaignChapterDescription and DEV_MODE and not StringIsEmpty(chapterInfo.description) then
-                    -- GameTooltip_AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description), false, 16)
-                    LibQTipUtil:AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description))
-                    --> TODO - add padding
+                    LibQTipUtil:AddDescriptionLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description))
                 end
             end
         end
@@ -1675,11 +1696,13 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
     end
 
     if DEV_MODE and not StringIsEmpty(campaignInfo.description) then
-        -- Campaign description
+        -- Campaign description                                                 --> TODO - Add to options
+        LibQTipUtil:AddBlankLineToTooltip(tooltip)
         LibQTipUtil:AddDisabledLine(tooltip, QUEST_DESCRIPTION)
-        LibQTipUtil:AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(campaignInfo.description))
+        LibQTipUtil:AddDescriptionLine(tooltip, campaignInfo.description, 20)
+
         if campaignInfo.isWarCampaign then
-            LibQTipUtil:AddDisabledLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(WAR_CAMPAIGN))
+            LibQTipUtil:AddErrorLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(WAR_CAMPAIGN))
         end
     end
 end
@@ -1762,33 +1785,29 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
     -- Zone Story (secondary)
     if (pin.questInfo.hasZoneStoryInfo and ns.settings.showZoneStory) then
-        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory", 2, "LEFT", "RIGHT")
+        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory", 1, "LEFT")
         SetZoneStoryTooltipAnchorPoint(pin, ZoneStoryTooltip)
     end
     -- Campaign (tertiary)
     if (pin.questInfo.isCampaign and ns.settings.showCampaign) then
         CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaign", 1, "LEFT")
         CampaignTooltip:SetPoint("BOTTOMLEFT", QuestlineTooltip, "BOTTOMRIGHT")
+        -- CampaignTooltip:SetScale(0.6)
     end
     ----------------------------------------------------------------------------
 
-    -- Plugin and category names
-    if (ns.settings.showPluginName or ns.settings.showCategoryNames) then
-        local pluginName = ns.settings.showPluginName and LoremasterPlugin.name or ''
-        if QuestlineTooltip then
-            local lineIndex, columnIndex = LibQTipUtil:AddDisabledLine(QuestlineTooltip, pluginName)
-            QuestlineTooltip:SetCell(lineIndex, 1, pluginName, nil, "RIGHT")
-        end
-        if ZoneStoryTooltip then
-            local lineIndex, columnIndex = LibQTipUtil:AddDisabledLine(ZoneStoryTooltip, pluginName, ns.settings.showCategoryNames and L.CATEGORY_NAME_ZONE_STORY or '')
-            -- ZoneStoryTooltip:SetLineTextColor(lineIndex, CATEGORY_NAME_COLOR:GetRGBA())
-        end
+    -- Plugin name
+    if QuestlineTooltip then
+        local pluginName = ns.settings.showPluginName and LoremasterPlugin.name or " "
+        local lineIndex = LibQTipUtil:AddDisabledLine(QuestlineTooltip, '')
+        QuestlineTooltip:SetCell(lineIndex, 1, pluginName, nil, "RIGHT")
+        -- LibQTipUtil:AddCategoryNameLine(
+
     end
 
     -- Quest types
     if (pin.questType and ns.settings.showQuestType and QuestlineTooltip) then
         LocalQuestUtils:AddQuestTagLinesToTooltip(QuestlineTooltip, pin.questInfo)
-        -- LibQTipUtil:AddBlankLineToTooltip(QuestlineTooltip)
     end
 
     if ZoneStoryTooltip then

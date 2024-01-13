@@ -1,7 +1,9 @@
-(A) Auto-adjust tooltip height @tooltip +map +pin
+(B) Add campaign description hint @tooltip +campaign +pin
 (B) Add world map button @worldMapButton +map +button
-Show active QLs in world map button @worldMapButton +questLines +map +button
 Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
-Handle or mark quick-accept type quests @tooltip +questLines +pin
-Add chapter description hint @tooltip +campaign +pin
+Determine switch between full screen WorldMapFrame and QuestLog view @scale +map
+Auto-scroll tooltip to quest @tooltip +map +pin
+Show achievement completion date @tooltip +map +achievement +zoneStory
+Check if faste scrolling is possible @tooltip +map
+Show active QLs in world map button @worldMapButton +questLines +map +button
