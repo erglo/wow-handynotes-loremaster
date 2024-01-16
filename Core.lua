@@ -557,9 +557,13 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                     if (not pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive)) or
                        (pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and ns.settings.showContinentStoryChapterQuests) then
                         -- Format quest name and optionally show to user
-                        local questInfo = LocalQuestUtils:GetQuestInfo(criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
+                        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
+                        local questInfo = LocalQuestUtils:GetQuestInfo(questID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
                         local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
                         LibQTipUtil:AddDescriptionLine(tooltip, criteriaQuestName, 15)
+                        if not tContains(ns.lore.storyQuests, tostring(questID)) then
+                            tinsert(ns.lore.storyQuests, tostring(questID))
+                        end
                     end
                 end
             end

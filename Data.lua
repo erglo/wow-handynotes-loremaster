@@ -109,7 +109,7 @@ end
 
 -- REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>
 --
-local CriteriaType = {
+local LocalCriteriaType = {
     Achievement = 8,
     Quest = 27,
 }
@@ -125,8 +125,9 @@ function LocalLoreUtil:GetStoryQuests(achievementID)
         for i, criteriaInfo in ipairs(criteriaInfoList) do
             if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
                 self:GetStoryQuests(criteriaInfo.assetID)
-            elseif (criteriaInfo.criteriaType == CriteriaType.Quest) then
-                tinsert(self.storyQuests, tostring(criteriaInfo.assetID))
+            elseif (criteriaInfo.LocalCriteriaType == LocalCriteriaType.Quest) then
+                local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
+                tinsert(self.storyQuests, tostring(questID))
             end
         end
     end
