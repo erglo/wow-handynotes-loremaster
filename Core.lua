@@ -1967,6 +1967,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
 
     if ShouldShowReadyForTurnInMessage(pin.questInfo) then
+        --> TODO - QustType needed in this case ???
         if ShouldShowQuestType(pin) or not (ns.settings.showPluginName and not ns.settings.showQuestType) then LibQTipUtil:AddBlankLineToTooltip(ActiveQuestTooltip) end
         LibQTipUtil:AddInstructionLine(ActiveQuestTooltip, QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN)
     end
@@ -2116,7 +2117,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
-                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), ns.activeZoneMapInfo.name))
+                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), ns.activeZoneMapInfo.name))
             end
         end
     end
@@ -2241,6 +2242,7 @@ function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
             local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
             local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
             ns:cprint(ORANGE(L.CONGRATULATIONS), format("You have completed %s in %s.", achievementLink, mapInfo.name))
+            ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
         end
     end
 end
@@ -2257,6 +2259,7 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
             local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
             local criteriaAmount = PARENS_TEMPLATE:format(GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
+            ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
             -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
             -- if (numLeft > 0) then
             --     ns:cprintf(YELLOW("> %d more to go to complete this achievement."), numLeft)
@@ -2267,17 +2270,17 @@ end
 -- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
 -- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 1195, "Schattenmond") end
 
--- function LoremasterPlugin:CRITERIA_COMPLETE(eventName, ...)
---     local criteriaID = ...
---     print("TEST -", eventName, criteriaID)
--- end
+function LoremasterPlugin:CRITERIA_COMPLETE(eventName, ...)
+    local criteriaID = ...
+    debug:print("TEST -", eventName, criteriaID)
+end
 
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
 LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
--- LoremasterPlugin:RegisterEvent("CRITERIA_COMPLETE")
+LoremasterPlugin:RegisterEvent("CRITERIA_COMPLETE")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
