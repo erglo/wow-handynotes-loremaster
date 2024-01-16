@@ -8,12 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* New `tooltip handler` for better organizing and displaying the tooltip content.
+* New `tooltip handler` [LibQTip](https://www.curseforge.com/wow/addons/libqtip-1-0) for better organizing and displaying the tooltip content.
 
 ### Changed
 
-* Separated categories into multiple tooltips.
-* The plugin name in active quest icon tooltips is now only showing when at least the "Ready for turn-in" message is activated. Without any tooltip content there's no need for the plugin name to be shown.
+* Quest tags: combined account-wide quest types with the player's faction group, as can seen in the quest log tooltip.
+* Quest tags: quest types shown by Blizzard in the active quest tooltip will be ignored since they're already shown.
+* Quest tags: quest type tags now show a different text color for active quests.
+* Tooltip: tooltips are now scrollable and clamped to the screen.
+* Tooltip: categories can now be separated into multiple tooltips.
+* Tooltip: the plugin name in active quests is now only showing when at least the "Ready for turn-in" message is activated. Without any tooltip content there's no need for the plugin name to be shown. In short: w/o content from this plugin, the tooltip mimics Blizzard's default look and feel.
 
 ## [v0.4.2-alpha+100200] - 2024-01-05
 

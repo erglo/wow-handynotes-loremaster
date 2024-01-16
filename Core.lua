@@ -89,6 +89,8 @@ L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready.
 
 L.CONGRATULATIONS = SPLASH_BOOST_HEADER
 
+L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
+
 L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global string
 L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
 L.CATEGORY_NAME_CAMPAIGN = TRACKER_HEADER_CAMPAIGN_QUESTS  --> WoW global string
@@ -173,7 +175,7 @@ local LocalUtils = {}
 function debug:AddDebugLineToLibQTooltip(tooltip, debugInfo)
     local text = debugInfo and debugInfo.text
     local addBlankLine = debugInfo and debugInfo.addBlankLine
-    if DEV_MODE then
+    if debug.isActive then
         if text then LibQTipUtil:AddDisabledLine(tooltip, text) end
     elseif addBlankLine then
         LibQTipUtil:AddBlankLineToTooltip(tooltip)
@@ -817,31 +819,36 @@ local QuestNameFactionGroupTemplate = {
     [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
 }
 
--- Expand the default quest tag atlas map 
---> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua> 
+-- Expand the default quest tag atlas map
+-- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
+--
+--> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
+--
 QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
-QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  --> escort
-QUEST_TAG_ATLAS[107] = "ArtifactQuest"  -- "Rune-06-purple"  -- "ArtifactQuest"
-QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"  -- "worldquest-questmarker-dragon"  --> elite world quest (!)
+QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  --> escort type quests
+QUEST_TAG_ATLAS[107] = "ArtifactQuest"
+QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"
 QUEST_TAG_ATLAS[145] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
-QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
+QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
+QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
+QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
+QUEST_TAG_ATLAS["COMPLETED_IMPORTANT"] = "quest-important-turnin"
+QUEST_TAG_ATLAS["DAILY_CAMPAIGN"] = "Quest-DailyCampaign-Available"
+QUEST_TAG_ATLAS["IMPORTANT"] = "quest-important-available"
 QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
 QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
 QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
-QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
-QUEST_TAG_ATLAS["STORY"] = "questlog-questtypeicon-story"
+QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 -- QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
--- "questlog-questtypeicon-lock"
 
 local QuestTagNames = {
-    ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
+    ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
+    ["IMPORTANT"] = ENCOUNTER_JOURNAL_SECTION_FLAG5,
+    ["LEGENDARY"] = ITEM_QUALITY5_DESC,
     ["TRIVIAL_CAMPAIGN"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(TRACKER_HEADER_CAMPAIGN_QUESTS),
     ["TRIVIAL_IMPORTANT"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ENCOUNTER_JOURNAL_SECTION_FLAG5),
     ["TRIVIAL_LEGENDARY"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ITEM_QUALITY5_DESC),
-    ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
-    ["LEGENDARY"] = ITEM_QUALITY5_DESC,
-    ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
-    -- ["ACCOUNT"] = ITEM_UPGRADE_DISCOUNT_TOOLTIP_ACCOUNT_WIDE,
+    ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
 }
 
 local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, 109}
@@ -854,7 +861,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     if not StringIsEmpty(questInfo.questName) then
         if questInfo.isDaily then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
                 questTitle = iconString..questTitle
@@ -862,10 +869,10 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isWeekly then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
-                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
         if questInfo.isStory then
@@ -873,18 +880,18 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = ORANGE(questTitle)
             end
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["STORY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["STORY"]))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS["STORY"], 16, 16)
-                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
             elseif (QUEST_TAG_ATLAS[questInfo.questType] == nil) then
                 -- This quest type is neither part of Blizzard's tag atlas variable, nor have I added it, yet.
-                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
             elseif tContains(leftSidedTags, questInfo.questType) then
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 questTitle = iconString..questTitle
@@ -895,10 +902,10 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isLegendary then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
-                questTitle = iconString..ITEM_NAME_DESCRIPTION_DELIMITER..questTitle
+                questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
         if debug.showChapterIDsInTooltip then
@@ -984,7 +991,6 @@ function LocalQuestUtils:IsObsolete(questID)
     if (GetQuestExpansion(questID) < 0) then
         return true
     end
-    -- if not HaveQuestData(questID) and (QuestCache.objects[questID] == nil or StringIsEmpty(QuestCache.objects[questID].title)) then
     if not HaveQuestData(questID) and (QuestCache.objects[questID] == nil) then
         return true
     end
@@ -997,29 +1003,44 @@ function LocalQuestUtils:IsStory(questID)
 end
 
 local function IsKnownQuestTypeTag(questInfo)
-    return questInfo.questTagInfo and QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID]
+    return questInfo.questTagInfo and QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID] ~= nil
 end
 local function ShouldIgnoreQuestTypeTag(questInfo)
     if not questInfo.questTagInfo then return false end
 
-    -- local result = questInfo.isOnQuest and QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID]
-    local result = questInfo.isOnQuest and IsKnownQuestTypeTag(questInfo)
-    debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName)
+    local shouldIgnore = questInfo.isOnQuest and IsKnownQuestTypeTag(questInfo)
+    if shouldIgnore then
+        debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName)
+    end
 
-    return result
+    return shouldIgnore
 end
 
 -- Add daily and weekly quests to known quest types.
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR
 
+    -- Blizzard's default tags
     local tagInfo = questInfo.questTagInfo
     if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagInfo.tagName, tagInfo.tagID, tagInfo.worldQuestType, LineColor)
+        local tagID = tagInfo.tagID
+        local tagName = tagInfo.tagName
+        -- Account-wide quest type are only shown in the questlog.
+        if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+            tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
+            tagName = tagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format( select(2, UnitFactionGroup("player")) )
+        end
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
     end
 
+    -- Custom tags
     if questInfo.isDaily then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, "DAILY", nil, LineColor)
+        if questInfo.isCampaign then
+            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
+            LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
+        else
+            LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, "DAILY", nil, LineColor)
+        end
     end
     if questInfo.isWeekly then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, "WEEKLY", nil, LineColor)
@@ -1035,11 +1056,20 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, LineColor)
         end
     end
-    if (questInfo.isCampaign and not questInfo.isTrivial) then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], "CAMPAIGN", nil, LineColor)
+    if (questInfo.isCampaign and not questInfo.isTrivial and not questInfo.isDaily) then
+        local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
     end
+    -- Default quest tags in QUEST_TAG_ATLAS which are not displayed by Blizzard for some reasons.
     if (questInfo.isLegendary and not questInfo.isTrivial) then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["LEGENDARY"], Enum.QuestTag.Legendary, nil, LineColor)
+    end
+    if (questInfo.isImportant and not questInfo.isTrivial) then
+        local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], tagName, nil, LineColor)
+    end
+    if questInfo.isStory then
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
     end
 end
 
@@ -1511,7 +1541,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
     if (filteredQuestInfos.numRepeatable > 0) then
-        questLineCountLine = questLineCountLine.." "..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
     end
     LibQTipUtil:AddNormalLine(tooltip, questLineCountLine)
 
@@ -1684,7 +1714,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
                     local lineTextTemplate = "|TInterface\\GossipFrame\\GossipGossipIcon:16:16:0:0|t %s"
                     LibQTipUtil:AddDescriptionLine(tooltip, lineTextTemplate:format(chapterInfo.description), 20)
                 end
-                if not ns.settings.showCampaignChapterDescription and DEV_MODE and not StringIsEmpty(chapterInfo.description) then
+                if not ns.settings.showCampaignChapterDescription and debug.isActive and not StringIsEmpty(chapterInfo.description) then
                     LibQTipUtil:AddDescriptionLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description))
                 end
             end
@@ -1694,7 +1724,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, showHintOnly)
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
-    if DEV_MODE and not StringIsEmpty(campaignInfo.description) then
+    if debug.isActive and not StringIsEmpty(campaignInfo.description) then
         -- Campaign description                                                 --> TODO - Add to options
         LibQTipUtil:AddBlankLineToTooltip(tooltip)
         LibQTipUtil:AddDisabledLine(tooltip, QUEST_DESCRIPTION)
@@ -2644,8 +2674,6 @@ end
 
 C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
 
--- QUEST_LOG_COVENANT_CALLINGS_HEADER = "|cffffffffBerufungen:|r |cffffd200%d/%d abgeschlossen|r";
-
 C_Minimap.IsTrackingHiddenQuests()
 
 -- local function tCount(tbl)
@@ -2657,12 +2685,6 @@ C_Minimap.IsTrackingHiddenQuests()
 -- 	end
 -- 	return n
 -- end
-
--- ACHIEVEMENT_NAME_FORMAT = "|T%d:16:16:0:0|t %s",
--- ACHIEVEMENT_COLON_FORMAT = CONTENT_TRACKING_ACHIEVEMENT_FORMAT,  -- "Erfolg: \"%s\"";
--- "CampaignAvailableQuestIcon"
--- "Campaign-QuestLog-LoreBook", "Campaign-QuestLog-LoreBook-Back"
--- "StoryHeader-CheevoIcon"
 
 -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
 -- ITEM_REQ_REPUTATION = "Requires %s - %s";
