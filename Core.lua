@@ -2077,7 +2077,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
             if questLineInfo then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                ns:cprintf("This was quest %s of the campaign %s from the chapter %s.",
+                ns:cprintf("You've completed %s quests of the %s chapter from the %s campaign.",
                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
@@ -2093,7 +2093,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-            ns:cprintf("This was quest %s from the %s questline.",
+            ns:cprintf("You've completed %s quests of the %s questline.",
                        GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )

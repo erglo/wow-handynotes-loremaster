@@ -1,6 +1,5 @@
 (A) Fix active quest tooltip +campaign +questLines
 (A) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip.
-(B) Add campaign description hint @tooltip +campaign +pin
 (B) Add world map button @worldMapButton +map +button
 Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
