@@ -373,7 +373,7 @@ function DBUtil:RemoveActiveLoreQuest(questID)
     debug:print(self, "Removed active lore quest", questID)
     -- Remove DB itself if empty
     if not self:HasCategoryTableAnyEntries("activeLoreQuests") then
-        DBUtil:DeleteDbCategory("activeLoreQuests")
+        self:DeleteDbCategory("activeLoreQuests")
     end
 
     return questLineID, campaignID
@@ -1474,6 +1474,10 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+    local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
+    if (numActiveQuestLines > 0) then
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format("+"..tostring(numActiveQuestLines)))
+    end
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
     end
@@ -1492,6 +1496,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
                 elseif isActiveQuest then
                     LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
+                elseif DBUtil:IsQuestActiveLoreQuest(questInfo.questID) then
+                    LibQTipUtil:AddColoredLine(tooltip, LIGHTYELLOW_FONT_COLOR, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
                 else
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
                 end
@@ -2100,7 +2106,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
     end
 end
 
-local function CountActiveQuestlineQuests(questLineID)
+function LocalUtils:CountActiveQuestlineQuests(questLineID)
     if not DBUtil:HasCategoryTableAnyEntries("activeLoreQuests") then return 0 end
 
     local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
@@ -2128,7 +2134,7 @@ local function PrintQuestAddedMessage(questInfo)
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, ns.activeZoneMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
+                local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
@@ -2143,7 +2149,7 @@ local function PrintQuestAddedMessage(questInfo)
         if questLineInfo then
             if ns.settings.showQuestlineQuestProgressMessage then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = CountActiveQuestlineQuests(questLineInfo.questLineID)
+                local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the %s questline.",
                             GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
