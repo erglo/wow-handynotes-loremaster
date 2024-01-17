@@ -855,6 +855,7 @@ local QuestTagNames = {
     ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
     ["IMPORTANT"] = ENCOUNTER_JOURNAL_SECTION_FLAG5,
     ["LEGENDARY"] = ITEM_QUALITY5_DESC,
+    ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
     ["TRIVIAL_CAMPAIGN"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(TRACKER_HEADER_CAMPAIGN_QUESTS),
     ["TRIVIAL_IMPORTANT"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ENCOUNTER_JOURNAL_SECTION_FLAG5),
     ["TRIVIAL_LEGENDARY"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ITEM_QUALITY5_DESC),
@@ -886,7 +887,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
             end
         end
         if questInfo.isStory then
-            if ns.settings.highlightStoryQuests then
+            if (ns.settings.highlightStoryQuests and not questInfo.isFlaggedCompleted) then
                 questTitle = ORANGE(questTitle)
             end
             if ns.settings.showQuestTypeAsText then
