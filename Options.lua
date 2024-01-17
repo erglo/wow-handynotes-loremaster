@@ -262,6 +262,15 @@ ns.pluginInfo.options = function(HandyNotes)
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 order = 2,
                             },
+                            separate_tooltip_cp = {
+                                type = "toggle",
+                                name = "Use Separate Tooltip",
+                                desc = "Shows the campaign details in a separate tooltip.",
+                                arg = "showCampaignSeparately",
+                                disabled = function() return not ns.settings["showCampaign"] end,
+                                width = "double",
+                                order = 3,
+                            },
                             chapter_description = {
                                 type = "toggle",
                                 name = "Include Chapter Description",
@@ -269,7 +278,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
-                                order = 3,
+                                order = 4,
                             },
                             campaign_description = {
                                 type = "toggle",
@@ -278,7 +287,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showCampaignDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
-                                order = 4,
+                                order = 5,
                             },
                         },
                     },
