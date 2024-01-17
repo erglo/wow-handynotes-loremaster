@@ -1664,10 +1664,10 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
         GameTooltip_AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
-    if debug.isActive and not StringIsEmpty(campaignInfo.description) then
-        -- Campaign description                                                 --> TODO - Add to options
+    -- Campaign description
+    if (ns.settings.showCampaignDescription or debug.isActive) and not StringIsEmpty(campaignInfo.description) then
         LibQTipUtil:AddBlankLineToTooltip(tooltip)
-        LibQTipUtil:AddDisabledLine(tooltip, QUEST_DESCRIPTION)
+        LibQTipUtil:AddNormalLine(tooltip, QUEST_DESCRIPTION)
         LibQTipUtil:AddDescriptionLine(tooltip, campaignInfo.description, 20)
 
         if campaignInfo.isWarCampaign then

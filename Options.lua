@@ -151,7 +151,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showZoneStory",
                                 order = 1,
                             },
-                            collapse_type = {
+                            collapse_type_sz = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
@@ -162,25 +162,26 @@ ns.pluginInfo.options = function(HandyNotes)
                             },
                             separate_tooltip_sz = {
                                 type = "toggle",
-                                name = "Show In Separate Tooltip",
+                                name = "Use Separate Tooltip",
                                 desc = "Shows the zone story details in a separate tooltip.",
                                 arg = "showZoneStorySeparately",
+                                disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
                                 order = 3,
                             },
-                            single_line_achievements = {
+                            single_line_achievements_sz = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
-                                desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
+                                desc = "Displays each story achievement in a single line instead of multiple (auto-collapsible) lines.",
                                 arg = "showSingleLineAchievements",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
                                 order = 4,
                             },
-                            show_chapter_quests = {
+                            show_chapter_quests_sz = {
                                 type = "toggle",
-                                name = "Show Chapter Quests",
-                                desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
+                                name = "Include Chapter Quests",
+                                desc = "Some chapters are directly linked to a quest. If activated, these will be shown below the chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
                                 arg = "showStoryChapterQuests",
                                 disabled = function() return ns.settings["showSingleLineAchievements"] or not ns.settings["showZoneStory"] end,
                                 width = "double",
@@ -201,7 +202,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showQuestLine",
                                 order = 1,
                             },
-                            collapse_type = {
+                            collapse_type_ql = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
@@ -212,8 +213,8 @@ ns.pluginInfo.options = function(HandyNotes)
                             },
                             quest_type_in_names = {
                                 type = "toggle",
-                                name = "Show Quest Type as Text",
-                                desc = "Displays the quest type in quest titles as text instead of using icons."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "WEEKLY", true, false, true),
+                                name = "Quest Type Icons as Text",
+                                desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
@@ -252,7 +253,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showCampaign",
                                 order = 1,
                             },
-                            collapse_type = {
+                            collapse_type_cp = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
@@ -263,12 +264,21 @@ ns.pluginInfo.options = function(HandyNotes)
                             },
                             chapter_description = {
                                 type = "toggle",
-                                name = "Show Chapter Description",
+                                name = "Include Chapter Description",
                                 desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("Description", 132053),
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
                                 order = 3,
+                            },
+                            campaign_description = {
+                                type = "toggle",
+                                name = "Show Campaign Description",
+                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AddExampleLine("Description", 132053),
+                                arg = "showCampaignDescription",
+                                disabled = function() return not ns.settings["showCampaign"] end,
+                                width = "double",
+                                order = 4,
                             },
                         },
                     },
@@ -329,7 +339,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             --     arg = "showZoneStory",
                             --     order = 1,
                             -- },
-                            single_line_achievements = {
+                            single_line_achievements_sz_cont = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
                                 desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
@@ -337,7 +347,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width = 1.5,  -- "double",
                                 order = 1,
                             },
-                            collapse_type = {
+                            collapse_type_sz_cont = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
@@ -345,9 +355,9 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
-                            show_chapter_quests = {
+                            chapter_quests_sz_cont = {
                                 type = "toggle",
-                                name = "Show Chapter Quests",
+                                name = "Include Chapter Quests",
                                 desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
                                 arg = "showContinentStoryChapterQuests",
                                 disabled = function() return ns.settings["showContinentSingleLineAchievements"] or not ns.settings["showContinentZoneIcons"] end,
