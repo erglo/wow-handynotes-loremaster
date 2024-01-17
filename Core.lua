@@ -1013,16 +1013,12 @@ function LocalQuestUtils:IsStory(questID)
     return tContains(ns.lore.storyQuests, tostring(questID)) or IsStoryQuest(questID)
 end
 
-local function IsKnownQuestTypeTag(questInfo)
-    return questInfo.questTagInfo and QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID] ~= nil
-end
 local function ShouldIgnoreQuestTypeTag(questInfo)
-    if not questInfo.questTagInfo then return false end
+    if not questInfo.questTagInfo then return true end
 
-    local shouldIgnore = questInfo.isOnQuest and IsKnownQuestTypeTag(questInfo)
-    if shouldIgnore then
-        debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName)
-    end
+    local isKnownQuestTypeTag = QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID] ~= nil
+    local shouldIgnore = questInfo.isOnQuest and isKnownQuestTypeTag
+    if shouldIgnore then debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName) end
 
     return shouldIgnore
 end
@@ -1747,9 +1743,8 @@ local function AdjustCampaignTooltipAnchorPoint(anchorFrame)
 end
 
 local function ShouldShowQuestType(pin)
-    local hasTagsToShow = not ShouldIgnoreQuestTypeTag(pin.questInfo) or pin.questInfo.hasHiddenQuestType
+    local hasTagsToShow = pin.questInfo.hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo)
 
-    -- return ns.settings.showQuestType and (pin.questType ~= nil or pin.questInfo.questType > 0)
     return ns.settings.showQuestType and hasTagsToShow
 end
 
