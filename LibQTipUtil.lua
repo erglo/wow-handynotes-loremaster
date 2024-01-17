@@ -157,11 +157,10 @@ end
 local function GetQuestTypeIconMarkupStringFromTagData(tagID, worldQuestType, text, iconWidth, iconHeight)
 	local atlasName = QuestUtils_GetQuestTagAtlas(tagID, worldQuestType)
 	if atlasName then
-		-- Use reasonable defaults if nothing is specified
-		iconWidth = iconWidth or 20;
-		iconHeight = iconHeight or 20;
-		local atlasMarkup = CreateAtlasMarkup(atlasName, iconWidth, iconHeight);
-		return string.format("%s %s", atlasMarkup, text); -- Convert to localized string to handle dynamic icon placement?
+		iconWidth = iconWidth or 20
+		iconHeight = iconHeight or 20
+		local atlasMarkup = CreateAtlasMarkup(atlasName, iconWidth, iconHeight)
+		return string.format("%s %s", atlasMarkup, text)
 	end
 end
 
@@ -174,7 +173,7 @@ end
 ---@return number|nil lineIndex The index of the newly added line.
 ---@return number|nil columnIndex The index of the next empty cell in the line or nil if it is full.
 function LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, worldQuestType, color, iconWidth, iconHeight, ...)
-    local tooltipLine = GetQuestTypeIconMarkupStringFromTagData(tagID, worldQuestType, tagName, iconWidth, iconHeight);
+    local tooltipLine = GetQuestTypeIconMarkupStringFromTagData(tagID, worldQuestType, tagName, iconWidth, iconHeight)
 	if tooltipLine then
         local lineIndex, columnIndex = tooltip:AddLine(tooltipLine, ...)
         local LineColor = color or NORMAL_FONT_COLOR

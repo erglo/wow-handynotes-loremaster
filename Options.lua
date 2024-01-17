@@ -132,7 +132,7 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                     quest_turn_in = {
                         type = "toggle",
-                        name = format("Show %s Message", string.gsub(QUEST_PROGRESS_TOOLTIP_QUEST_READY_FOR_TURN_IN, "|cff20ff20", "|cff999999")),
+                        name = format("Show %s Message", LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(QUEST_WATCH_QUEST_READY)),
                         desc = "Show or hide this message. This option affects active quests only.",
                         arg = "showQuestTurnIn",
                         width = "double",
@@ -160,6 +160,14 @@ ns.pluginInfo.options = function(HandyNotes)
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 order = 2,
                             },
+                            separate_tooltip_sz = {
+                                type = "toggle",
+                                name = "Show In Separate Tooltip",
+                                desc = "Shows the zone story details in a separate tooltip.",
+                                arg = "showZoneStorySeparately",
+                                width = "double",
+                                order = 3,
+                            },
                             single_line_achievements = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
@@ -167,7 +175,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showSingleLineAchievements",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
-                                order = 3,
+                                order = 4,
                             },
                             show_chapter_quests = {
                                 type = "toggle",
@@ -176,7 +184,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "showStoryChapterQuests",
                                 disabled = function() return ns.settings["showSingleLineAchievements"] or not ns.settings["showZoneStory"] end,
                                 width = "double",
-                                order = 4,
+                                order = 5,
                             },
                         },
                     },
