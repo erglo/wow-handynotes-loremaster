@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Updated TOC file version to `WoW 10.2.5`.
 * Quest tags: combined account-wide quest types with the player's faction group, as can seen in the quest log tooltip.
 * Quest tags: quest types shown by Blizzard in the active quest tooltip will be ignored since they're already shown.
 * Quest tags: quest type tags now show a different text color for active quests.
