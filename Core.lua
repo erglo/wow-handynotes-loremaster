@@ -828,16 +828,23 @@ local QuestNameFactionGroupTemplate = {
     [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
 }
 
+LocalUtils.QuestTag = {}
+LocalUtils.QuestTag.Artifact = 107
+LocalUtils.QuestTag.BurningLegion = 145
+LocalUtils.QuestTag.Class = 21
+LocalUtils.QuestTag.Escort = 84
+LocalUtils.QuestTag.WorldQuest = 109
+
 -- Expand the default quest tag atlas map
 -- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
 --
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
 --
-QUEST_TAG_ATLAS[21] = "questlog-questtypeicon-class"
-QUEST_TAG_ATLAS[84] = "nameplates-InterruptShield"  --> escort type quests
-QUEST_TAG_ATLAS[107] = "ArtifactQuest"
-QUEST_TAG_ATLAS[109] = "worldquest-tracker-questmarker"
-QUEST_TAG_ATLAS[145] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Class] = "questlog-questtypeicon-class"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Escort] = "nameplates-InterruptShield"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Artifact] = "ArtifactQuest"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.WorldQuest] = "worldquest-tracker-questmarker"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegion] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
@@ -853,6 +860,7 @@ QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 
 local QuestTagNames = {
     ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
+    ["COMPLETED"] = COMPLETE,
     ["IMPORTANT"] = ENCOUNTER_JOURNAL_SECTION_FLAG5,
     ["LEGENDARY"] = ITEM_QUALITY5_DESC,
     ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
@@ -862,19 +870,28 @@ local QuestTagNames = {
     ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
 }
 
-local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, 109}
+local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest}
 
 -- Add quest type tags (text or icon) to a quest name.
 function LocalQuestUtils:FormatQuestName(questInfo)
-    local iconString;
+    local iconString, atlasName;
+    local isReady = questInfo.isReadyForTurnIn
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not StringIsEmpty(questInfo.questName) then
+        if isReady then
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["COMPLETED"]))..L.TEXT_DELIMITER..questTitle
+            else
+                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS["COMPLETED"], 16, 16, -2)
+                questTitle = iconString..questTitle
+            end
+        end
         if questInfo.isDaily then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..L.TEXT_DELIMITER..questTitle
             else
-                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
+                iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] or QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
                 questTitle = iconString..questTitle
             end
         end
@@ -882,7 +899,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..L.TEXT_DELIMITER..questTitle
             else
-                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
+                iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] or QUEST_TAG_ATLAS.WEEKLY, 16, 16)
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
@@ -907,7 +924,9 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 questTitle = iconString..questTitle
             else
-                iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
+                atlasName = QuestUtils_GetQuestTagAtlas(questInfo.questTagInfo.tagID, questInfo.questTagInfo.worldQuestType)
+                iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(atlasName, 14, 16, 2) or CreateAtlasMarkup(atlasName, 16, 16, 2, -1)
+                -- iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
                 questTitle = questTitle..iconString
             end
         end
@@ -915,7 +934,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..L.TEXT_DELIMITER..questTitle
             else
-                iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
+                iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_LEGENDARY"] or QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
@@ -940,10 +959,10 @@ end
 
 function LocalQuestUtils:FormatAchievementQuestName(questInfo, fallbackName)
     if not StringIsEmpty(questInfo.questName) then
-        local iconString = CreateAtlasMarkup("SmallQuestBang", 16, 16, 1, -1)   --> TODO - Also show trivial quest icon
+        local iconString = CreateAtlasMarkup("SmallQuestBang", 16, 16, 1, -1)
         local questTitle = iconString..QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
         if (questInfo.questType ~= 0) then
-            iconString = (questInfo.questType == 84) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
+            iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
             questTitle = questTitle..iconString
         end
         return questTitle
@@ -1086,13 +1105,6 @@ end
 function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
     local questName = self:GetQuestName(questID)
     if (targetType == "questline") then
-        -- local nilCount = 0
-        -- if StringIsEmpty(questName) then
-        --     questName, nilCount = self:CheckNilQuest(questID)
-        -- end
-        -- if self.cache[questID] then
-        --     return self.cache[questID]
-        -- end
         local questInfo = {
             isAccountQuest = C_QuestLog.IsAccountQuest(questID),
             -- isBounty = C_QuestLog.IsQuestBounty(questID),
@@ -1103,6 +1115,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
             isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
+            isOnQuest = C_QuestLog.IsOnQuest(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
@@ -1123,10 +1137,6 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
         }
-        -- if not (StringIsEmpty(questName) and self.cache[questID]) then
-        --     -- Should not be cached w/o a name
-        --     self.cache[questID] = questInfo
-        -- end
         if ns.settings.saveRecurringQuests then
             -- Enhance completion flagging for recurring quests
             if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then
@@ -1142,54 +1152,45 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
 
     if (targetType == "pin") then
         local questInfo = {
+            -- Test
+            questMapID = GetQuestUiMapID(questID),
             hasPOIInfo = QuestHasPOIInfo(questID),  -- QuestPOIGetIconInfo(questID)
-            isAccountQuest = C_QuestLog.IsAccountQuest(questID),
             isBounty = C_QuestLog.IsQuestBounty(questID),
-            isBreadcrumbQuest = IsBreadcrumbQuest(questID),
             isCalling = C_QuestLog.IsQuestCalling(questID),
-            isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
-            isComplete = C_QuestLog.IsComplete(questID),
-            isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
-            isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
-            isLegendary = C_QuestLog.IsLegendaryQuest(questID),
-            isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isReplayedRecently = C_QuestLog.IsQuestReplayedRecently(questID),
-            isSequenced = IsQuestSequenced(questID),
-            isStory = self:IsStory(questID),
-            isTask = C_QuestLog.IsQuestTask(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
+            -- Keep
+            isAccountQuest = C_QuestLog.IsAccountQuest(questID),
+            isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
+            isComplete = C_QuestLog.IsComplete(questID),
+            isDaily = self:IsDaily(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isImportant = C_QuestLog.IsImportantQuest(questID),
+            isLegendary = C_QuestLog.IsLegendaryQuest(questID),
+            isOnQuest = C_QuestLog.IsOnQuest(questID),
+            isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
+            isStory = self:IsStory(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
-            -- isWorldQuest = C_QuestLog.IsWorldQuest(questID),
-            questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
-            questExpansionID = GetQuestExpansion(questID),
             questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questID = questID,
-            questMapID = GetQuestUiMapID(questID),
             questName = questName,
-            questType = C_QuestLog.GetQuestType(questID),
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
-            -- Test
-            questWatchType = C_QuestLog.GetQuestWatchType(questID),
-            isFailed = C_QuestLog.IsFailed(questID),
-            isOnQuest = C_QuestLog.IsOnQuest(questID),
-            canHaveWarBonus = C_QuestLog.QuestCanHaveWarModeBonus(questID),
-            hasWarBonus = C_QuestLog.QuestHasWarModeBonus(questID),
-            -- C_QuestLog.IsOnMap(questID) : onMap, hasLocalPOI
+            questType = C_QuestLog.GetQuestType(questID),
+            -- Keep for further testing
+            questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
+            questExpansionID = GetQuestExpansion(questID),
+            isBreadcrumbQuest = IsBreadcrumbQuest(questID),
+            isSequenced = IsQuestSequenced(questID),
         }
 
-        questInfo.activeMapID = ns.activeZoneMapInfo.mapID  --> The ID of the map the user is currently looking at
-        questInfo.isActiveMap = (questInfo.activeMapID == pinMapID)
-        questInfo.isQuestMap = (questInfo.questMapID == pinMapID)
-        local zoneStoryMapID = questInfo.questMapID > 0 and questInfo.questMapID or pinMapID
-        questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(zoneStoryMapID)
-        questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, questInfo.activeMapID)
-        questInfo.hasHiddenQuestType = questInfo.isTrivial or questInfo.isCampaign
+        questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pinMapID)
+        questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, pinMapID)
+        questInfo.hasHiddenQuestType = questInfo.isTrivial or questInfo.isCampaign or questInfo.isStory
 
         return questInfo
     end

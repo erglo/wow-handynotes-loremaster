@@ -1,4 +1,3 @@
-(A) Fix active quest tooltip +campaign +questLines
 (A) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip.
 (B) Add world map button @worldMapButton +map +button
 Add right-click menu to continent pin @clickHandler +map +pin
@@ -9,3 +8,4 @@ Show achievement completion date @tooltip +map +achievement +zoneStory
 Check if faste scrolling is possible @tooltip +map
 Show active QLs in world map button @worldMapButton +questLines +map +button
 Add story to quest types @tooltip +zoneStory +questTypes
+Make icons in continent view bigger @scale +map +icons
