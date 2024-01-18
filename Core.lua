@@ -1722,16 +1722,19 @@ local function SetDebugTooltipAnchorPoint(pin, frame, anchorFrame)
     frame:SetClampedToScreen(true)
 end
 
-local function SetZoneStoryTooltipAnchorPoint(anchorFrame)
-    if not anchorFrame then return end
+local scaledScreenWidth = GetScreenWidth() * UIParent:GetEffectiveScale()
 
-    if GetCursorPosition() < anchorFrame:GetCenter() then
-        ZoneStoryTooltip:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT")
+local function SetZoneStoryTooltipAnchorPoint()
+    if WorldMapFrame:IsMaximized() then
+        -- local uiScale, cursorX, cursorY = UIParent:GetEffectiveScale(), GetCursorPosition()
+        if ( GetCursorPosition() < scaledScreenWidth / 2 ) then
+            ZoneStoryTooltip:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", 0, -38)
+        else
+            ZoneStoryTooltip:SetPoint("TOPLEFT", WorldMapFrame.ScrollContainer, "TOPLEFT")
+        end
     else
-        ZoneStoryTooltip:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT")
+        ZoneStoryTooltip:SetPoint("TOPLEFT", WorldMapFrame.BorderFrame, "TOPRIGHT")
     end
-    -- if ( tooltipWidth > UIParent:GetRight() - QuestMapFrame:GetParent():GetRight() ) then
-    --> TODO - Anchor to QuestMapFrame ???
 end
 
 -- If a quest is too far on the right side of the map the CampaignTooltip will
@@ -1811,7 +1814,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Zone Story (secondary)
     if LocalUtils:ShouldShowZoneStoryDetails(pin) then
         ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory", 1, "LEFT")
-        SetZoneStoryTooltipAnchorPoint(UIParent)
+        SetZoneStoryTooltipAnchorPoint()
     end
     -- Campaign (tertiary)
     if LocalUtils:ShouldShowCampaignDetails(pin) then
@@ -1919,7 +1922,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Zone Story (secondary)
     if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
         ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStoryActive", 1, "LEFT")
-        SetZoneStoryTooltipAnchorPoint(UIParent)  -- pin.owningMap.ScrollContainer
+        SetZoneStoryTooltipAnchorPoint()
     end
     -- Campaign (tertiary)
     if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
