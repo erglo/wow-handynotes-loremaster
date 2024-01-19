@@ -1,12 +1,10 @@
-(A) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip.
+(A) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip. @tooltip +map +pin +zoneStory
 (B) Add world map button @worldMapButton +map +button
-(C) Re-calculate ZoneStoryTooltip anchor for maximized worldmap @tooltip +map +zoneStory
+(C) Auto-scroll tooltip to quest @tooltip +map +pin
+(C) Check if fast scrolling is possible @tooltip +map +pin
+(D) Make icons in continent view bigger @scale +map +icons
 Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
-Determine switch between full screen WorldMapFrame and QuestLog view @scale +map
-Auto-scroll tooltip to quest @tooltip +map +pin
 Show achievement completion date @tooltip +map +achievement +zoneStory
-Check if fast scrolling is possible @tooltip +map
+Don't show ZoneStoryTooltip in completed zones @tooltip +map +zoneStory
 Show active QLs in world map button @worldMapButton +questLines +map +button
-Add story to quest types @tooltip +zoneStory +questTypes
-Make icons in continent view bigger @scale +map +icons

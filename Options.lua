@@ -43,15 +43,16 @@ ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale
 ns.pluginInfo.defaultOptions = {
 	profile = {
         ["*"] = true,
-        ["collapseType_zonestory"] = "auto",
+        ["collapseType_zonestory"] = "show",
         ["collapseType_questline"] = "show",
-        ["collapseType_campaign"] = "auto",
+        ["collapseType_campaign"] = "show",
         ["collapseType_zoneStoryOnContinent"] = "auto",
-        ["showQuestTypeAsText"] = false,
         ["showSingleLineAchievements"] = false,
-        ["showCampaignChapterDescription"] = false,
         ["showContinentSingleLineAchievements"] = false,
         ["hideCompletedContinentZoneIcons"] = false,
+        ["showCampaignChapterDescription"] = false,
+        ["showQuestTypeAsText"] = false,
+        ["showQuestLineSeparately"] = false,
 	},
 }
 ns.pluginInfo.options = function(HandyNotes)
@@ -195,7 +196,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         inline = true,
                         order = 20,
                         args = {
-                            questline = {
+                            show_questline = {
                                 type = "toggle",
                                 name = "Show Questline",
                                 desc = "Show or hide questline details associated with the hovered quest.",
@@ -211,14 +212,23 @@ ns.pluginInfo.options = function(HandyNotes)
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 order = 2,
                             },
-                            quest_type_in_names = {
+                            separate_tooltip_ql = {
+                                type = "toggle",
+                                name = "Use Separate Tooltip",
+                                desc = "Shows the questline details in a separate tooltip.",
+                                arg = "showQuestLineSeparately",
+                                disabled = function() return not ns.settings["showQuestLine"] end,
+                                width = "double",
+                                order = 3,
+                            },
+                            quest_type_names = {
                                 type = "toggle",
                                 name = "Quest Type Icons as Text",
                                 desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
-                                order = 3,
+                                order = 4,
                             },
                             highlight_story_quests = {
                                 type = "toggle",
@@ -227,7 +237,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "highlightStoryQuests",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
-                                order = 4,
+                                order = 5,
                             },
                             save_recurring_quests = {
                                 type = "toggle",
@@ -236,7 +246,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 arg = "saveRecurringQuests",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
-                                order = 5,
+                                order = 6,
                             },
                         },
                     },
