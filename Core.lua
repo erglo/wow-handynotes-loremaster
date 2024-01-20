@@ -1051,10 +1051,11 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
         local tagID = tagInfo.tagID
         local tagName = tagInfo.tagName
-        -- Account-wide quest type are only shown in the questlog.
+        -- Account-wide quest type are usually only shown in the questlog
         if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+            local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
             tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-            tagName = tagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format( select(2, UnitFactionGroup("player")) )
+            tagName = tagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
         end
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
     end
@@ -1097,6 +1098,12 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     end
     if questInfo.isStory then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
+    end
+    if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+        -- Show faction group icon only when no tagInfo provided or not an account quest
+        local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
+        local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, nil, LineColor)
     end
 end
 
@@ -1190,7 +1197,11 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
 
         questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pinMapID)
         questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, pinMapID)
-        questInfo.hasHiddenQuestType = questInfo.isTrivial or questInfo.isCampaign or questInfo.isStory
+        questInfo.hasHiddenQuestType = tContains({questInfo.isTrivial, questInfo.isCampaign, questInfo.isStory,
+                                                  questInfo.isDaily, questInfo.isWeekly, questInfo.isLegendary,
+                                                  questInfo.isBreadcrumbQuest, questInfo.isSequenced, questInfo.isImportant,
+                                                  questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
+                                                  questInfo.isAccountQuest}, true)
 
         return questInfo
     end

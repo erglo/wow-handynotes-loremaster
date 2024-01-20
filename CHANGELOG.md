@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Quest type tags: added faction group tags.
 * Campaign: added optional `campaign description`. Some campaigns provide further information about themselves.
 * Questlines: added highlight and counter for displaying the number of active (ongoing) quests.
 * New `tooltip handler` [LibQTip](https://www.curseforge.com/wow/addons/libqtip-1-0) for better organizing and displaying the tooltip content.
@@ -15,9 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Updated TOC file version to `WoW 10.2.5`.
-* Quest tags: combined account-wide quest types with the player's faction group, when they are limited to that, as can be seen in the game's quest log tooltip.
+* Quest type tags: combined account-wide quest types with the player's faction group, when they are limited to that, as can be seen in the game's quest log tooltip.
 * Quest type tags: quest types shown by Blizzard in the active quest tooltip will be ignored since they're already shown, eg. raids or dungeons.
-* Quest type tags: active (ongoing) quests now show a completed icon suitable for their own type.
+* Quest type tags: active (ongoing) quests now show a completion icon suitable for their own type.
 * Tooltip: content categories can now be separated into `multiple tooltips`.
 * Tooltip: `tooltips are now scrollable` and clamped to the screen.
 * Tooltip: the plugin name in active quests is now only showing when at least the "Ready for turn-in" message is activated. Without any tooltip content there's no need for the plugin name to be shown. In short: w/o content from this plugin, the tooltip mimics Blizzard's default look and feel.
