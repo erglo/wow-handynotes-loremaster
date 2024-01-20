@@ -12,25 +12,26 @@ Simply **hover a quest icon** on the world map, if it is part of a questline or 
 Download available at:
 [CurseForge.com](https://www.curseforge.com/wow/addons/handynotes-loremaster/files "CurseForge Files"),
 [WoWInterface.com](https://www.wowinterface.com/downloads/info26628-HandyNotesLoremaster.html "WoWInterface"),
-[Wago.io](https://addons.wago.io/addons/wow-handynotes-loremaster/versions?stability=alpha "Wago Releases (alpha)") and
+[Wago.io](https://addons.wago.io/addons/wow-handynotes-loremaster/versions?stability=beta "Wago Releases (beta)") and
 [GitHub.com](https://github.com/erglo/wow-handynotes-loremaster/releases "GitHub Releases").  
-_(**Note:** This is a playable release. Activate visibility for **alpha** releases to find this addon.)_
 
-## Features (_alpha_)
+_(**Note:** This is a playable release. Activate visibility for **beta** releases to find this addon.)_
+
+## Features (_beta_)
 
 * Extends quest icon tooltips on the worldmap with details about zone stories, questlines and campaigns.
 * Shows an icon in continent view indicating whether you finished a zone's story achievement or not.
-* _TODO_: Adds an icon on the right top corner of the worldmap with details about available questlines on the active zone.
-* **Many options**: eg. see the quest type in a quest's tooltip when hovering its icon or hide the details you're not interested in.
+* _TODO (NYI)_: Adds an icon on the right top corner of the worldmap with details about available questlines on the active zone.
+* **Many options**: eg. see the quest type in a quest's tooltip when hovering its icon or hide the content you're not interested in.
 
 ----
 
 ### Contributing
 
-If you have a feature request or if you would like to report a bug, please visit the repository's [issue page on GitHub](https://github.com/erglo/wow-handynotes-loremaster/issues).
+If you have a feature request or if you would like to report a bug, please visit the repository's [issue page at GitHub](https://github.com/erglo/wow-handynotes-loremaster/issues).
 
-⚠️**Translators:** _Please do **not** provide any localizations, yet. All strings are still hard coded and many of them are often subject to change in the current state of development (alpha)._  
-_Future changes and instruction details will be provided in this sections._
+⚠️**Translators:** _Please do **not** provide any localizations, yet. All strings are still hard coded and many of them are subject to change in the current stage of development (beta)._  
+_Note: Future changes and instruction details will be provided in this sections._
 
 ----
 
@@ -44,12 +45,16 @@ _Future changes and instruction details will be provided in this sections._
 * Version control management with [Git](https://git-scm.com) + [GitHub](https://github.com/)
   + GitHub workflow via [BigWigsMods/packager](https://github.com/BigWigsMods/packager)
 * In-game development tools (addons):
-  + [Ace3](https://www.curseforge.com/wow/addons/ace3),
-    [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber),
+  + [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber),
     [BugSack](https://www.curseforge.com/wow/addons/bugsack),
     [idTip](https://www.curseforge.com/wow/addons/idtip),
     [TextureViewer](https://www.curseforge.com/wow/addons/textureviewer),
-    [WoWLua](https://www.curseforge.com/wow/addons/wowlua).
+    [WoWLua](https://www.curseforge.com/wow/addons/wowlua).  
+* Game libraries:
+  + [Ace3](https://www.curseforge.com/wow/addons/ace3),
+    [CallbackHandler-1.0](https://www.curseforge.com/wow/addons/callbackhandler),
+    [LibQTip-1.0](https://www.curseforge.com/wow/addons/libqtip-1-0),
+    [LibStub](https://www.curseforge.com/wow/addons/libstub).
 
 ### References
 
