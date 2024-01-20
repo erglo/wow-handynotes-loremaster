@@ -43,7 +43,8 @@ _Note: Future changes and instruction details will be provided in this sections.
   + Stanzilla's [World of Warcraft TOC Language Support](https://github.com/Stanzilla/vscode-wow-toc) extension
   + David Anson's [Markdown linting and style checking](https://github.com/DavidAnson/vscode-markdownlint) extension
 * Version control management with [Git](https://git-scm.com) + [GitHub](https://github.com/)
-  + GitHub workflow via [BigWigsMods/packager](https://github.com/BigWigsMods/packager)
+  + Packaging and uploading: [BigWigsMods/packager](https://github.com/BigWigsMods/packager)
+  + Changelog generating: [kemayo/actions-recent-changelog](https://github.com/kemayo/actions-recent-changelog)
 * In-game development tools (addons):
   + [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber),
     [BugSack](https://www.curseforge.com/wow/addons/bugsack),
