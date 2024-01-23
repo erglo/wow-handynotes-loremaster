@@ -879,7 +879,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not StringIsEmpty(questInfo.questName) then
-        if isReady then
+        if ( isReady and not (questInfo.isDaily or questInfo.isWeekly) ) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["COMPLETED"]))..L.TEXT_DELIMITER..questTitle
             else
@@ -899,7 +899,9 @@ function LocalQuestUtils:FormatQuestName(questInfo)
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..L.TEXT_DELIMITER..questTitle
             else
-                iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] or QUEST_TAG_ATLAS.WEEKLY, 16, 16)
+                local iconTurnIn = CreateAtlasMarkup(QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"], 16, 16, -1)
+                local iconAvailable = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
+                iconString = isReady and iconTurnIn or iconAvailable
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
@@ -1062,16 +1064,24 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
 
     -- Custom tags
     if questInfo.isDaily then
-        if questInfo.isCampaign then
-            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
-        else
-            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "DAILY"
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
-        end
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, "DAILY", nil, LineColor)
+        -- if questInfo.isCampaign then
+        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
+        -- else
+        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "DAILY"
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
+        -- end
     end
     if questInfo.isWeekly then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, "WEEKLY", nil, LineColor)
+        -- if questInfo.isCampaign then
+        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
+        -- else
+        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "WEEKLY"
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
+        -- end
     end
     if questInfo.isTrivial then
         if questInfo.isLegendary then
@@ -1084,7 +1094,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, LineColor)
         end
     end
-    if (questInfo.isCampaign and not questInfo.isTrivial and not questInfo.isDaily) then
+    if (questInfo.isCampaign and not questInfo.isTrivial) then -- and not questInfo.isDaily and not questInfo.isWeekly) then
         local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
     end

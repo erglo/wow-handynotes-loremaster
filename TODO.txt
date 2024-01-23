@@ -9,3 +9,4 @@ Show achievement completion date @tooltip +map +achievement +zoneStory
 Don't show ZoneStoryTooltip in completed zones @tooltip +map +zoneStory
 Show active QLs in world map button @worldMapButton +questLines +map +button
 Combine trivial quest type tags with tagInfo tags. @tooltip +questType +questTags
+Create turn-in quest icon for weekly quests. @icons +questType +questTags
