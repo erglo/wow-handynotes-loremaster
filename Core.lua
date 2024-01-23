@@ -1210,9 +1210,10 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, pinMapID)
         questInfo.hasHiddenQuestType = tContains({questInfo.isTrivial, questInfo.isCampaign, questInfo.isStory,
                                                   questInfo.isDaily, questInfo.isWeekly, questInfo.isLegendary,
-                                                  questInfo.isBreadcrumbQuest, questInfo.isSequenced, questInfo.isImportant,
+                                                  -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
+                                                  questInfo.isImportant, questInfo.isAccountQuest,
                                                   questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
-                                                  questInfo.isAccountQuest}, true)
+                                                  }, true)
 
         return questInfo
     end
@@ -1829,7 +1830,7 @@ local function ShouldShowQuestType(pin)
 end
 
 local function ShouldShowReadyForTurnInMessage(pin)
-    return ns.settings.showQuestTurnIn and pin.questInfo.isOnQuest and pin.questInfo.isReadyForTurnIn
+    return pin.questInfo.isOnQuest and ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
@@ -1951,7 +1952,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
 
     if ShouldShowQuestType(pin) then
-        if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
+        if not ns.settings.showPluginName then
             LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
@@ -2063,7 +2064,9 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
 
     if ShouldShowReadyForTurnInMessage(pin) then
-        if not ns.settings.showPluginName then LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip) end
+        if not ns.settings.showPluginName then
+            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
+        end
         LibQTipUtil:AddInstructionLine(PrimaryTooltip, QUEST_WATCH_QUEST_READY)
     end
 

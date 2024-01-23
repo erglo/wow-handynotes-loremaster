@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-* Quest type tags: fixed display in active quests which showed multiple tag icons for turn-in quests.
+* Active quests: fixed unnecessary blank line which appeared beneath the "Ready for turn-in" message.
+* Quest type tags: fixed multiple tag icons for turn-in quests which showed up questline quests.
 
 ## [v0.5.0-beta+100205] - 2024-01-20
 
