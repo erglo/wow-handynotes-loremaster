@@ -3,7 +3,7 @@
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
--- Copyright (C) 2023  Erwin D. Glockner (aka erglo)
+-- Copyright (C) 2024  Erwin D. Glockner (aka erglo)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ ns.pluginInfo.defaultOptions = {
         ["showCampaignChapterDescription"] = false,
         ["showQuestTypeAsText"] = false,
         ["showQuestLineSeparately"] = false,
+        -- ["scrollingStep"] = 50,
 	},
 }
 ns.pluginInfo.options = function(HandyNotes)
@@ -139,6 +140,25 @@ ns.pluginInfo.options = function(HandyNotes)
                         width = "double",
                         order = 4,
                     },
+                    -- tooltip_slider_speed = {
+                    --     type = "range",
+                    --     name = "Scrolling Speed",
+                    --     desc = function(info)
+                    --         local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph.."Default is %s."
+                    --         local valueString = tostring( ns.pluginInfo.defaultOptions.profile[info.arg] )
+                    --         return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
+                    --     end,
+                    --     min = 10,
+                    --     max = 150,
+                    --     step = 10,
+                    --     set = function(info, value)
+                    --         ns.settings[info.arg] = value
+                    --         -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
+                    --     end,
+                    --     arg = "scrollingStep",
+                    --     -- width = 1.5,  -- "double",
+                    --     order = 5,
+                    -- },
                     zs_group = {
                         type = "group",
                         name = ZONE,
@@ -322,6 +342,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes.WorldMapDataProvider:RefreshAllData()
+                            LocalOptionUtils:printOption(info.option.name, value)
                         end,
                         width ="double",
                         order = 1,
@@ -334,6 +355,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes.WorldMapDataProvider:RefreshAllData()
+                            LocalOptionUtils:printOption(info.option.name, value)
                         end,
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
@@ -351,13 +373,6 @@ ns.pluginInfo.options = function(HandyNotes)
                                 name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map.", --..LocalOptionUtils.new_paragraph,
                                 order = 0,
                             },
-                            -- show_zone_story = {
-                            --     type = "toggle",
-                            --     name = "Show Zone Story",
-                            --     desc = "Show or hide story details of the currently viewed zone.",
-                            --     arg = "showZoneStory",
-                            --     order = 1,
-                            -- },
                             single_line_achievements_sz_cont = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
@@ -436,35 +451,27 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width ="double",
                                 order = 4,
                             },
-                            -- incomplete_zone_stories_msg = {
-                            --     type = "toggle",
-                            --     name = "Incomplete Zone Stories",
-                            --     desc = "Notifies you of Zone Stories which haven't been completed on the currently viewed map.",
-                            --     arg = "showIncompleteZoneStories",
-                            --     width ="double",
-                            --     order = 10,
-                            --     disabled = true,
-                            -- },
-                            -- incomplete_questlines_msg = {
-                            --     type = "toggle",
-                            --     name = "Incomplete Questlines",
-                            --     desc = "Notifies you of questlines which haven't been completed on the currently viewed map.",
-                            --     arg = "showIncompleteQuestLines",
-                            --     width ="double",
-                            --     order = 20,
-                            --     disabled = true,
-                            -- },
-                            -- incomplete_campaigns_msg = {
-                            --     type = "toggle",
-                            --     name = "Incomplete Campaigns",
-                            --     desc = "Notifies you of story campaigns which haven't been completed, yet.",
-                            --     arg = "showIncompleteCampaigns",
-                            --     width ="double",
-                            --     order = 30,
-                            --     disabled = true,
-                            -- },
                         },
                     },  --> chat_notifications
+                    -- tooltip_slider_speed = {
+                    --     type = "range",
+                    --     name = "Scrolling Speed",
+                    --     desc = function(info)
+                    --         local textTemplate = "Select the step size in which the scrollbar should move."..LocalOptionUtils.new_paragraph.."Default is %s."
+                    --         local valueString = tostring( ns.settings[info.arg] )
+                    --         return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
+                    --     end,
+                    --     min = 10,
+                    --     max = 150,
+                    --     step = 10,
+                    --     set = function(info, value)
+                    --         ns.settings[info.arg] = value
+                    --         -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
+                    --     end,
+                    --     arg = "scrollingStep",
+                    --     width = 1.5,  -- "double",
+                    --     order = 50,
+                    -- },
                 },
             },  --> notification_settings
         } --> root parent group

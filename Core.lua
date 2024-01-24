@@ -1780,6 +1780,8 @@ local function ShowAllTooltips()
         -- Too long for screen height
         if (questLineHeight > screenHeight) then
             QuestLineTooltip:UpdateScrolling()
+            -- QuestLineTooltip:SetScrollStep(ns.settings.scrollingStep)
+            QuestLineTooltip:SetScrollStep(IsShiftKeyDown() and 60 or 30)
         end
         -- Too near or over top side of the screen
         if (questLineTop + primaryHeight > screenHeight) then
@@ -1806,6 +1808,8 @@ local function ShowAllTooltips()
     end
     if not QuestLineTooltip and (primaryHeight > screenHeight) then
         PrimaryTooltip:UpdateScrolling()
+        -- PrimaryTooltip:SetScrollStep(ns.settings.scrollingStep)
+        PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and 60 or 30)
     end
     PrimaryTooltip:SetClampedToScreen(true)
     PrimaryTooltip:Show()
