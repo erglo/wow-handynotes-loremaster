@@ -34,6 +34,12 @@ local LocalOptionUtils = {}
 LocalOptionUtils.new_paragraph = "|n|n"
 LocalOptionUtils.newline = "|n"
 LocalOptionUtils.stringDelimiter = ITEM_NAME_DESCRIPTION_DELIMITER
+LocalOptionUtils.statusFormatString = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
+LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
+LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
+LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
+LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
+LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -371,7 +377,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         arg = "showContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
-                            HandyNotes.WorldMapDataProvider:RefreshAllData()
+                            HandyNotes:UpdateWorldMapPlugin(AddonID)
                             LocalOptionUtils:printOption(info.option.name, value)
                         end,
                         width ="double",
@@ -384,7 +390,7 @@ ns.pluginInfo.options = function(HandyNotes)
                         arg = "hideCompletedContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
-                            HandyNotes.WorldMapDataProvider:RefreshAllData()
+                            HandyNotes:UpdateWorldMapPlugin(AddonID)
                             LocalOptionUtils:printOption(info.option.name, value)
                         end,
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
@@ -490,13 +496,6 @@ ns.pluginInfo.options = function(HandyNotes)
 end
 
 ----- Utility functions ----------
-
-LocalOptionUtils.statusFormatString = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
-LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
-LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
-LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
-LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
-LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
