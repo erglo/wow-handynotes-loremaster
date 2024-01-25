@@ -53,7 +53,7 @@ ns.pluginInfo.defaultOptions = {
         ["showCampaignChapterDescription"] = false,
         ["showQuestTypeAsText"] = false,
         ["showQuestLineSeparately"] = false,
-        -- ["scrollingStep"] = 50,
+        ["scrollStep"] = 30,
 	},
 }
 ns.pluginInfo.options = function(HandyNotes)
@@ -77,9 +77,9 @@ ns.pluginInfo.options = function(HandyNotes)
                 name = "About this plugin",                                     --> TODO - L10n
                 order = 9,
                 args = {
-                    header = {
+                    heading = {
                         type = "description",
-                        name = LocalOptionUtils:CreateAboutHeader(),
+                        name = LocalOptionUtils:CreateAboutHeading(),
                         fontSize = "medium",
                         order = 0,
                     },
@@ -97,10 +97,10 @@ ns.pluginInfo.options = function(HandyNotes)
             },  --> about
             tooltip_details_zone = {
                 type = "group",
-                -- name = "Tooltip Content",
                 name = "Tooltip"..LocalOptionUtils.stringDelimiter..PARENS_TEMPLATE:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
                 order = 1,
+                childGroups = "tab",
                 args = {
                     description = {
                         type = "description",
@@ -108,61 +108,50 @@ ns.pluginInfo.options = function(HandyNotes)
                         -- fontSize = "medium",
                         order = 0,
                     },
-                    plugin_name = {
-                        type = "toggle",
-                        name = "Show Plugin Name",
-                        desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
-                        arg = "showPluginName",
-                        width = 1.0,
+                    general_details = {
+                        type = "group",
+                        name = GENERAL_LABEL,
                         order = 1,
-                    },                                                          --> TODO - Show quest ID, trivial quests ???
-                    category_names = {
-                        type = "toggle",
-                        name = "Show Category Names",
-                        desc = "Each content category is indicated by its name. Deactivate to hide those names.",
-                        arg = "showCategoryNames",
-                        width = "double",
-                        order = 2,
+                        args = {
+                            plugin_name = {
+                                type = "toggle",
+                                name = "Show Plugin Name",
+                                desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
+                                arg = "showPluginName",
+                                width = "full",
+                                order = 1,
+                            },                                                          --> TODO - Show quest ID, trivial quests ???
+                            category_names = {
+                                type = "toggle",
+                                name = "Show Category Names",
+                                desc = "Each content category is indicated by its name. Deactivate to hide those names.",
+                                arg = "showCategoryNames",
+                                width = "full",
+                                order = 2,
+                            },
+                            quest_type = {
+                                type = "toggle",
+                                name = "Show Quest Type",
+                                desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddQuestTypeExampleLine(CALENDAR_TYPE_RAID, "raid"),
+                                arg = "showQuestType",
+                                width = "full",
+                                order = 3,
+                            },
+                            quest_turn_in = {
+                                type = "toggle",
+                                name = format("Show %s Message", LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(QUEST_WATCH_QUEST_READY)),
+                                desc = "Show or hide this message. This option affects active quests only.",
+                                arg = "showQuestTurnIn",
+                                width = "full",
+                                order = 4,
+                            },
+                        },
                     },
-                    quest_type = {
-                        type = "toggle",
-                        name = "Show Quest Type",
-                        desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddQuestTypeExampleLine(CALENDAR_TYPE_RAID, "raid"),
-                        arg = "showQuestType",
-                        -- width = "double",
-                        order = 3,
-                    },
-                    quest_turn_in = {
-                        type = "toggle",
-                        name = format("Show %s Message", LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(QUEST_WATCH_QUEST_READY)),
-                        desc = "Show or hide this message. This option affects active quests only.",
-                        arg = "showQuestTurnIn",
-                        width = "double",
-                        order = 4,
-                    },
-                    -- tooltip_slider_speed = {
-                    --     type = "range",
-                    --     name = "Scrolling Speed",
-                    --     desc = function(info)
-                    --         local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph.."Default is %s."
-                    --         local valueString = tostring( ns.pluginInfo.defaultOptions.profile[info.arg] )
-                    --         return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
-                    --     end,
-                    --     min = 10,
-                    --     max = 150,
-                    --     step = 10,
-                    --     set = function(info, value)
-                    --         ns.settings[info.arg] = value
-                    --         -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
-                    --     end,
-                    --     arg = "scrollingStep",
-                    --     -- width = 1.5,  -- "double",
-                    --     order = 5,
-                    -- },
                     zs_group = {
                         type = "group",
                         name = ZONE,
-                        inline = true,
+                        desc = "Show or hide story details of the currently viewed zone.",
+                        inline = false,
                         order = 10,
                         args = {
                             show_zone_story = {
@@ -170,6 +159,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 name = "Show Zone Story",
                                 desc = "Show or hide story details of the currently viewed zone.",
                                 arg = "showZoneStory",
+                                width = 1.2,
                                 order = 1,
                             },
                             collapse_type_sz = {
@@ -213,7 +203,8 @@ ns.pluginInfo.options = function(HandyNotes)
                     ql_group = {
                         type = "group",
                         name = "Questline",
-                        inline = true,
+                        desc = "Show or hide questline details associated with the hovered quest.",
+                        inline = false,
                         order = 20,
                         args = {
                             show_questline = {
@@ -221,6 +212,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 name = "Show Questline",
                                 desc = "Show or hide questline details associated with the hovered quest.",
                                 arg = "showQuestLine",
+                                width = 1.2,
                                 order = 1,
                             },
                             collapse_type_ql = {
@@ -268,12 +260,49 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width = "double",
                                 order = 6,
                             },
+                            separator_pre_advanced_ql = {
+                                type = "description",
+                                name = LocalOptionUtils.newline,
+                                order = 20,
+                            },
+                            header_advanced_ql = {
+                                type = "header",
+                                name = ADVANCED_OPTIONS,
+                                desc = ADVANCED_OPTIONS_TOOLTIP,
+                                width = "half",
+                                order = 21,
+                            },
+                            separator_post_advanced_ql = {
+                                type = "description",
+                                name = LocalOptionUtils.newline,
+                                order = 22,
+                            },
+                            tooltip_slider_speed_ql = {
+                                type = "range",
+                                name = "Tooltip Scroll Speed",
+                                desc = function(info)
+                                    local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph.."Default is %s."
+                                    local valueString = tostring( ns.pluginInfo.defaultOptions.profile[info.arg] )
+                                    return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
+                                end,
+                                min = 10,
+                                max = 150,
+                                step = 10,
+                                set = function(info, value)
+                                    ns.settings[info.arg] = value
+                                    -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
+                                end,
+                                arg = "scrollStep",
+                                disabled = function() return not ns.settings["showQuestLine"] end,
+                                order = 30,
+                            },
                         },
                     },
                     cp_group = {
                         type = "group",
                         name = TRACKER_HEADER_CAMPAIGN_QUESTS,
-                        inline = true,
+                        desc = "Show or hide story campaign details associated with the hovered quest.",
+                        inline = false,
                         order = 30,
                         args = {
                             campaign = {
@@ -281,6 +310,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 name = "Show Campaign",
                                 desc = "Show or hide story campaign details associated with the hovered quest.",
                                 arg = "showCampaign",
+                                width = 1.2,
                                 order = 1,
                             },
                             collapse_type_cp = {
@@ -304,7 +334,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             chapter_description = {
                                 type = "toggle",
                                 name = "Include Chapter Description",
-                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("Description", 132053),
+                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine(DESCRIPTION, 132053),
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -313,7 +343,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             campaign_description = {
                                 type = "toggle",
                                 name = "Show Campaign Description",
-                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AddExampleLine("Description", 132053),
+                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AddExampleLine(DESCRIPTION),
                                 arg = "showCampaignDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -378,7 +408,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 name = "Single Line Achievements",
                                 desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
                                 arg = "showContinentSingleLineAchievements",
-                                width = 1.5,  -- "double",
+                                width = 1.2,
                                 order = 1,
                             },
                             collapse_type_sz_cont = {
@@ -453,25 +483,6 @@ ns.pluginInfo.options = function(HandyNotes)
                             },
                         },
                     },  --> chat_notifications
-                    -- tooltip_slider_speed = {
-                    --     type = "range",
-                    --     name = "Scrolling Speed",
-                    --     desc = function(info)
-                    --         local textTemplate = "Select the step size in which the scrollbar should move."..LocalOptionUtils.new_paragraph.."Default is %s."
-                    --         local valueString = tostring( ns.settings[info.arg] )
-                    --         return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
-                    --     end,
-                    --     min = 10,
-                    --     max = 150,
-                    --     step = 10,
-                    --     set = function(info, value)
-                    --         ns.settings[info.arg] = value
-                    --         -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
-                    --     end,
-                    --     arg = "scrollingStep",
-                    --     width = 1.5,  -- "double",
-                    --     order = 50,
-                    -- },
                 },
             },  --> notification_settings
         } --> root parent group
@@ -493,10 +504,10 @@ LocalOptionUtils.printOption = function(self, text, isEnabled)
     ns:cprintf(self.statusFormatString, text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
 end
 
-LocalOptionUtils.CreateAboutHeader = function(self)
+LocalOptionUtils.CreateAboutHeading = function(self)
     local versionString = GRAY_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.version)
     local pluginName = NORMAL_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title)
-    return self.newline..pluginName.."  "..versionString
+    return self.newline..pluginName..LocalOptionUtils.stringDelimiter..versionString
 end
 
 LocalOptionUtils.CreateAboutBody = function(self)
@@ -504,7 +515,7 @@ LocalOptionUtils.CreateAboutBody = function(self)
     for i, key in ipairs(self.tocKeys) do
         local keyString = string.gsub(key, "X[-]", '')
         text = text..NORMAL_FONT_COLOR_CODE..keyString..FONT_COLOR_CODE_CLOSE
-        text = text..HEADER_COLON.." "..GetAddOnMetadata(AddonID, key)
+        text = text..HEADER_COLON..LocalOptionUtils.stringDelimiter..GetAddOnMetadata(AddonID, key)
         text = text..self.new_paragraph
     end
     return text..self.new_paragraph
@@ -546,13 +557,13 @@ LocalOptionUtils.GetCollapseTypeDescription = function(self)
     local desc = "Choose how the details in this category should be displayed."
     desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.auto..HEADER_COLON)
-    desc = desc.." ".."Automatically collapse this category's details when completed."
+    desc = desc..LocalOptionUtils.stringDelimiter.."Automatically collapse this category's details when completed."
     desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.hide..HEADER_COLON)
-    desc = desc.." ".."Always show category details collapsed."
+    desc = desc..LocalOptionUtils.stringDelimiter.."Always show category details collapsed."
     desc = desc..LocalOptionUtils.new_paragraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
-    desc = desc.." ".."Always show full category details."
+    desc = desc..LocalOptionUtils.stringDelimiter.."Always show full category details."
 
     return desc
 end

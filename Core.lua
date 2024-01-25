@@ -1773,6 +1773,7 @@ end
 -- 
 local function ShowAllTooltips()
     local primaryHeight = PrimaryTooltip:GetHeight() * uiScale
+    local scrollStep = ns.settings.scrollStep
 
     if QuestLineTooltip then
         local questLineTop = QuestLineTooltip:GetTop() * uiScale
@@ -1780,8 +1781,7 @@ local function ShowAllTooltips()
         -- Too long for screen height
         if (questLineHeight > screenHeight) then
             QuestLineTooltip:UpdateScrolling()
-            -- QuestLineTooltip:SetScrollStep(ns.settings.scrollingStep)
-            QuestLineTooltip:SetScrollStep(IsShiftKeyDown() and 60 or 30)
+            QuestLineTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
         end
         -- Too near or over top side of the screen
         if (questLineTop + primaryHeight > screenHeight) then
@@ -1808,8 +1808,7 @@ local function ShowAllTooltips()
     end
     if not QuestLineTooltip and (primaryHeight > screenHeight) then
         PrimaryTooltip:UpdateScrolling()
-        -- PrimaryTooltip:SetScrollStep(ns.settings.scrollingStep)
-        PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and 60 or 30)
+        PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
     end
     PrimaryTooltip:SetClampedToScreen(true)
     PrimaryTooltip:Show()

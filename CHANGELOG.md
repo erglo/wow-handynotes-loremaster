@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Settings: modified layout for tooltip(s) options.
 * Tooltip: increased scrolling speed.
 * Quest filter: updated obsolete quest IDs.
 
