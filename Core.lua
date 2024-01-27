@@ -136,6 +136,7 @@ local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 
 local currentPin;  -- Currently hovered worldmap pin
 local nodes = {}
+ns.nodes = nodes
 
 ----- Debugging -----
 
@@ -428,7 +429,6 @@ end
 
 ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyAchievementID2, storyMapInfo}, ... }
 ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
-ZoneStoryUtils.wrapLine = false
 
 -- Return the achievement ID for given zone.  
 -- **Note:** Shadowlands + Dragonflight have 2 story achievements per zone.
@@ -1730,14 +1730,14 @@ local function SetZoneStoryTooltipAnchorPoint()
     end
 end
 
--- If a quest is too far on the right side of the map the CampaignTooltip will
--- be shown on the left side of the primary tooltip.
-local function AdjustCampaignTooltipAnchorPoint(anchorFrame)
-    if ( CampaignTooltip:GetRight() * uiScale > screenWidth ) then
-        CampaignTooltip:ClearAllPoints()
-        CampaignTooltip:SetPoint("BOTTOMRIGHT", anchorFrame, "BOTTOMLEFT")
-    end
-end
+-- -- If a quest is too far on the right side of the map the CampaignTooltip will
+-- -- be shown on the left side of the primary tooltip.
+-- local function AdjustCampaignTooltipAnchorPoint(anchorFrame)
+--     if ( CampaignTooltip:GetRight() * uiScale > screenWidth ) then
+--         CampaignTooltip:ClearAllPoints()
+--         CampaignTooltip:SetPoint("BOTTOMRIGHT", anchorFrame, "BOTTOMLEFT")
+--     end
+-- end
 
 -- Positions and displays all tooltips.
 -- Note: Left and bottom side of the screen are beeing handled automatically by
@@ -1806,13 +1806,18 @@ local function ShowAllTooltips()
         QuestLineTooltip:SetClampedToScreen(true)
         QuestLineTooltip:Show()
     end
+
     if not QuestLineTooltip and (primaryHeight > screenHeight) then
         PrimaryTooltip:UpdateScrolling()
         PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
     end
     PrimaryTooltip:SetClampedToScreen(true)
     PrimaryTooltip:Show()
-    if ZoneStoryTooltip then ZoneStoryTooltip:Show() end
+
+    if ZoneStoryTooltip then
+        ZoneStoryTooltip:Show()
+    end
+
     if CampaignTooltip then
         -- If a quest is too far on the right side of the map the CampaignTooltip will
         -- be shown on the left side of the primary tooltip.
@@ -2116,6 +2121,14 @@ local function Hook_QuestPin_OnClick(pin, mouseButton)
     end
 end
 
+local function Hook_WorldMap_OnFrameSizeChanged()
+    if ( ns.isWorldMapMaximized ~= WorldMapFrame:IsMaximized() ) then
+        ns.isWorldMapMaximized = WorldMapFrame:IsMaximized()
+        wipe(ns.nodes)
+        HandyNotes:UpdateWorldMapPlugin(AddonID)
+    end
+end
+
 ----- Ace3 Profile Handler ----------
 
 function LoremasterPlugin:OnProfileChanged(event, ...)
@@ -2181,6 +2194,9 @@ function LoremasterPlugin:RegisterHooks()
     HandyNotes.db.RegisterCallback(self, "OnProfileDeleted", "OnProfileChanged")
     hooksecurefunc(HandyNotes, "OnEnable", self.OnHandyNotesStateChanged)
     hooksecurefunc(HandyNotes, "OnDisable", self.OnHandyNotesStateChanged)
+
+    -- Keep track of World Map size changes, ie. to adjust icon scale, etc.
+    hooksecurefunc(WorldMapFrame, "OnFrameSizeChanged", Hook_WorldMap_OnFrameSizeChanged)
 end
 
 ----- Ace3 event handler
@@ -2373,17 +2389,11 @@ end
 -- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
 -- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 1195, "Schattenmond") end
 
-function LoremasterPlugin:CRITERIA_COMPLETE(eventName, ...)
-    local criteriaID = ...
-    debug:print("TEST -", eventName, criteriaID)
-end
-
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
 LoremasterPlugin:RegisterEvent("QUEST_REMOVED")
 LoremasterPlugin:RegisterEvent("ACHIEVEMENT_EARNED")
 LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
-LoremasterPlugin:RegisterEvent("CRITERIA_COMPLETE")
 
 --------------------------------------------------------------------------------
 ----- Required functions for HandyNotes ----------------------------------------
@@ -2391,7 +2401,7 @@ LoremasterPlugin:RegisterEvent("CRITERIA_COMPLETE")
 
 local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
-local node2Offset = 0.008
+local node2Offset = ns.isWorldMapMaximized and 0.0001 or 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
     [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
     [62] = { x = -0.015, y = 0 }, -- Darkshore
@@ -2400,10 +2410,12 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
     [77] = { x = -0.015, y = -0.01 }, -- Felwood
     [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
     [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
+    [641] = { x = 0, y = -0.01 }, -- Val'sharah
     [646] = { x = 0.025, y = 0 }, -- Broken Shore
     [895] = { x = 0.08, y = -0.04 }, -- Tiragarde Sound
     -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
     [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
+    [2133] = { x = -0.025, y = -0.01 }, -- Zaralek Cavern
 }
 
 -- Convert an atlas file to a texture table with coordinates suitable for
@@ -2428,13 +2440,17 @@ end
 
 local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
     local icon = achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
-    local scale = achievementInfo.completed and 1.5 or 1.2
+    local iconSizeScale = achievementInfo.completed and 1.0 or 0.85 --> adjust size of red "x" icon, it is slightly bigger than the checkmark icon
+    local mapSizeScale = ns.isWorldMapMaximized and 0.4 or 0   --> adjust icon size, they appear smaller on the full screen World Map
+    local scale = ns.settings.continentIconScale * ( iconSizeScale + mapSizeScale)
+	local alpha = ns.settings.continentIconAlpha or 1.0
     local coord = HandyNotes:getCoord(x, y)
+
     -- print(i, mapID, mapChildInfo.name, "-->", coord)
-    nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, achievementInfo=achievementInfo}  --> zoneData
+    nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, alpha=alpha, achievementInfo=achievementInfo}  --> zoneData
 end
 
-local function GetContinentNodes(parentMapInfo)
+local function SetContinentNodes(parentMapInfo)
     local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone)
     -- print("numChildren:", #mapChildren)
 
@@ -2484,7 +2500,7 @@ local function GetContinentNodes(parentMapInfo)
             -- end
         end
     -- else
-    --     print("Skipping:", parentMapInfo.mapID, parentMapInfo.name)
+        -- print("Skipping:", parentMapInfo.mapID, parentMapInfo.name)
     end
 end
 
@@ -2503,7 +2519,7 @@ local function NodeIterator(t, prev)
         if (zoneData and ns.settings.showContinentZoneIcons) then
             if not (ns.settings.hideCompletedContinentZoneIcons and zoneData.achievementInfo.completed) then
                 -- Needed return values: coord, uiMapID, iconPath, iconScale, iconAlpha
-                return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, 1.0
+                return coord, ns.activeContinentMapInfo.mapID, zoneData.icon, zoneData.scale, zoneData.alpha
             end
         end
         coord, zoneData = next(t, coord)
@@ -2532,6 +2548,9 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
 
         ns.activeZoneMapInfo = mapInfo
 
+        -- Keep track of World Map size changes, ie. to adjust icon scale, etc.
+        ns.isWorldMapMaximized = WorldMapFrame:IsMaximized()
+
         if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
             debug:print(LocalQuestLineUtils, "Entering zone:", mapID, mapInfo.name)
             -- Update data cache for current zone
@@ -2543,7 +2562,7 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
         -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
-            GetContinentNodes(mapInfo)
+            SetContinentNodes(mapInfo)
             if TableHasAnyEntries(nodes) then
                 return NodeIterator, nodes[mapInfo.mapID]
             end

@@ -60,6 +60,8 @@ ns.pluginInfo.defaultOptions = {
         ["showQuestTypeAsText"] = false,
         ["showQuestLineSeparately"] = false,
         ["scrollStep"] = 30,
+        ["continentIconScale"] = 1.5,
+        ["continentIconAlpha"] = 0.75,
 	},
 }
 ns.pluginInfo.options = function(HandyNotes)
@@ -104,13 +106,13 @@ ns.pluginInfo.options = function(HandyNotes)
             tooltip_details_zone = {
                 type = "group",
                 name = "Tooltip"..LocalOptionUtils.stringDelimiter..PARENS_TEMPLATE:format(ZONE),
-                desc = "Select the tooltip details which should be shown when hovering a quest icon on the world map.",
+                desc = "Select the tooltip details which should be shown when hovering a quest icon on the World Map.",
                 order = 1,
                 childGroups = "tab",
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the tooltip details which should be shown when hovering a quest icon on the world map."..LocalOptionUtils.new_paragraph,
+                        name = "Select the tooltip details which should be shown when hovering a quest icon on the World Map."..LocalOptionUtils.new_paragraph,
                         -- fontSize = "medium",
                         order = 0,
                     },
@@ -287,13 +289,11 @@ ns.pluginInfo.options = function(HandyNotes)
                                 type = "range",
                                 name = "Tooltip Scroll Speed",
                                 desc = function(info)
-                                    local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph.."Default is %s."
+                                    local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph..DEFAULT..HEADER_COLON..LocalOptionUtils.stringDelimiter.."%s."
                                     local valueString = tostring( ns.pluginInfo.defaultOptions.profile[info.arg] )
                                     return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
                                 end,
-                                min = 10,
-                                max = 150,
-                                step = 10,
+                                min = 10, max = 150, step = 10,
                                 set = function(info, value)
                                     ns.settings[info.arg] = value
                                     -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
@@ -359,27 +359,28 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                 }
             },  --> tooltip_details_zone
-            details_continent = {
+            continent_settings = {
                 type = "group",
                 name = CONTINENT,
-                desc = "Select the details for the continent view on the world map.",
+                desc = "Select the details for the continent view on the World Map.",
+                childGroups = "tab",
                 order = 2,
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the details for the continent view on the world map."..LocalOptionUtils.new_paragraph,
+                        name = "Select the details for the continent view on the World Map."..LocalOptionUtils.new_paragraph,
                         order = 0,
                     },
                     show_zone_icons = {
                         type = "toggle",
                         name = "Show Zone Icon",
                         desc = "Shows the check mark icons on a continent for zones with at least one achievement.",
-                        arg = "showContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes:UpdateWorldMapPlugin(AddonID)
                             LocalOptionUtils:printOption(info.option.name, value)
                         end,
+                        arg = "showContinentZoneIcons",
                         width ="double",
                         order = 1,
                     },
@@ -387,29 +388,29 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Hide Completed Zone Icon",
                         desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
-                        arg = "hideCompletedContinentZoneIcons",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             HandyNotes:UpdateWorldMapPlugin(AddonID)
                             LocalOptionUtils:printOption(info.option.name, value)
                         end,
+                        arg = "hideCompletedContinentZoneIcons",
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
                         order = 2,
                     },
-                    zs_cont_group = {
+                    continent_tooltip_group = {
                         type = "group",
                         name = "Tooltip",
-                        inline = true,
+                        inline = false,
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         order = 10,
                         args = {
                             description = {
                                 type = "description",
-                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the world map.", --..LocalOptionUtils.new_paragraph,
+                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the World Map.", --..LocalOptionUtils.new_paragraph,
                                 order = 0,
                             },
-                            single_line_achievements_sz_cont = {
+                            single_line_achievements_szc = {
                                 type = "toggle",
                                 name = "Single Line Achievements",
                                 desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
@@ -417,7 +418,7 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width = 1.2,
                                 order = 1,
                             },
-                            collapse_type_sz_cont = {
+                            collapse_type_szc = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.GetCollapseTypeDescription,
@@ -425,19 +426,65 @@ ns.pluginInfo.options = function(HandyNotes)
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
                             },
-                            chapter_quests_sz_cont = {
+                            chapter_quests_szc = {
                                 type = "toggle",
                                 name = "Include Chapter Quests",
                                 desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
                                 arg = "showContinentStoryChapterQuests",
-                                disabled = function() return ns.settings["showContinentSingleLineAchievements"] or not ns.settings["showContinentZoneIcons"] end,
+                                disabled = function() return ns.settings["showContinentSingleLineAchievements"] end,
                                 width = "double",
                                 order = 3,
                             },
                         },
-                    },
+                    },  --> continent_tooltip_group
+                    continent_advanced_group = {
+                        type = "group",
+                        name = ADVANCED_OPTIONS,
+                        desc = ADVANCED_OPTIONS_TOOLTIP,
+                        inline = false,
+                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
+                        order = 20,
+                        args = {
+                            description = {
+                                type = "description",
+                                name = ADVANCED_OPTIONS_TOOLTIP..LocalOptionUtils.new_paragraph,
+                                order = 0,
+                            },
+                            icon_scale_szc = {
+                                type = "range",
+                                name = "World Map Icon Scale",
+                                desc = "The size of the continent icons on the World Map",
+                                min = 0.3,
+                                max = 3,
+                                step = 0.1,
+                                set = function(info, value)
+                                    ns.settings[info.arg] = value
+                                    wipe(ns.nodes)
+                                    HandyNotes:UpdateWorldMapPlugin(AddonID)
+                                end,
+                                arg = "continentIconScale",
+                                order = 23,
+                            },
+                            icon_alpha_szc = {
+                                type = "range",
+                                name = "World Map Icon Alpha",
+                                desc = "The overall alpha transparency of the icons on the World Map",
+                                min = 0,
+                                max = 1,
+                                step = 0.01,
+                                isPercent = true,
+                                set = function(info, value)
+                                    ns.settings[info.arg] = value
+                                    wipe(ns.nodes)
+                                    HandyNotes:UpdateWorldMapPlugin(AddonID)
+                                end,
+                                arg = "continentIconAlpha",
+                                order = 24,
+                            },
+                        },
+                    },  --> continent_advanced_group
                 },
-            },  --> details_continent
+            },  --> continent_settings
             notification_settings = {
                 type = "group",
                 name = "Notifications",

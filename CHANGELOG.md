@@ -6,16 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+* Settings: added slider for adjusting `continent icon size + transparency`.
+* Settings: added slider for adjusting the `questline tooltip's scroll speed`.
+
 ### Changed
 
-* Settings: modified layout for tooltip(s) options.
-* Tooltip: increased scrolling speed.
+* World Map: continent icons will now auto-scale with the size of the map.
+* World Map: increased continent icon size 1.5x and recused transparency to 75 %.
+* Settings: modified layout for continent icon options.
+* Settings: modified layout for quest tooltip options.
+* Tooltip: increased scrolling speed for the questline tooltip.
 * Quest filter: updated obsolete quest IDs.
 
 ### Fixed
 
-* Active quests: fixed unnecessary blank line which appeared beneath the "Ready for turn-in" message.
-* Quest type tags: fixed multiple tag icons for turn-in quests which showed up questline quests.
+* Active quests: fixed unnecessary blank line which appeared under the "Ready for turn-in" message.
+* Quest type tags: fixed multiple tag icons for turn-in quests appearing in questline quest lists.
 
 ## [v0.5.0-beta+100205] - 2024-01-20
 
@@ -113,7 +121,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Availability and completion check for story line quests.
 * Availability and completion check for zone story quests.
 * Quest type details, eg. "Raid", "Dungeon", etc.
-* World map hook for active quest pins.
-* World map hook for storyline quest pins.
+* World Map hook for active quest pins.
+* World Map hook for storyline quest pins.
 * New slash commands: `/lm`, `/loremaster`
 * Basic file structure for a HandyNotes plugin using Ace3.
