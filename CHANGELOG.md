@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Zone Story: added manually optional zone stories for `Zaralek Cavern`, `Forbidden Reach` and `Emerald Dream`. These are additional storylines and not part of any Loremaster achievement.
 * Settings: added slider for adjusting `continent icon size + transparency`.
 * Settings: added slider for adjusting the `questline tooltip's scroll speed`.
 

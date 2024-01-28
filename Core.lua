@@ -530,6 +530,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     -- Achievement details
     local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
     local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
+    achievementName = tContains(ns.lore.OptionalAchievements, storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
     LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
     if (not pin.isOnContinent and ns.settings.showSingleLineAchievements) then return true end
     if (pin.isOnContinent and ns.settings.showContinentSingleLineAchievements) then return true end
@@ -763,10 +764,12 @@ end
 
 ----- Faction Groups ----------
 
-local playerFactionGroup = UnitFactionGroup("player")
+-- local playerFactionGroup = UnitFactionGroup("player")
 
--- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
-local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+-- -- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
+-- local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+
+local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
 
 -- Sometimes `GetQuestFactionGroup()` does not return the correct faction group ID, eg. Neutral instead of Horde.
 local correctFactionGroupQuests = {
@@ -808,8 +811,8 @@ function QuestFilterUtils:PlayerMatchesQuestRequirements(questInfo)
         return false
     end
 
-    -- Filter quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])
-    local isFactionGroupMatch = tContains({QuestFactionGroupID[playerFactionGroup], QuestFactionGroupID.Neutral}, questInfo.questFactionGroup)
+    -- Filter quest by faction group (1 == Alliance, 2 == Horde, [3 == Neutral])  --> Player = 1|2
+    local isFactionGroupMatch = tContains({QuestFactionGroupID.Player, QuestFactionGroupID.Neutral}, questInfo.questFactionGroup)
     return isFactionGroupMatch
 end
 
@@ -1842,6 +1845,10 @@ local function ShouldShowReadyForTurnInMessage(pin)
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
+    local achievementID, achievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
+    if ( not ns.settings.showOptionalZoneStories and tContains(ns.lore.OptionalAchievements, achievementID) )  then
+        return false
+    end
     return ns.settings.showZoneStory and pin.questInfo.hasZoneStoryInfo
 end
 
@@ -2124,7 +2131,7 @@ end
 local function Hook_WorldMap_OnFrameSizeChanged()
     if ( ns.isWorldMapMaximized ~= WorldMapFrame:IsMaximized() ) then
         ns.isWorldMapMaximized = WorldMapFrame:IsMaximized()
-        wipe(ns.nodes)
+        wipe(nodes)
         HandyNotes:UpdateWorldMapPlugin(AddonID)
     end
 end
@@ -2459,6 +2466,7 @@ local function SetContinentNodes(parentMapInfo)
 
         for i, mapChildInfo in ipairs(mapChildren) do
             local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
+            if ( not ns.settings.showContinentOptionalZoneStories and tContains(ns.lore.OptionalAchievements, storyAchievementID) ) then break end
             if storyAchievementID then
                 local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
                 if (minX == 0) then return end

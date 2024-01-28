@@ -206,6 +206,15 @@ ns.pluginInfo.options = function(HandyNotes)
                                 width = "double",
                                 order = 5,
                             },
+                            optional_stories_sz = {
+                                type = "toggle",
+                                name = "Include Optional Zone Stories",
+                                desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
+                                arg = "showOptionalZoneStories",
+                                disabled = function() return not ns.settings["showZoneStory"] end,
+                                width = "double",
+                                order = 6,
+                            },
                         },
                     },
                     ql_group = {
@@ -397,6 +406,20 @@ ns.pluginInfo.options = function(HandyNotes)
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
                         order = 2,
+                    },
+                    optional_stories_szc = {
+                        type = "toggle",
+                        name = "Include Optional Zone Stories",
+                        desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
+                        set = function(info, value)
+                            ns.settings[info.arg] = value
+                            wipe(ns.nodes)
+                            HandyNotes:UpdateWorldMapPlugin(AddonID)
+                        end,
+                        arg = "showContinentOptionalZoneStories",
+                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
+                        width = "double",
+                        order = 3,
                     },
                     continent_tooltip_group = {
                         type = "group",

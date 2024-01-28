@@ -33,6 +33,18 @@ ns.lore = LocalLoreUtil
 
 local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
 
+----- Faction Groups -----------------------------------------------------------
+
+-- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
+local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
+QuestFactionGroupID["Player"] = QuestFactionGroupID[ UnitFactionGroup("player") ]
+
+ns.QuestFactionGroupID = QuestFactionGroupID
+
+--------------------------------------------------------------------------------
+
+LocalLoreUtil.OptionalAchievements = {17739, 15638, 15325, 19026}
+
 LocalLoreUtil.AchievementsLocationMap = {
     [2022] = { --> "Waken Shore"                        --> "Dragonflight"
         16334, -- "Waking Hope"
@@ -50,8 +62,16 @@ LocalLoreUtil.AchievementsLocationMap = {
         16363, -- "Just Don't Ask Me to Spell It"
         16398, -- "Sojourner of Thaldraszus"
     },
-    -- [2133] = nil,  --> "Zaralek Cavern"
-    -- [2151] = nil,  --> "Forbidden Reach"
+    [2133] = { --> "Zaralek Cavern"
+        17739, -- (extra storyline) "Embers of Neltharion"
+    },
+    [2151] = { --> "Forbidden Reach"
+        -- 15638, -- (extra storyline) "Dracthyr, Awaken"
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 15638 or 15325,
+    },
+    [2200] = { --> "Emerald Dream"
+        19026, -- (extra storyline) "Defenders of the Dream"
+    },
     [1525] = { --> "Revendreth"                         --> "Shadowlands"
         13878, -- "The Master of Revendreth"
         14798, -- "Sojourner of Revendreth"
@@ -146,6 +166,8 @@ function LocalLoreUtil:PrepareData()
     self:GetStoryQuests()
 end
 
+--@do-not-package@
+
 ----- Tests ----------
 
 TestList = ns.utils.achieve.GetAchievementCriteriaInfoList
@@ -157,7 +179,6 @@ Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievement
 
 Test_PrepareData = function() return LocalLoreUtil:PrepareData() end
 
---@do-not-package@
 --------------------------------------------------------------------------------
 
 ------------------------- (2023-10-16)
@@ -205,5 +226,92 @@ Test_PrepareData = function() return LocalLoreUtil:PrepareData() end
 --         14798,  -- "Sojourner of Revendreth"
 --     },
 -- }
+
+--------------------------------------------------------------------------------
+
+-- 
+-- Note: "optional" means that the achievement is NOT part of the Loremaster achievement, but
+-- might be part of a storyline.
+-- 
+LocalLoreUtil.LoremasterAchievementsLocationMap = {
+
+    ----- Dragonflight -----
+
+    ["1978"] = { -- Dragon Isles
+        { id = 16585, type = "continent", fallbackName = "Loremaster of the Dragon Isles" },  --> (not yet added by Blizzard to the main Loremaster achievement)
+        { id = 19307, type = "continent", fallbackName = "Dragon Isles Pathfinder" },
+    },
+    ["2022"] = { -- Waken Shore
+        { id = 16334, type = "criteria", fallbackName = "Waking Hope", criteriaIDs = {"16585", "19307"} },
+        { id = 16401, type = "criteria", fallbackName = "Sojourner of the Waking Shores", criteriaID = 16585 },
+        { id = 16292, type = "storyline", fallbackName = "Mastering the Waygates", questLineID = 1363 },  -- (optional)
+    },
+    ["2023"] = { -- Ohn'ahran Plains
+        {id = 15394, type = "criteria", fallbackName = "Ohn'a'Roll", criteriaIDs = {"16585", "19307"} },
+        {id = 16405, type = "criteria", fallbackName = "Sojourner of Ohn'ahran Plains", criteriaID = 16585 },
+        {id = 16574, type = "interaction", fallbackName = "Sleeping on the Job", includeDescription = true},  -- (optional)
+    },
+    ["2024"] = { -- Azure Span
+        { id = 16336, type = "criteria", fallbackName = "Azure Spanner", criteriaIDs = {"16585", "19307"} },
+        { id = 16428, type = "criteria", fallbackName = "Sojourner of Azure Span", criteriaID = 16585 },
+        { id = 16580, type = "quests", fallbackName = "Lend a Helping Span", includeDescription = true},  -- (optional)
+    },
+    [2025] = { --> Thaldraszus
+        { id = 16363, type = "criteria", fallbackName = "Just Don't Ask Me to Spell It", criteriaIDs = {"16585", "19307"} },
+        { id = 16398, type = "criteria", fallbackName = "Sojourner of Thaldraszus", criteriaID = 16585 },
+        { id = 16808, type = "reputation", fallbackName = "Friend of the Dragon Isles", includeDescription = true},  -- (optional)
+    },
+    [2133] = { --> Zaralek Cavern
+        17739, -- (extra storyline) "Embers of Neltharion"   ==>  / 
+        -- 17785, -- (noteworthy) "Que Zara(lek), Zara(lek)" ==> 18804, "Neltharion's Legacy"
+    },
+    [2151] = { --> Forbidden Reach (extra storyline)
+        { id = 15325, type = "storyline", fallbackName = "Dracthyr, Awaken", factionGroupID = QuestFactionGroupID.Alliance, questLineIDs = {1261, 1270, 1271, 1272, 1274, 1275, 1276} },
+        { id = 15638, type = "storyline", fallbackName = "Dracthyr, Awaken", factionGroupID = QuestFactionGroupID.Horde, questLineIDs = {1261, 1270, 1271, 1272, 1274, 1275, 1311} },
+    },
+    [2200] = { --> Emerald Dream
+        19026, -- (extra storyline) "Defenders of the Dream"
+    },
+    -- [830] = { --> Krokuun
+    --     12066, -- (optional) "You Are Now Prepared!"
+    --     18854, -- (optional, single ac) "Seeing Red" (Added in patch 10.1.7)
+    -- },
+    -- [217] = { --> Gilneas
+    --     19719, -- "Reclamation of Gilneas"  (Added in patch 10.2.5)
+    --     --> storyline: 5538, "The Gilneas Reclamation"
+    -- },
+
+    -- Shadowlands
+
+    [1525] = { --> Revendreth                           --> Shadowlands
+        13878, -- "The Master of Revendreth"
+        14798, -- "Sojourner of Revendreth"
+    },
+    [1533] = { --> Bastion
+        14281, -- "The Path to Ascension"
+        14801, -- "Sojourner of Bastion"
+    },
+    [1536] = { --> Maldraxxus
+        14206, -- "Blade of the Primus"
+        14799, -- "Sojourner of Maldraxxus"
+    },
+    [1565] = { --> Ardenweald
+        14164, -- "Awaken, Ardenweald"
+        14800, -- "Sojourner of Ardenweald"
+    },
+    -- [1543] = nil,  --> "The Maw"
+    -- [1970] = nil,  --> "Zereth Mortis"
+    -- [905] = { --> Argus                                 --> Legion
+    --     12066, -- (optional) "You Are Now Prepared!"
+    -- },
+
+    -- Battle for Azeroth
+
+    [1355] = { --> Nazjatar
+        13709, -- (extra storyline) "Unfathomable" (Horde)
+    },
+}
+--> TODO - Noteworthy achievements
+-- 19790, "The Archives Called, You Answered"
 
 --@end-do-not-package@
