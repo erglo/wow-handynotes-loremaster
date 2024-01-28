@@ -1,26 +1,33 @@
 [URL="https://img.shields.io/badge/https%3A%2F%2Fimg.shields.io%2Fbadge%2Frepo-wow--handynotes--loremaster-gray?logo=github&label=repo&color=24292E"][/URL] [URL="https://img.shields.io/github/v/tag/erglo/wow-handynotes-loremaster?logo=github&label=latest&color=darkgreen"][/URL] [URL="https://img.shields.io/curseforge/game-versions/909254?logo=battle.net&logoColor=%23148EFF&label=WoW-retail"][/URL]
 
 This World of Warcraft™ addon helps you keep track of the Loremaster story quest achievements as well as questlines and campaigns.  
-Simply [b]hover a quest icon[/b] on the world map, if it is part of a questline or a story campaign additional details about your progress will appear in the icon's tooltip.
+Simply [B]hover a quest icon[/B] on the world map, if it is part of a questline or a story campaign additional details about your progress will appear in the icon's tooltip.
 
-⚠️[b]Required addon:[/b] [url=https://www.curseforge.com/wow/addons/handynotes]HandyNotes[/url]
+⚠️[B]Required addon:[/B] [URL=https://www.curseforge.com/wow/addons/handynotes]HandyNotes[/URL]
 
-[I]([B]Note:[/B] This is a playable release. Activate visibility for [B]beta[/B] releases to find this addon.)[/I]
+[I]([B]Note:[/B] This is a playable release. For some add-on hosting services or addon manager you might need to activate visibility for [B]beta[/B] releases in order to find this addon.)[/I]
 
 [SIZE="3"][B]Features[/B] ([I][COLOR="Orange"]beta[/COLOR][/I])[/SIZE]
 
 [LIST]
     [*] Extends quest icon tooltips on the worldmap with details about zone stories, questlines and campaigns.
-    [*] Shows an icon in continent view indicating whether you finished a zone's story achievement or not.
+    [*] Choose whether you want to see the tooltips content categories in multiple tooltips (default) or in a single one.
+    [*] Displays an icon in continent view indicating whether you finished a zone's story achievement or not.
+    [*] Get notified in chat when accepting or turning-in a quest. When it belongs to a questline or a campaign you'll be informed about your progress.
+    [*] See more than just 1 quest type provided by Blizzard.
     [*] [I]TODO (NYI)[/I]: Adds an icon on the right top corner of the worldmap with details about available questlines on the active zone.
-    [*] [B]Many options:[/B] eg. see the quest type in a quest's tooltip when hovering its icon or hide the content you're not interested in.
+    [*] [B]Many options:[/B] simply hide the content you're not interested in.
 [/LIST]
 
 [SIZE="3"]Contributing[/SIZE]
 
-If you have a feature request or if you would like to report a bug, please visit the repository's [url=https://github.com/erglo/wow-handynotes-loremaster/issues]issue page at GitHub[/url].
+If you have a feature request or if you would like to report a bug, please visit the repository's [URL=https://github.com/erglo/wow-handynotes-loremaster/issues]issue page at GitHub[/URL].
 
-⚠️[b]Translators:[/b] [I]Please do [b]not[/b] provide any localizations, yet. All strings are still hard coded and many of them are often subject to change in the current state of development (beta).[/I]
+[B]Note:[/B] Questlines will sometimes have multiple quests with the same name. [I]That is NOT a bug!![/I] The game filters quests in background processes I don't have access to (or at least I haven't figured out how, yet), depending eg. on the player's class, race, faction group, etc. There are also quests which are obsolete but haven't been removed from the game, yet.  
+Currently, those quests need to be filtered manually. You're welcome to report those, especially if you know how to distinguish them.  
+[I]Also note, those name doublets are merely a visual nuisance. Don't let them irritate you. The game will still choose the correct quest for you as soon as you reach that point in a questline.[/I]
+
+⚠️[B]Translators:[/B] [I]Please do [B]not[/B] provide any localizations, yet. All strings are still hard coded and many of them are often subject to change in the current state of development (beta).[/I]
 [I]Note: Future changes and instruction details will be provided in this sections.[/I]
 
 [URL="https://github.com/erglo/wow-handynotes-loremaster"][IMG]https://camo.githubusercontent.com/b05ed80f247dc6f8d464a78bef9b8fbba142af3702664b7d15e9d3ee474d1338/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f7265706f2d776f772d2d68616e64796e6f7465732d2d6c6f72656d61737465722d677261793f6c6f676f3d676974687562266c6f676f436f6c6f723d253233393539444135266c6162656c436f6c6f723d25323332343239324526636f6c6f723d253233393539444135[/IMG][/URL]
@@ -29,36 +36,36 @@ __________________________________________________
 [SIZE="2"][B]Tools Used[/B][/SIZE]
 
 [LIST]
-    [*] Microsoft's [url=https://code.visualstudio.com]Visual Studio Code[/url] with ...
+    [*] Microsoft's [URL=https://code.visualstudio.com]Visual Studio Code[/URL] with ...
         [LIST]
-            [*] Sumneko's [url=https://github.com/LuaLS/lua-language-server]Lua Language Server[/url] extension
-            [*] Ketho's [url=https://github.com/Ketho/vscode-wow-api]World of Warcraft API[/url] extension
-            [*] Stanzilla's [url=https://github.com/Stanzilla/vscode-wow-toc]World of Warcraft TOC Language Support[/url] extension
-            [*] David Anson's [url=https://github.com/DavidAnson/vscode-markdownlint]Markdown linting and style checking[/url] extension
+            [*] Sumneko's [URL=https://github.com/LuaLS/lua-language-server]Lua Language Server[/URL] extension
+            [*] Ketho's [URL=https://github.com/Ketho/vscode-wow-api]World of Warcraft API[/URL] extension
+            [*] Stanzilla's [URL=https://github.com/Stanzilla/vscode-wow-toc]World of Warcraft TOC Language Support[/URL] extension
+            [*] David Anson's [URL=https://github.com/DavidAnson/vscode-markdownlint]Markdown linting and style checking[/URL] extension
         [/LIST]
-    [*] Version control management with [url=https://git-scm.com]Git[/url] + [url=https://github.com/]GitHub[/url]
+    [*] Version control management with [URL=https://git-scm.com]Git[/URL] + [URL=https://github.com/]GitHub[/URL]
         [LIST]
-            [*] Packaging and uploading: [url=https://github.com/BigWigsMods/packager]BigWigsMods/packager[/url]
-            [*] Changelog generating: [url=https://github.com/kemayo/actions-recent-changelog]kemayo/actions-recent-changelog[/url]
+            [*] Packaging and uploading: [URL=https://github.com/BigWigsMods/packager]BigWigsMods/packager[/URL]
+            [*] Changelog generating: [URL=https://github.com/kemayo/actions-recent-changelog]kemayo/actions-recent-changelog[/URL]
         [/LIST]
     [*] In-game development tools (addons):
         [LIST]
-            [*] [url=https://www.curseforge.com/wow/addons/bug-grabber]BugGrabber[/url], [url=https://www.curseforge.com/wow/addons/bugsack]BugSack[/url], [url=https://www.curseforge.com/wow/addons/idtip]idTip[/url], [url=https://www.curseforge.com/wow/addons/textureviewer]TextureViewer[/url], [url=https://www.curseforge.com/wow/addons/wowlua]WoWLua[/url].
+            [*] [URL=https://www.curseforge.com/wow/addons/bug-grabber]BugGrabber[/URL], [URL=https://www.curseforge.com/wow/addons/bugsack]BugSack[/URL], [URL=https://www.curseforge.com/wow/addons/idtip]idTip[/URL], [URL=https://www.curseforge.com/wow/addons/textureviewer]TextureViewer[/URL], [URL=https://www.curseforge.com/wow/addons/wowlua]WoWLua[/URL].
         [/LIST]
     [*] Game libraries:
         [LIST]
-            [*] [url=https://www.curseforge.com/wow/addons/ace3]Ace3[/url], [url=https://www.curseforge.com/wow/addons/callbackhandler]CallbackHandler-1.0[/url], [url=https://www.curseforge.com/wow/addons/libqtip-1-0]LibQTip-1.0[/url], [url=https://www.curseforge.com/wow/addons/libstub]LibStub[/url].
+            [*] [URL=https://www.curseforge.com/wow/addons/ace3]Ace3[/URL], [URL=https://www.curseforge.com/wow/addons/callbackhandler]CallbackHandler-1.0[/URL], [URL=https://www.curseforge.com/wow/addons/libqtip-1-0]LibQTip-1.0[/URL], [URL=https://www.curseforge.com/wow/addons/libstub]LibStub[/URL].
         [/LIST]
 [/LIST]
 
 [SIZE="2"][B]References[/B][/SIZE]
 
 [LIST]
-    [*] Townlong Yak's [url=https://www.townlong-yak.com/framexml/live]FrameXML archive[/url]
-    [*] WoWpedia's [url=https://wowpedia.fandom.com/wiki/World_of_Warcraft_API]World of Warcraft API[/url]
-    [*] [url=https://www.wowhead.com]Wowhead.com[/url]
-    [*] Matt Cone's [url=https://www.markdownguide.org]"The Markdown Guide"[/url]
+    [*] Townlong Yak's [URL=https://www.townlong-yak.com/framexml/live]FrameXML archive[/URL]
+    [*] WoWpedia's [URL=https://wowpedia.fandom.com/wiki/World_of_Warcraft_API]World of Warcraft API[/URL]
+    [*] [URL=https://www.wowhead.com]Wowhead.com[/URL]
+    [*] Matt Cone's [URL=https://www.markdownguide.org]"The Markdown Guide"[/URL]
         --> [I](Buy his [URL="https://www.markdownguide.org/book"]book[/URL]!)[/I]
-    [*] [url=https://git-scm.com/book]The Git Book[/url]
-    [*] [url=https://code.visualstudio.com/docs]Documentation[/url] for Visual Studio Code
+    [*] [URL=https://git-scm.com/book]The Git Book[/URL]
+    [*] [URL=https://code.visualstudio.com/docs]Documentation[/URL] for Visual Studio Code
 [/LIST]

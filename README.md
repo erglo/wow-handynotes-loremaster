@@ -4,7 +4,6 @@
 ![GitHub tag](https://img.shields.io/github/v/tag/erglo/wow-handynotes-loremaster?logo=github&label=latest&color=darkgreen)
 ![CurseForge Game Versions](https://img.shields.io/curseforge/game-versions/909254?logo=battle.net&logoColor=%23148EFF&label=WoW-retail)
 
-
 This World of Warcraft™ addon helps you keep track of the Loremaster story quest achievements as well as questlines and campaigns.  
 Simply **hover a quest icon** on the world map, if it is part of a questline or a story campaign additional details about your progress will appear in the icon's tooltip.
 
@@ -16,20 +15,27 @@ Download available at:
 [Wago.io](https://addons.wago.io/addons/wow-handynotes-loremaster/versions?stability=beta "Wago Releases (beta)") and
 [GitHub.com](https://github.com/erglo/wow-handynotes-loremaster/releases "GitHub Releases").  
 
-_(**Note:** This is a playable release. Activate visibility for **beta** releases to find this addon.)_
+_(**Note:** This is a playable release. For some add-on hosting services or addon manager you might need to activate visibility for **beta** releases in order to find this addon.)_
 
 ## Features (_beta_)
 
 * Extends quest icon tooltips on the worldmap with details about zone stories, questlines and campaigns.
-* Shows an icon in continent view indicating whether you finished a zone's story achievement or not.
+* Choose whether you want to see the tooltips content categories in multiple tooltips (default) or in a single one.
+* Displays an icon in continent view indicating whether you finished a zone's story achievement or not.
+* Get notified in chat when accepting or turning-in a quest. When it belongs to a questline or a campaign you'll be informed about your progress.
+* See more than just 1 quest type provided by Blizzard.
 * _TODO (NYI)_: Adds an icon on the right top corner of the worldmap with details about available questlines on the active zone.
-* **Many options**: eg. see the quest type in a quest's tooltip when hovering its icon or hide the content you're not interested in.
+* **Many options:** simply hide the content you're not interested in.
 
 ----
 
 ### Contributing
 
 If you have a feature request or if you would like to report a bug, please visit the repository's [issue page at GitHub](https://github.com/erglo/wow-handynotes-loremaster/issues).
+
+**Note:** Questlines will sometimes have multiple quests with the same name. _That is NOT a bug!!_ The game filters quests in background processes I don't have access to (or at least I haven't figured out how, yet), depending eg. on the player's class, race, faction group, etc. There are also quests which are obsolete but haven't been removed from the game, yet.  
+Currently, those quests need to be filtered manually. You're welcome to report those, especially if you know how to distinguish them.  
+_Also note, those name doublets are merely a visual nuisance. Don't let them irritate you. The game will still choose the correct quest for you as soon as you reach that point in a questline._
 
 ⚠️**Translators:** _Please do **not** provide any localizations, yet. All strings are still hard coded and many of them are subject to change in the current stage of development (beta)._  
 _Note: Future changes and instruction details will be provided in this sections._
