@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * World Map: continent icons will now auto-scale with the size of the map.
-* World Map: increased continent icon size 1.5x and recused transparency to 75 %.
+* World Map: increased continent icon size 1.5x and reduced transparency to 75 %.
 * Settings: modified layout for continent icon options.
 * Settings: modified layout for quest tooltip options.
 * Tooltip: increased scrolling speed for the questline tooltip.
