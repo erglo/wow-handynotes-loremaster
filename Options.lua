@@ -27,19 +27,38 @@
 local AddonID, ns = ...
 
 ns.currentLocale = GetLocale()
+
 local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 local format = string.format
 
+local BRIGHTBLUE_FONT_COLOR = BRIGHTBLUE_FONT_COLOR
+local GRAY_FONT_COLOR = GRAY_FONT_COLOR
+local LIGHTGRAY_FONT_COLOR = LIGHTGRAY_FONT_COLOR
+local NORMAL_FONT_COLOR = NORMAL_FONT_COLOR
+local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR
+
+local NORMAL_FONT_COLOR_CODE = NORMAL_FONT_COLOR_CODE
+local FONT_COLOR_CODE_CLOSE = FONT_COLOR_CODE_CLOSE
+
+local ADVANCED_OPTIONS = ADVANCED_OPTIONS
+local ADVANCED_OPTIONS_TOOLTIP = ADVANCED_OPTIONS_TOOLTIP
+local DEFAULT = DEFAULT
+local EXAMPLE_TEXT = EXAMPLE_TEXT
+local DESCRIPTION = DESCRIPTION
+
 local LocalOptionUtils = {}
-LocalOptionUtils.new_paragraph = "|n|n"
-LocalOptionUtils.newline = "|n"
-LocalOptionUtils.stringDelimiter = ITEM_NAME_DESCRIPTION_DELIMITER
-LocalOptionUtils.statusFormatString = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
-LocalOptionUtils.statusEnabledString = VIDEO_OPTIONS_ENABLED
-LocalOptionUtils.statusDisabledString = VIDEO_OPTIONS_DISABLED
+LocalOptionUtils.newParagraph = "|n|n"
+LocalOptionUtils.newLine = "|n"
+LocalOptionUtils.colon = HEADER_COLON
+LocalOptionUtils.textDelimiter = ITEM_NAME_DESCRIPTION_DELIMITER
+LocalOptionUtils.parensStringFormat = PARENS_TEMPLATE
+LocalOptionUtils.statusStringFormat = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
+LocalOptionUtils.statusEnabledText = VIDEO_OPTIONS_ENABLED
+LocalOptionUtils.statusDisabledText = VIDEO_OPTIONS_DISABLED
 LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
-LocalOptionUtils.dashLine = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
+LocalOptionUtils.dashLineStringFormat = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
+LocalOptionUtils.questTypeIconFormat = "|A:questlog-questtypeicon-%s:16:16:0:-1|a"
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -69,7 +88,6 @@ ns.pluginInfo.needWorldMapRefresh = {
     "hideCompletedContinentZoneIcons",
 }
 ns.pluginInfo.needWorldMapRefreshAll = {
-    "showContinentOptionalZoneStories",
     "scrollStep",
     "continentIconScale",
     "continentIconAlpha"
@@ -83,9 +101,10 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
         get = function(info) return ns.settings[info.arg] end,
         set = function(info, value)
             ns.settings[info.arg] = value
-            if ( strsplit("_", info.arg) == "collapseType") then
+            if ( strsplit("_", info.arg) == "collapseType" ) then
                 LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
             elseif tContains(self.needWorldMapRefresh, info.arg) then
+                LocalOptionUtils:printOption(info.option.name, value)
                 LoremasterPlugin:Refresh()
             elseif tContains(self.needWorldMapRefreshAll, info.arg) then
                 LoremasterPlugin:RefreshAll()
@@ -101,40 +120,45 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                 args = {
                     heading = {
                         type = "description",
-                        name = LocalOptionUtils:CreateAboutHeading(),
+                        name = LocalOptionUtils:CreateAboutHeadingText(),
                         fontSize = "medium",
                         order = 0,
                     },
                     description = {
                         type = "description",
-                        name = LocalOptionUtils.newline..self.description,
+                        name = LocalOptionUtils.newLine..self.description,
                         order = 1,
                     },
                     body = {
                         type = "description",
-                        name = LocalOptionUtils:CreateAboutBody(),
+                        name = LocalOptionUtils:CreateAboutBodyText(),
                         order = 2,
                     },
                 }
             },  --> about
             tooltip_details_zone = {
                 type = "group",
-                name = "Tooltip"..LocalOptionUtils.stringDelimiter..PARENS_TEMPLATE:format(ZONE),
+                name = "Tooltip"..LocalOptionUtils.textDelimiter..LocalOptionUtils.parensStringFormat:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the World Map.",
                 order = 1,
                 childGroups = "tab",
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the tooltip details which should be shown when hovering a quest icon on the World Map."..LocalOptionUtils.new_paragraph,
-                        -- fontSize = "medium",
+                        name = "Select the tooltip details which should be shown when hovering a quest icon on the World Map."..LocalOptionUtils.newParagraph,
                         order = 0,
                     },
                     general_details = {
                         type = "group",
                         name = GENERAL_LABEL,
+                        desc = "The settings in this group apply to all tooltips.",
                         order = 1,
                         args = {
+                            description = {
+                                type = "description",
+                                name = "The settings in this section apply to all tooltips."..LocalOptionUtils.newParagraph,
+                                order = 0,
+                            },
                             plugin_name = {
                                 type = "toggle",
                                 name = "Show Plugin Name",
@@ -142,7 +166,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 arg = "showPluginName",
                                 width = "full",
                                 order = 1,
-                            },                                                          --> TODO - Show quest ID, trivial quests ???
+                            },                                                  --> TODO - Show quest ID, trivial quests ???
                             category_names = {
                                 type = "toggle",
                                 name = "Show Category Names",
@@ -154,7 +178,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             quest_type = {
                                 type = "toggle",
                                 name = "Show Quest Type",
-                                desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AddQuestTypeExampleLine(CALENDAR_TYPE_RAID, "raid"),
+                                desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AppendQuestTypeExampleText(CALENDAR_TYPE_RAID, "raid"),
                                 arg = "showQuestType",
                                 width = "full",
                                 order = 3,
@@ -172,7 +196,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     zs_group = {
                         type = "group",
                         name = ZONE,
-                        desc = "Show or hide story details of the currently viewed zone.",
+                        desc = "Show or hide story achievement details of the currently viewed zone.",
                         inline = false,
                         order = 10,
                         args = {
@@ -180,26 +204,27 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Show Zone Story",
                                 desc = "Show or hide story details of the currently viewed zone.",
+                                descStyle = "inline",
                                 arg = "showZoneStory",
-                                width = 1.2,
+                                width = "full",
                                 order = 1,
-                            },
-                            collapse_type_sz = {
-                                type = "select",
-                                name = "Select Display Type...",
-                                desc = LocalOptionUtils.GetCollapseTypeDescription,
-                                arg = "collapseType_zonestory",
-                                values = LocalOptionUtils.collapseTypeList,
-                                disabled = function() return not ns.settings["showZoneStory"] end,
-                                order = 2,
                             },
                             separate_tooltip_sz = {
                                 type = "toggle",
                                 name = "Use Separate Tooltip",
-                                desc = "Shows the zone story details in a separate tooltip.",
+                                desc = "Displays this category's details in a separate tooltip.",
                                 arg = "showZoneStorySeparately",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
-                                width = "double",
+                                width = 1.2,
+                                order = 2,
+                            },
+                            collapse_type_sz = {
+                                type = "select",
+                                name = "Select Display Type...",
+                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                arg = "collapseType_zonestory",
+                                values = LocalOptionUtils.collapseTypeList,
+                                disabled = function() return not ns.settings["showZoneStory"] end,
                                 order = 3,
                             },
                             single_line_achievements_sz = {
@@ -214,7 +239,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             show_chapter_quests_sz = {
                                 type = "toggle",
                                 name = "Include Chapter Quests",
-                                desc = "Some chapters are directly linked to a quest. If activated, these will be shown below the chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
+                                desc = "Some chapters are directly linked to a quest. If activated, each linked quest name will be shown below the chapter name."..LocalOptionUtils:AppendExampleText("QuestName", "SmallQuestBang"),
                                 arg = "showStoryChapterQuests",
                                 disabled = function() return ns.settings["showSingleLineAchievements"] or not ns.settings["showZoneStory"] end,
                                 width = "double",
@@ -242,32 +267,33 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Show Questline",
                                 desc = "Show or hide questline details associated with the hovered quest.",
+                                descStyle = "inline",
                                 arg = "showQuestLine",
-                                width = 1.2,
+                                width = "full",
                                 order = 1,
-                            },
-                            collapse_type_ql = {
-                                type = "select",
-                                name = "Select Display Type...",
-                                desc = LocalOptionUtils.GetCollapseTypeDescription,
-                                arg = "collapseType_questline",
-                                values = LocalOptionUtils.collapseTypeList,
-                                disabled = function() return not ns.settings["showQuestLine"] end,
-                                order = 2,
                             },
                             separate_tooltip_ql = {
                                 type = "toggle",
                                 name = "Use Separate Tooltip",
-                                desc = "Shows the questline details in a separate tooltip.",
+                                desc = "Displays this category's details in a separate tooltip.",
                                 arg = "showQuestLineSeparately",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
-                                width = "double",
+                                width = 1.2,
+                                order = 2,
+                            },
+                            collapse_type_ql = {
+                                type = "select",
+                                name = "Select Display Type...",
+                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                arg = "collapseType_questline",
+                                values = LocalOptionUtils.collapseTypeList,
+                                disabled = function() return not ns.settings["showQuestLine"] end,
                                 order = 3,
                             },
                             quest_type_names = {
                                 type = "toggle",
                                 name = "Quest Type Icons as Text",
-                                desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newline..PET_BATTLE_UI_VS..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "WEEKLY", true, false, true),
+                                desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newLine..PET_BATTLE_UI_VS..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
@@ -276,7 +302,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             highlight_story_quests = {
                                 type = "toggle",
                                 name = "Highlight Story Quests",
-                                desc = "Lore-related quests will be highlighted in a different text color, if activated."..LocalOptionUtils:AddExampleLine("QuestName", nil, nil, nil, ORANGE_FONT_COLOR),
+                                desc = "Lore-related quests will be highlighted in a different text color, if activated."..LocalOptionUtils:AppendExampleText("QuestName", nil, nil, nil, ORANGE_FONT_COLOR),
                                 arg = "highlightStoryQuests",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = "double",
@@ -293,7 +319,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             separator_pre_advanced_ql = {
                                 type = "description",
-                                name = LocalOptionUtils.newline,
+                                name = LocalOptionUtils.newLine,
                                 order = 20,
                             },
                             header_advanced_ql = {
@@ -305,13 +331,13 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             separator_post_advanced_ql = {
                                 type = "description",
-                                name = LocalOptionUtils.newline,
+                                name = LocalOptionUtils.newLine,
                                 order = 22,
                             },
                             tooltip_slider_speed_ql = {
                                 type = "range",
                                 name = "Tooltip Scroll Speed",
-                                desc = "Set the step size (speed) for the scrollbar."..LocalOptionUtils:AppendDefaultLine("scrollStep"),
+                                desc = "Set the step size (speed) for this tooltip's scrollbar."..LocalOptionUtils:AppendDefaultValueText("scrollStep"),
                                 min = 10,
                                 max = 150,
                                 step = 10,
@@ -332,18 +358,10 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Show Campaign",
                                 desc = "Show or hide story campaign details associated with the hovered quest.",
+                                descStyle = "inline",
                                 arg = "showCampaign",
-                                width = 1.2,
+                                width = "full",
                                 order = 1,
-                            },
-                            collapse_type_cp = {
-                                type = "select",
-                                name = "Select Display Type...",
-                                desc = LocalOptionUtils.GetCollapseTypeDescription,
-                                arg = "collapseType_campaign",
-                                values = LocalOptionUtils.collapseTypeList,
-                                disabled = function() return not ns.settings["showCampaign"] end,
-                                order = 2,
                             },
                             separate_tooltip_cp = {
                                 type = "toggle",
@@ -351,13 +369,22 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 desc = "Shows the campaign details in a separate tooltip.",
                                 arg = "showCampaignSeparately",
                                 disabled = function() return not ns.settings["showCampaign"] end,
-                                width = "double",
+                                width = 1.2,
+                                order = 2,
+                            },
+                            collapse_type_cp = {
+                                type = "select",
+                                name = "Select Display Type...",
+                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                arg = "collapseType_campaign",
+                                values = LocalOptionUtils.collapseTypeList,
+                                disabled = function() return not ns.settings["showCampaign"] end,
                                 order = 3,
                             },
                             chapter_description = {
                                 type = "toggle",
                                 name = "Include Chapter Description",
-                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine(DESCRIPTION, 132053),
+                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AppendExampleText(DESCRIPTION, 132053),
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -366,7 +393,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             campaign_description = {
                                 type = "toggle",
                                 name = "Show Campaign Description",
-                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AddExampleLine(DESCRIPTION),
+                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AppendExampleText(DESCRIPTION),
                                 arg = "showCampaignDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -385,13 +412,13 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the details for the continent view on the World Map."..LocalOptionUtils.new_paragraph,
+                        name = "Select the details for the continent view on the World Map."..LocalOptionUtils.newParagraph,
                         order = 0,
                     },
                     show_zone_icons = {
                         type = "toggle",
                         name = "Show Zone Icon",
-                        desc = "Shows the check mark icons on a continent for zones with at least one achievement.",
+                        desc = "Shows the icons on a continent for zones with at least one achievement.",
                         arg = "showContinentZoneIcons",
                         width ="double",
                         order = 1,
@@ -399,7 +426,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     completed_zone_icons = {
                         type = "toggle",
                         name = "Hide Completed Zone Icon",
-                        desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
+                        desc = "Hide the icons on a continent from zones with a completed achievement.",
                         arg = "hideCompletedContinentZoneIcons",
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
@@ -409,6 +436,11 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         type = "toggle",
                         name = "Include Optional Zone Stories",
                         desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
+                        set = function(info, value)
+                            ns.settings[info.arg] = value
+                            LocalOptionUtils:printOption(info.option.name, value)
+                            LoremasterPlugin:RefreshAll()
+                        end,
                         arg = "showContinentOptionalZoneStories",
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width = "double",
@@ -417,13 +449,14 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     continent_tooltip_group = {
                         type = "group",
                         name = "Tooltip",
+                        desc = "Select the tooltip details which should be shown when hovering an icon in continent view on the World Map.",
                         inline = false,
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         order = 10,
                         args = {
                             description = {
                                 type = "description",
-                                name = "Select the tooltip details which should be shown when hovering a completion-check icon in continent view on the World Map.", --..LocalOptionUtils.new_paragraph,
+                                name = "Select the tooltip details which should be shown when hovering an icon in continent view on the World Map."..LocalOptionUtils.newParagraph,
                                 order = 0,
                             },
                             single_line_achievements_szc = {
@@ -437,7 +470,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             collapse_type_szc = {
                                 type = "select",
                                 name = "Select Display Type...",
-                                desc = LocalOptionUtils.GetCollapseTypeDescription,
+                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
                                 arg = "collapseType_zoneStoryOnContinent",
                                 values = LocalOptionUtils.collapseTypeList,
                                 order = 2,
@@ -445,7 +478,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             chapter_quests_szc = {
                                 type = "toggle",
                                 name = "Include Chapter Quests",
-                                desc = "Some chapters are directly linked to a quest.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AddExampleLine("QuestName", "SmallQuestBang"),
+                                desc = "Some chapters are directly linked to a quest. If activated, each linked quest name will be shown below the chapter name."..LocalOptionUtils:AppendExampleText("QuestName", "SmallQuestBang"),
                                 arg = "showContinentStoryChapterQuests",
                                 disabled = function() return ns.settings["showContinentSingleLineAchievements"] end,
                                 width = "double",
@@ -463,13 +496,13 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         args = {
                             description = {
                                 type = "description",
-                                name = ADVANCED_OPTIONS_TOOLTIP..LocalOptionUtils.new_paragraph,
+                                name = ADVANCED_OPTIONS_TOOLTIP..LocalOptionUtils.newParagraph,
                                 order = 0,
                             },
                             icon_scale_szc = {
                                 type = "range",
                                 name = "World Map Icon Scale",
-                                desc = "Set the size of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultLine("continentIconScale"),
+                                desc = "Set the size of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultValueText("continentIconScale"),
                                 min = 0.3,
                                 max = 3,
                                 step = 0.1,
@@ -479,7 +512,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             icon_alpha_szc = {
                                 type = "range",
                                 name = "World Map Icon Alpha",
-                                desc = "Set the transparency of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultLine("continentIconAlpha"),
+                                desc = "Set the transparency of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultValueText("continentIconAlpha"),
                                 min = 0,
                                 max = 1,
                                 step = 0.01,
@@ -499,7 +532,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                 args = {
                     description = {
                         type = "description",
-                        name = "Choose how or whether you want to be notified of plugin changes."..LocalOptionUtils.new_paragraph,
+                        name = "Choose how or whether you want to be notified of plugin changes."..LocalOptionUtils.newParagraph,
                         order = 0,
                     },
                     chat_notifications_group = {
@@ -552,76 +585,74 @@ end
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
-    local msg = isEnabled and self.statusEnabledString or self.statusDisabledString
-    ns:cprintf(self.statusFormatString, text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
+    local msg = isEnabled and self.statusEnabledText or self.statusDisabledText
+    ns:cprintf(self.statusStringFormat, text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
 end
 
-LocalOptionUtils.CreateAboutHeading = function(self)
+LocalOptionUtils.CreateAboutHeadingText = function(self)
     local versionString = GRAY_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.version)
     local pluginName = NORMAL_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title)
-    return self.newline..pluginName..LocalOptionUtils.stringDelimiter..versionString
+    return self.newLine..pluginName..self.textDelimiter..versionString
 end
 
-LocalOptionUtils.CreateAboutBody = function(self)
-    local text = self.new_paragraph
+LocalOptionUtils.CreateAboutBodyText = function(self)
+    local text = self.newParagraph
     for i, key in ipairs(self.tocKeys) do
         local keyString = string.gsub(key, "X[-]", '')
         text = text..NORMAL_FONT_COLOR_CODE..keyString..FONT_COLOR_CODE_CLOSE
-        text = text..HEADER_COLON..LocalOptionUtils.stringDelimiter..GetAddOnMetadata(AddonID, key)
-        text = text..self.new_paragraph
+        text = text..self.colon..self.textDelimiter..GetAddOnMetadata(AddonID, key)
+        text = text..self.newParagraph
     end
-    return text..self.new_paragraph
+    return text..self.newParagraph
 end
 
-LocalOptionUtils.AddQuestTypeExampleLine = function(self, text, tagName, prepend, asText, skipHeader)
-    local exampleText = skipHeader and self.newline or self.new_paragraph..EXAMPLE_TEXT..self.newline
-    local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(tagName)) or format("|A:questlog-questtypeicon-%s:16:16:0:-1|a", tagName)
+LocalOptionUtils.AppendQuestTypeExampleText = function(self, text, tagName, prepend, asText, skipHeader)
+    local exampleText = skipHeader and self.newLine or self.newParagraph..EXAMPLE_TEXT..self.newLine
+    local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(self.parensStringFormat:format(tagName)) or self.questTypeIconFormat:format(tagName)
     if (tagName == "raid") then
-        return exampleText..tagString..self.stringDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..tagString..self.textDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
     if prepend then
-        return exampleText..format(self.dashLine, tagString)..self.stringDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..format(self.dashLineStringFormat, tagString)..self.textDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
-    return exampleText..format(self.dashLine, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..self.stringDelimiter..tagString
+    return exampleText..format(self.dashLineStringFormat, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..self.textDelimiter..tagString
 end
 
-LocalOptionUtils.AddExampleLine = function(self, text, icon, iconWidth, iconHeight, textColor)
-    local exampleText = self.new_paragraph..EXAMPLE_TEXT..self.newline
+LocalOptionUtils.AppendExampleText = function(self, text, icon, iconWidth, iconHeight, textColor)
+    local exampleText = self.newParagraph..EXAMPLE_TEXT..self.newLine
     local TextColor = textColor or GRAY_FONT_COLOR
     if not icon then
-        return exampleText..self.dashIconString..self.stringDelimiter..TextColor:WrapTextInColorCode(text)
+        return exampleText..self.dashIconString..self.textDelimiter..TextColor:WrapTextInColorCode(text)
     end
     local CreateMarkupFunction = type(icon) == "number" and CreateSimpleTextureMarkup or CreateAtlasMarkup
     local width = iconWidth or 16
     local height = iconHeight or 16
-    return exampleText..CreateMarkupFunction(icon, width, height)..self.stringDelimiter..TextColor:WrapTextInColorCode(text)
+    return exampleText..CreateMarkupFunction(icon, width, height)..self.textDelimiter..TextColor:WrapTextInColorCode(text)
 end
 
-LocalOptionUtils.AppendDefaultLine = function(self, arg)
-    local textTemplate = LocalOptionUtils.new_paragraph..DEFAULT..HEADER_COLON..LocalOptionUtils.stringDelimiter.."%s."
+LocalOptionUtils.AppendDefaultValueText = function(self, arg)
+    local textTemplate = GRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon..self.textDelimiter.."%s")
     local valueString = tostring( ns.pluginInfo.defaultOptions.profile[arg] )
-    return NORMAL_FONT_COLOR:WrapTextInColorCode(textTemplate):format(valueString)
+    return textTemplate:format(valueString)
 end
-
------ Collapse Type ----------
 
 LocalOptionUtils.collapseTypeList = {
-    auto = "Auto-Collapse",  -- ..GRAY_FONT_COLOR:WrapTextInColorCode(" ("..DEFAULT..")"),
+    auto = "Auto-Collapse",
     hide = "Collapsed",
-    show = "Opened",
+    show = "Opened"..LocalOptionUtils.textDelimiter..GRAY_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.parensStringFormat:format(DEFAULT)),
 }
 
-LocalOptionUtils.GetCollapseTypeDescription = function(self)
+LocalOptionUtils.CreateCollapseTypeDescriptionText = function(self)
     local desc = "Choose how the details in this category should be displayed."
-    desc = desc..LocalOptionUtils.new_paragraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.auto..HEADER_COLON)
-    desc = desc..LocalOptionUtils.stringDelimiter.."Automatically collapse this category's details when completed."
-    desc = desc..LocalOptionUtils.new_paragraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.hide..HEADER_COLON)
-    desc = desc..LocalOptionUtils.stringDelimiter.."Always show category details collapsed."
-    desc = desc..LocalOptionUtils.new_paragraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.collapseTypeList.show..HEADER_COLON)
-    desc = desc..LocalOptionUtils.stringDelimiter.."Always show full category details."
+    desc = desc..self.newParagraph
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.auto..self.colon)
+    desc = desc..self.textDelimiter.."Automatically collapse this category's details when completed."
+    desc = desc..self.newParagraph
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.hide..self.colon)
+    desc = desc..self.textDelimiter.."Always show category details collapsed."
+    desc = desc..self.newParagraph
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.show..self.colon)
+    desc = desc..self.textDelimiter.."Always show full category details."
 
     return desc
 end
@@ -646,17 +677,17 @@ end
 --         type_icons_quests = {
 --             type = "toggle",
 --             name = "Quest Type",
---             desc = "Show or hide the quest type icon."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "dungeon"),
+--             desc = "Show or hide the quest type icon."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "dungeon"),
 --         },
 --         type_icons_factions = {
 --             type = "toggle",
 --             name = "Faction Type",
---             desc = "Show or hide the faction group icon."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "horde"),
+--             desc = "Show or hide the faction group icon."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "horde"),
 --         },
 --         type_icons_recurring = {
 --             type = "toggle",
 --             name = "Recurring Type",
---             desc = "Show or hide the quest type icon for recurring quests."..LocalOptionUtils:AddQuestTypeExampleLine("Quest Name", "monthly"),
+--             desc = "Show or hide the quest type icon for recurring quests."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "monthly"),
 --         },
 --     },
 -- },  --> type_icons_settings
