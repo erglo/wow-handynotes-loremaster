@@ -59,6 +59,7 @@ LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
 LocalOptionUtils.dashLineStringFormat = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 LocalOptionUtils.questTypeIconFormat = "|A:questlog-questtypeicon-%s:16:16:0:-1|a"
+LocalOptionUtils.suffixTextDefault = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.parensStringFormat:format(DEFAULT))
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -221,10 +222,11 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             collapse_type_sz = {
                                 type = "select",
                                 name = "Select Display Type...",
-                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
+                                values = LocalOptionUtils.SetCollapseTypeValues,
                                 arg = "collapseType_zonestory",
-                                values = LocalOptionUtils.collapseTypeList,
                                 disabled = function() return not ns.settings["showZoneStory"] end,
+                                width = 1.2,
                                 order = 3,
                             },
                             single_line_achievements_sz = {
@@ -284,10 +286,11 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             collapse_type_ql = {
                                 type = "select",
                                 name = "Select Display Type...",
-                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
+                                values = LocalOptionUtils.SetCollapseTypeValues,
                                 arg = "collapseType_questline",
-                                values = LocalOptionUtils.collapseTypeList,
                                 disabled = function() return not ns.settings["showQuestLine"] end,
+                                width = 1.2,
                                 order = 3,
                             },
                             quest_type_names = {
@@ -375,10 +378,11 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             collapse_type_cp = {
                                 type = "select",
                                 name = "Select Display Type...",
-                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
+                                values = LocalOptionUtils.SetCollapseTypeValues,
                                 arg = "collapseType_campaign",
-                                values = LocalOptionUtils.collapseTypeList,
                                 disabled = function() return not ns.settings["showCampaign"] end,
+                                width = 1.2,
                                 order = 3,
                             },
                             chapter_description = {
@@ -470,9 +474,10 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             collapse_type_szc = {
                                 type = "select",
                                 name = "Select Display Type...",
-                                desc = LocalOptionUtils:CreateCollapseTypeDescriptionText(),
+                                desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
+                                values = LocalOptionUtils.SetCollapseTypeValues,
                                 arg = "collapseType_zoneStoryOnContinent",
-                                values = LocalOptionUtils.collapseTypeList,
+                                width = 1.2,
                                 order = 2,
                             },
                             chapter_quests_szc = {
@@ -631,7 +636,7 @@ LocalOptionUtils.AppendExampleText = function(self, text, icon, iconWidth, iconH
 end
 
 LocalOptionUtils.AppendDefaultValueText = function(self, arg)
-    local textTemplate = GRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon..self.textDelimiter.."%s")
+    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon)..self.textDelimiter.."%s"
     local valueString = tostring( ns.pluginInfo.defaultOptions.profile[arg] )
     return textTemplate:format(valueString)
 end
@@ -639,10 +644,22 @@ end
 LocalOptionUtils.collapseTypeList = {
     auto = "Auto-Collapse",
     hide = "Collapsed",
-    show = "Opened"..LocalOptionUtils.textDelimiter..GRAY_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.parensStringFormat:format(DEFAULT)),
+    show = "Opened",
 }
 
-LocalOptionUtils.CreateCollapseTypeDescriptionText = function(self)
+LocalOptionUtils.SetCollapseTypeValues = function(info)
+    local self = LocalOptionUtils
+    local valueList = CopyTable(self.collapseTypeList, true)
+    local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
+    local defaultLabel = valueList[defaultKey]..self.textDelimiter..self.suffixTextDefault
+    -- Update key-value list
+    valueList[defaultKey] = defaultLabel
+
+    return valueList
+end
+
+LocalOptionUtils.CreateCollapseTypeDescriptionText = function(info)
+    local self = LocalOptionUtils
     local desc = "Choose how the details in this category should be displayed."
     desc = desc..self.newParagraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.auto..self.colon)
@@ -653,6 +670,11 @@ LocalOptionUtils.CreateCollapseTypeDescriptionText = function(self)
     desc = desc..self.newParagraph
     desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.show..self.colon)
     desc = desc..self.textDelimiter.."Always show full category details."
+    -- Append default value text
+    local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
+    local defaultLabel = self.collapseTypeList[defaultKey]
+    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon)..self.textDelimiter.."%s"
+    desc = desc..textTemplate:format(defaultLabel)
 
     return desc
 end

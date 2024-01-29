@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+-### Changed
+
+* Settings: updated the display type options for each category.
+
 ## [v0.6.0-beta+100205] - 2024-01-29
 
 ### Added
@@ -20,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Settings: modified layout for quest tooltip options.
 * Tooltip: increased scrolling speed for the questline tooltip.
 * Quest filter: updated obsolete quest IDs.
+* Updated README files.
 
 ### Fixed
 
