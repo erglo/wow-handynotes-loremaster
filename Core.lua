@@ -212,7 +212,7 @@ function LoremasterPlugin:OnInitialize()
     ns.data = self.db.global  --> All characters on the same account share this database.
     ns.charDB = self.db.char
 
-    self.options = ns.pluginInfo.options(HandyNotes)
+    self.options = ns.pluginInfo:InitializeOptions(LoremasterPlugin)
 
     -- Register options to Ace3 for a standalone config window
     LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(AddonID, self.options)  --> TODO - Check if library files are needed
@@ -2132,8 +2132,7 @@ end
 local function Hook_WorldMap_OnFrameSizeChanged()
     if ( ns.isWorldMapMaximized ~= WorldMapFrame:IsMaximized() ) then
         ns.isWorldMapMaximized = WorldMapFrame:IsMaximized()
-        wipe(nodes)
-        HandyNotes:UpdateWorldMapPlugin(AddonID)
+        LoremasterPlugin:RefreshAll()
     end
 end
 
@@ -2664,6 +2663,16 @@ function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
         --     --> TODO - Add context menu
         -- end
     end
+end
+
+function LoremasterPlugin:Refresh()
+    -- self:SendMessage('HandyNotes_NotifyUpdate', AddonID)
+    HandyNotes:UpdateWorldMapPlugin(AddonID)
+end
+
+function LoremasterPlugin:RefreshAll()
+    wipe(nodes)
+    self:Refresh()
 end
 
 ----- Temporary solutions - Can be removed later

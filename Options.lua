@@ -64,17 +64,31 @@ ns.pluginInfo.defaultOptions = {
         ["continentIconAlpha"] = 0.75,
 	},
 }
-ns.pluginInfo.options = function(HandyNotes)
+ns.pluginInfo.needWorldMapRefresh = {
+    "showContinentZoneIcons",
+    "hideCompletedContinentZoneIcons",
+}
+ns.pluginInfo.needWorldMapRefreshAll = {
+    "showContinentOptionalZoneStories",
+    "scrollStep",
+    "continentIconScale",
+    "continentIconAlpha"
+}
+ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
     return {
         type = 'group',
-        name = ns.pluginInfo.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
-        desc = ns.pluginInfo.description,
+        name = self.title:gsub("HandyNotes: ", ''),  --> "Loremaster"
+        desc = self.description,
         childGroups = "tab",
         get = function(info) return ns.settings[info.arg] end,
         set = function(info, value)
             ns.settings[info.arg] = value
             if ( strsplit("_", info.arg) == "collapseType") then
                 LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
+            elseif tContains(self.needWorldMapRefresh, info.arg) then
+                LoremasterPlugin:Refresh()
+            elseif tContains(self.needWorldMapRefreshAll, info.arg) then
+                LoremasterPlugin:RefreshAll()
             else
                 LocalOptionUtils:printOption(info.option.name, value)
             end
@@ -93,7 +107,7 @@ ns.pluginInfo.options = function(HandyNotes)
                     },
                     description = {
                         type = "description",
-                        name = LocalOptionUtils.newline..ns.pluginInfo.description,
+                        name = LocalOptionUtils.newline..self.description,
                         order = 1,
                     },
                     body = {
@@ -297,16 +311,10 @@ ns.pluginInfo.options = function(HandyNotes)
                             tooltip_slider_speed_ql = {
                                 type = "range",
                                 name = "Tooltip Scroll Speed",
-                                desc = function(info)
-                                    local textTemplate = "Set the step size (speed) for the scrollbar."..LocalOptionUtils.new_paragraph..DEFAULT..HEADER_COLON..LocalOptionUtils.stringDelimiter.."%s."
-                                    local valueString = tostring( ns.pluginInfo.defaultOptions.profile[info.arg] )
-                                    return textTemplate:format(NORMAL_FONT_COLOR:WrapTextInColorCode(valueString))
-                                end,
-                                min = 10, max = 150, step = 10,
-                                set = function(info, value)
-                                    ns.settings[info.arg] = value
-                                    -- ns:cprint(info.option.name, '-', NORMAL_FONT_COLOR:WrapTextInColorCode(tostring(value)))
-                                end,
+                                desc = "Set the step size (speed) for the scrollbar."..LocalOptionUtils:AppendDefaultLine("scrollStep"),
+                                min = 10,
+                                max = 150,
+                                step = 10,
                                 arg = "scrollStep",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 order = 30,
@@ -384,11 +392,6 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Show Zone Icon",
                         desc = "Shows the check mark icons on a continent for zones with at least one achievement.",
-                        set = function(info, value)
-                            ns.settings[info.arg] = value
-                            HandyNotes:UpdateWorldMapPlugin(AddonID)
-                            LocalOptionUtils:printOption(info.option.name, value)
-                        end,
                         arg = "showContinentZoneIcons",
                         width ="double",
                         order = 1,
@@ -397,11 +400,6 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Hide Completed Zone Icon",
                         desc = "Hide the check mark icons on a continent from zones with a completed achievement.",
-                        set = function(info, value)
-                            ns.settings[info.arg] = value
-                            HandyNotes:UpdateWorldMapPlugin(AddonID)
-                            LocalOptionUtils:printOption(info.option.name, value)
-                        end,
                         arg = "hideCompletedContinentZoneIcons",
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width ="double",
@@ -411,11 +409,6 @@ ns.pluginInfo.options = function(HandyNotes)
                         type = "toggle",
                         name = "Include Optional Zone Stories",
                         desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
-                        set = function(info, value)
-                            ns.settings[info.arg] = value
-                            wipe(ns.nodes)
-                            HandyNotes:UpdateWorldMapPlugin(AddonID)
-                        end,
                         arg = "showContinentOptionalZoneStories",
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         width = "double",
@@ -476,31 +469,21 @@ ns.pluginInfo.options = function(HandyNotes)
                             icon_scale_szc = {
                                 type = "range",
                                 name = "World Map Icon Scale",
-                                desc = "The size of the continent icons on the World Map",
+                                desc = "Set the size of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultLine("continentIconScale"),
                                 min = 0.3,
                                 max = 3,
                                 step = 0.1,
-                                set = function(info, value)
-                                    ns.settings[info.arg] = value
-                                    wipe(ns.nodes)
-                                    HandyNotes:UpdateWorldMapPlugin(AddonID)
-                                end,
                                 arg = "continentIconScale",
                                 order = 23,
                             },
                             icon_alpha_szc = {
                                 type = "range",
                                 name = "World Map Icon Alpha",
-                                desc = "The overall alpha transparency of the icons on the World Map",
+                                desc = "Set the transparency of the continent icons on the World Map."..LocalOptionUtils:AppendDefaultLine("continentIconAlpha"),
                                 min = 0,
                                 max = 1,
                                 step = 0.01,
                                 isPercent = true,
-                                set = function(info, value)
-                                    ns.settings[info.arg] = value
-                                    wipe(ns.nodes)
-                                    HandyNotes:UpdateWorldMapPlugin(AddonID)
-                                end,
                                 arg = "continentIconAlpha",
                                 order = 24,
                             },
@@ -528,7 +511,7 @@ ns.pluginInfo.options = function(HandyNotes)
                             welcome_msg = {
                                 type = "toggle",
                                 name = "Show Plugin-is-Ready Message",
-                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(ns.pluginInfo.title)),
+                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(self.title)),
                                 arg = "showWelcomeMessage",
                                 width ="double",
                                 order = 1,
@@ -612,6 +595,12 @@ LocalOptionUtils.AddExampleLine = function(self, text, icon, iconWidth, iconHeig
     local width = iconWidth or 16
     local height = iconHeight or 16
     return exampleText..CreateMarkupFunction(icon, width, height)..self.stringDelimiter..TextColor:WrapTextInColorCode(text)
+end
+
+LocalOptionUtils.AppendDefaultLine = function(self, arg)
+    local textTemplate = LocalOptionUtils.new_paragraph..DEFAULT..HEADER_COLON..LocalOptionUtils.stringDelimiter.."%s."
+    local valueString = tostring( ns.pluginInfo.defaultOptions.profile[arg] )
+    return NORMAL_FONT_COLOR:WrapTextInColorCode(textTemplate):format(valueString)
 end
 
 ----- Collapse Type ----------
