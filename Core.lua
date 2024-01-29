@@ -675,6 +675,7 @@ QuestFilterUtils.obsoleteQuests = {
     62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
     72943,  -- Dragonflight, United Again
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
+    79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
 }
 
 -- 25328 (quest giver is inside a cave @ 27003601)                              --> TODO: Add hint to cave entrance ???
