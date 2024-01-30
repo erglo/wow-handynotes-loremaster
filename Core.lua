@@ -704,6 +704,7 @@ local raceQuests = {
     ["28431"] = { 8, 10, 27 },  -- Eastern Kingdoms, Burning Steppes, "A Perfect Costume" (Horde)
     ["31139"] = { 32 },  -- Eastern Kingdoms, Northshire, "Beating Them Back!"
     ["50694"] = { 4, 7, 22 },  -- Battle for Azeroth, Stormsong Valley, "A Bloody Mess" (Alliance)
+    ["77201"] = { 4 },  -- Dragonflight, Emerald Dream, "A Personal Offering" (Alliance)
 }
 
 -- Quests which are not bound to a specific player race are considered playable.

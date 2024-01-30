@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
--### Changed
+### Changed
 
 * Settings: moved "Single Line Achievements" option for zone stories to the "Select Display Type..." dropdown menu.
 * Settings: updated the display type options for each category.
