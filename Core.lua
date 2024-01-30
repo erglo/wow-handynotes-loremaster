@@ -388,8 +388,8 @@ local function GetCollapseTypeModifier(isComplete, varName)
     local types = {
         auto = (not isComplete) or IsShiftKeyDown(),
         hide = IsShiftKeyDown(),
-        -- hide = false,
         show = true,
+        singleLine = false,
     }
     return types[ns.settings[varName]]
 end
@@ -532,8 +532,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
     achievementName = tContains(ns.lore.OptionalAchievements, storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
     LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
-    if (not pin.isOnContinent and ns.settings.showSingleLineAchievements) then return true end
-    if (pin.isOnContinent and ns.settings.showContinentSingleLineAchievements) then return true end
+    if (not pin.isOnContinent and ns.settings.collapseType_zoneStory == "singleLine") then return true end
+    if (pin.isOnContinent and ns.settings.collapseType_zoneStoryContinent == "singleLine") then return true end
 
     if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
         if not StringIsEmpty(achievementInfo.earnedBy) then
@@ -545,8 +545,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
 
     -- Chapter list
-    if (not pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zonestory")) or
-       (pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zoneStoryOnContinent")) then
+    if (not pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zoneStory")) or
+       (pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zoneStoryContinent")) then
         local criteriaName
         for i, criteriaInfo in ipairs(achievementInfo.criteriaList) do
             criteriaName = criteriaInfo.criteriaString
@@ -1980,7 +1980,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            if not ns.settings.showSingleLineAchievements then
+            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
                 LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
             end
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
@@ -2099,7 +2099,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            if not ns.settings.showSingleLineAchievements then
+            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
                 LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
             end
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)

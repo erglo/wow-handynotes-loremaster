@@ -69,12 +69,10 @@ ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale
 ns.pluginInfo.defaultOptions = {
 	profile = {
         ["*"] = true,
-        ["collapseType_zonestory"] = "show",
+        ["collapseType_zoneStory"] = "show",
         ["collapseType_questline"] = "show",
         ["collapseType_campaign"] = "show",
-        ["collapseType_zoneStoryOnContinent"] = "auto",
-        ["showSingleLineAchievements"] = false,
-        ["showContinentSingleLineAchievements"] = false,
+        ["collapseType_zoneStoryContinent"] = "auto",
         ["hideCompletedContinentZoneIcons"] = false,
         ["showCampaignChapterDescription"] = false,
         ["showQuestTypeAsText"] = false,
@@ -103,7 +101,8 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
         set = function(info, value)
             ns.settings[info.arg] = value
             if ( strsplit("_", info.arg) == "collapseType" ) then
-                LocalOptionUtils:printOption(LocalOptionUtils.collapseTypeList[value], true)
+                local collapseTypeValue = LocalOptionUtils.collapseTypeValues[value] or LocalOptionUtils.collapseTypeExtraValues[value]
+                LocalOptionUtils:printOption(collapseTypeValue, true)
             elseif tContains(self.needWorldMapRefresh, info.arg) then
                 LocalOptionUtils:printOption(info.option.name, value)
                 LoremasterPlugin:Refresh()
@@ -224,28 +223,19 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
                                 values = LocalOptionUtils.SetCollapseTypeValues,
-                                arg = "collapseType_zonestory",
+                                arg = "collapseType_zoneStory",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = 1.2,
                                 order = 3,
-                            },
-                            single_line_achievements_sz = {
-                                type = "toggle",
-                                name = "Single Line Achievements",
-                                desc = "Displays each story achievement in a single line instead of multiple (auto-collapsible) lines.",
-                                arg = "showSingleLineAchievements",
-                                disabled = function() return not ns.settings["showZoneStory"] end,
-                                width = "double",
-                                order = 4,
                             },
                             show_chapter_quests_sz = {
                                 type = "toggle",
                                 name = "Include Chapter Quests",
                                 desc = "Some chapters are directly linked to a quest. If activated, each linked quest name will be shown below the chapter name."..LocalOptionUtils:AppendExampleText("QuestName", "SmallQuestBang"),
                                 arg = "showStoryChapterQuests",
-                                disabled = function() return ns.settings["showSingleLineAchievements"] or not ns.settings["showZoneStory"] end,
+                                disabled = function() return (ns.settings["collapseType_zoneStory"] == "singleLine") or not ns.settings["showZoneStory"] end,
                                 width = "double",
-                                order = 5,
+                                order = 4,
                             },
                             optional_stories_sz = {
                                 type = "toggle",
@@ -254,7 +244,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 arg = "showOptionalZoneStories",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
-                                order = 6,
+                                order = 5,
                             },
                         },
                     },
@@ -463,31 +453,23 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Select the tooltip details which should be shown when hovering an icon in continent view on the World Map."..LocalOptionUtils.newParagraph,
                                 order = 0,
                             },
-                            single_line_achievements_szc = {
-                                type = "toggle",
-                                name = "Single Line Achievements",
-                                desc = "Displays story achievements in a single line instead of multiple (auto-collapsible) lines.",
-                                arg = "showContinentSingleLineAchievements",
-                                width = 1.2,
-                                order = 1,
-                            },
                             collapse_type_szc = {
                                 type = "select",
                                 name = "Select Display Type...",
                                 desc = LocalOptionUtils.CreateCollapseTypeDescriptionText,
                                 values = LocalOptionUtils.SetCollapseTypeValues,
-                                arg = "collapseType_zoneStoryOnContinent",
+                                arg = "collapseType_zoneStoryContinent",
                                 width = 1.2,
-                                order = 2,
+                                order = 1,
                             },
                             chapter_quests_szc = {
                                 type = "toggle",
                                 name = "Include Chapter Quests",
                                 desc = "Some chapters are directly linked to a quest. If activated, each linked quest name will be shown below the chapter name."..LocalOptionUtils:AppendExampleText("QuestName", "SmallQuestBang"),
                                 arg = "showContinentStoryChapterQuests",
-                                disabled = function() return ns.settings["showContinentSingleLineAchievements"] end,
-                                width = "double",
-                                order = 3,
+                                disabled = function() return ns.settings["collapseType_zoneStoryContinent"] == "singleLine" end,
+                                width = "full",
+                                order = 2,
                             },
                         },
                     },  --> continent_tooltip_group
@@ -641,19 +623,26 @@ LocalOptionUtils.AppendDefaultValueText = function(self, arg)
     return textTemplate:format(valueString)
 end
 
-LocalOptionUtils.collapseTypeList = {
+LocalOptionUtils.collapseTypeValues = {
     auto = "Auto-Collapse",
     hide = "Collapsed",
     show = "Opened",
 }
 
+LocalOptionUtils.collapseTypeExtraValues = {
+    singleLine = "Single Line",  -- only for zone story achievements
+}
+
 LocalOptionUtils.SetCollapseTypeValues = function(info)
     local self = LocalOptionUtils
-    local valueList = CopyTable(self.collapseTypeList, true)
+    local valueList = CopyTable(self.collapseTypeValues, true)
+    if tContains({"collapseType_zoneStory", "collapseType_zoneStoryContinent"}, info.arg) then
+        MergeTable(valueList, self.collapseTypeExtraValues)
+    end
     local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
-    local defaultLabel = valueList[defaultKey]..self.textDelimiter..self.suffixTextDefault
-    -- Update key-value list
-    valueList[defaultKey] = defaultLabel
+    local defaultLabel = valueList[defaultKey]
+    -- Update/replaces default label
+    valueList[defaultKey] = defaultLabel..self.textDelimiter..self.suffixTextDefault
 
     return valueList
 end
@@ -662,17 +651,22 @@ LocalOptionUtils.CreateCollapseTypeDescriptionText = function(info)
     local self = LocalOptionUtils
     local desc = "Choose how the details in this category should be displayed."
     desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.auto..self.colon)
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.auto..self.colon)
     desc = desc..self.textDelimiter.."Automatically collapse this category's details when completed."
     desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.hide..self.colon)
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.hide..self.colon)
     desc = desc..self.textDelimiter.."Always show category details collapsed."
     desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeList.show..self.colon)
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.show..self.colon)
     desc = desc..self.textDelimiter.."Always show full category details."
+    if tContains({"collapseType_zoneStory", "collapseType_zoneStoryContinent"}, info.arg) then
+        desc = desc..self.newParagraph
+        desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeExtraValues.singleLine..self.colon)
+        desc = desc..self.textDelimiter.."Displays each story achievement in a single line instead of multiple lines."
+    end
     -- Append default value text
     local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
-    local defaultLabel = self.collapseTypeList[defaultKey]
+    local defaultLabel = self.collapseTypeValues[defaultKey] or self.collapseTypeExtraValues[defaultKey]
     local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon)..self.textDelimiter.."%s"
     desc = desc..textTemplate:format(defaultLabel)
 
