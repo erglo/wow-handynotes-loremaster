@@ -49,7 +49,7 @@ if not HandyNotes then
 end
 
 local LibQTip = LibStub('LibQTip-1.0')
-local LibQTipUtil = ns.utils.LibQTipUtil
+local LibQTipUtil = ns.utils.libqtip
 local PrimaryTooltip, ZoneStoryTooltip, QuestLineTooltip, CampaignTooltip
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
