@@ -43,7 +43,10 @@ local utils = ns.utils
 
 local loadSilent = true
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", loadSilent)
-if not HandyNotes then return end
+if not HandyNotes then
+    error("Embedded library/addon required: HandyNotes", 0)
+    return
+end
 
 local LibQTip = LibStub('LibQTip-1.0')
 local LibQTipUtil = ns.utils.LibQTipUtil
@@ -2453,6 +2456,7 @@ local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
     local scale = ns.settings.continentIconScale * ( iconSizeScale + mapSizeScale)
 	local alpha = ns.settings.continentIconAlpha or 1.0
     local coord = HandyNotes:getCoord(x, y)
+    -- local coord = ns.utils.handynotes:GetCoordFromXY(x, y)
 
     -- print(i, mapID, mapChildInfo.name, "-->", coord)
     nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, alpha=alpha, achievementInfo=achievementInfo}  --> zoneData
@@ -2553,7 +2557,7 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
         local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
         local mapInfo = LocalMapUtils:GetMapInfo(mapID)
-        debug:print(GRAY("GetNodes2"), "> mapID:", uiMapID, mapID, "mapType:", mapInfo.mapType)
+        debug:print(GRAY("GetNodes2"), "> mapID:", uiMapID, mapID, "mapType:", mapInfo.mapType, "parent:", mapInfo.parentMapID)
 
         ns.activeZoneMapInfo = mapInfo
 
@@ -2667,7 +2671,7 @@ function LoremasterPlugin:OnClick(button, isDown, mapID, coord)
 end
 
 function LoremasterPlugin:Refresh()
-    -- self:SendMessage('HandyNotes_NotifyUpdate', AddonID)
+    -- self:SendMessage('HandyNotes_NotifyUpdate', AddonID)  -- this updates World Map and Minimap
     HandyNotes:UpdateWorldMapPlugin(AddonID)
 end
 
@@ -2696,6 +2700,7 @@ function Temp_ConvertActiveQuestlineQuests()
 end
 
 --@do-not-package@
+
 --------------------------------------------------------------------------------
 --[[ Tests
 --------------------------------------------------------------------------------
