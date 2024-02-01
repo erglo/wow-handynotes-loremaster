@@ -790,6 +790,7 @@ local correctFactionGroupQuests = {
     -- ["26149"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Abyssal Depths, "Prisoners"
     ["27090"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Western Plaguelands, "Andorhal, Once and For All"
     -- ["25561"] = QuestFactionGroupID.Alliance,  -- Kalimdor, Thousand Needles, "Circle the Wagons... er, Boats"
+    ["70050"] = QuestFactionGroupID.Alliance,  -- Eastern Kingdoms, Stormwind City, (Dragonflight), "Chasing Storms"
 }
 
 -- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
