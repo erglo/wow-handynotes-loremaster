@@ -26,7 +26,8 @@
 --------------------------------------------------------------------------------
 
 local AddonID, ns = ...
-local utils = ns.utils
+
+local LocalAchievementUtil = ns.utils.achieve
 
 local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 --> TODO: Include debugging tools
 ns.lore = LocalLoreUtil
@@ -102,7 +103,7 @@ LocalLoreUtil.AchievementsLocationMap = {
 --> REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>
 --
 local function GetWrappedCriteriaInfoByAchievementID(achievementID, criteriaType)
-    local achievementInfo = ns.utils.achieve.GetWrappedAchievementInfo(achievementID)
+    local achievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(achievementID)
     -- Default return values for GetAchievementInfo(): 
 	-- 1:achievementID, 2:name, 3:points, 4:completed, 5:month, 6:day, 7:year,
 	-- 8:description, 9:flags, 10:icon, 11:rewardText, 12:isGuild,
@@ -140,7 +141,7 @@ LocalLoreUtil.storyQuests = {}
 ---@param achievementID number|nil
 --
 function LocalLoreUtil:GetStoryQuests(achievementID)
-    local criteriaInfoList = achievementID and ns.utils.achieve.GetAchievementCriteriaInfoList(achievementID) -- or self.criteriaInfoList
+    local criteriaInfoList = achievementID and LocalAchievementUtil.GetAchievementCriteriaInfoList(achievementID) -- or self.criteriaInfoList
     if criteriaInfoList then
         for i, criteriaInfo in ipairs(criteriaInfoList) do
             if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
@@ -157,7 +158,7 @@ end
 
 function LocalLoreUtil:PrepareData()
     -- "The Loremaster" main achievement 
-    self.criteriaInfoList = ns.utils.achieve.GetAchievementCriteriaInfoList(loremasterAchievementID)
+    self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(loremasterAchievementID)
 
     -- Add Dragonflight's "Loremaster of the Dragon Isles"
     local dfCriteriaInfo = GetWrappedCriteriaInfoByAchievementID(16585)
@@ -170,7 +171,7 @@ end
 
 ----- Tests ----------
 
-TestList = ns.utils.achieve.GetAchievementCriteriaInfoList
+TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 -- TestList(7520)
 
 Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievementID

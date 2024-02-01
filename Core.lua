@@ -39,7 +39,6 @@
 --------------------------------------------------------------------------------
 
 local AddonID, ns = ...
-local utils = ns.utils
 
 local loadSilent = true
 local HandyNotes = LibStub("AceAddon-3.0"):GetAddon("HandyNotes", loadSilent)
@@ -49,10 +48,12 @@ if not HandyNotes then
 end
 
 local LibQTip = LibStub('LibQTip-1.0')
-local LibQTipUtil = ns.utils.libqtip
 local PrimaryTooltip, ZoneStoryTooltip, QuestLineTooltip, CampaignTooltip
 
+local LibQTipUtil = ns.utils.libqtip
+local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
+
 LocalMapUtils.VASHJIR_MAP_ID = 203
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
@@ -474,12 +475,12 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
     if not achievementID then return end
 
     if not self.achievements[achievementID] then
-        local achievementInfo = utils.achieve.GetWrappedAchievementInfo(achievementID)
-        achievementInfo.numCriteria = utils.achieve.GetWrappedAchievementNumCriteria(achievementID)
+        local achievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(achievementID)
+        achievementInfo.numCriteria = LocalAchievementUtil.GetWrappedAchievementNumCriteria(achievementID)
         achievementInfo.numCompleted = 0
         achievementInfo.criteriaList = {}
         for criteriaIndex=1, achievementInfo.numCriteria do
-            local criteriaInfo = utils.achieve.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
+            local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
@@ -2319,7 +2320,7 @@ function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
-            local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
+            local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
             local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
             ns:cprint(ORANGE(L.CONGRATULATIONS), format("You have completed %s in %s.", achievementLink, mapInfo.name))
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
@@ -2336,7 +2337,7 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
-            local achievementLink = utils.achieve.GetAchievementLinkWithIcon(achievementInfo)
+            local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
             local criteriaAmount = PARENS_TEMPLATE:format(GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
