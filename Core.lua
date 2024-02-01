@@ -52,6 +52,9 @@ local LibQTip = LibStub('LibQTip-1.0')
 local LibQTipUtil = ns.utils.libqtip
 local PrimaryTooltip, ZoneStoryTooltip, QuestLineTooltip, CampaignTooltip
 
+local LocalMapUtils = ns.utils.worldmap
+LocalMapUtils.VASHJIR_MAP_ID = 203
+
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
@@ -168,7 +171,7 @@ local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:"
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
 local QuestFilterUtils =    { debug = false, debug_prefix = "QFilter:" }
-local LocalMapUtils =       { debug = false, debug_prefix = "MAP:" }
+-- MergeTable(LocalMapUtils,   { debug = false, debug_prefix = "MAP:" })
 -- local TooltipUtils =        { debug = true, debug_prefix = "TTU:" }
 local LocalUtils = {}
 
@@ -1552,60 +1555,6 @@ LocalUtils.CriteriaType = {
     Quest = 27,
 }
 
------ Map Utilities ----------
-
-LocalMapUtils.mapInfoCache = {}  --> { [mapID] = mapInfo, ...}
-LocalMapUtils.mapID = {
-    VASHJ_IR = 203,
-}
-
-function LocalMapUtils:GetMapInfo(mapID)
-    if not self.mapInfoCache[mapID] then
-        self.mapInfoCache[mapID] = C_Map.GetMapInfo(mapID)
-        debug:print(self, "Added mapID", mapID, "to map cache")
-    end
-    return self.mapInfoCache[mapID]
-end
-
-function LocalMapUtils:GetBestMapForPlayer()
-    -- Note: "Only works for the player and party members."
-    return C_Map.GetBestMapForUnit("player")
-end
-
-function LocalMapUtils:GetPlayerPosition()
-    -- Note: "Only works for the player and party members."
-    return C_Map.GetPlayerMapPosition(self:GetBestMapForPlayer(), "player")
-end
-
--- Set a user waypoint on given map at given position.
---
--- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/MapDocumentation.lua></br>
--- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WaypointLocationDataProvider.lua></br>
--- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/UiMapPoint.lua>
--- 
-function LocalMapUtils:SetUserWaypointXY(mapID, posX, posY)
-    if C_Map.CanSetUserWaypointOnMap(mapID) then
-        local uiMapPoint = UiMapPoint.CreateFromCoordinates(mapID, posX, posY)
-        C_Map.SetUserWaypoint(uiMapPoint)
-        debug:print(self, "UserWayPoint has been set.")
-        return uiMapPoint
-    else
-        UIErrorsFrame:AddMessage(MAP_PIN_INVALID_MAP, RED_FONT_COLOR:GetRGBA())
-        ns:cprint(RED(MAP_PIN_INVALID_MAP))
-    end
-end
--- local position = C_Map.GetUserWaypointPositionForMap(mapID)
--- local uiMapPoint = C_Map.GetUserWaypoint()
--- local uiMapPoint = C_Map.GetUserWaypointFromHyperlink(hyperlink)
--- local hyperlink = C_Map.GetUserWaypointHyperlink()
--- C_Map.HasUserWaypoint()
-
--- local mapInfo = C_Map.GetMapInfoAtPosition(uiMapID, x, y, ignoreZoneMapPositionData)
-
-function LocalMapUtils:ClearUserWaypoint()
-    C_Map.ClearUserWaypoint()
-end
-
 ----- Campaign Handler ----------
 --
 -- REF.: <https://www.townlong-yak.com/framexml/live/ObjectAPI/CampaignChapter.lua>
@@ -2128,8 +2077,9 @@ local function Hook_QuestPin_OnClick(pin, mouseButton)
     if IsAltKeyDown() then
         debug:print(HookUtils, "Alt-Clicked:", pin.questID, pin.pinTemplate, mouseButton)    --> works, but only with "LeftButton" (!)
 
-        LocalMapUtils:SetUserWaypointXY(pin.mapID, pin:GetPosition())
-        C_SuperTrack.SetSuperTrackedUserWaypoint(true)  -- select it as active
+        local posX, posY = pin:GetPosition()
+        local chatNotifyOnError = true
+        LocalMapUtils:SetUserWaypointXY(pin.mapID, posX, posY, nil, chatNotifyOnError)
     end
 end
 
@@ -2571,7 +2521,7 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
             ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
-        if (isWorldMapShown and (mapInfo.mapType == Enum.UIMapType.Continent or mapID == LocalMapUtils.mapID.VASHJ_IR)) then
+        if (isWorldMapShown and (mapInfo.mapType == Enum.UIMapType.Continent or mapID == LocalMapUtils.VASHJIR_MAP_ID)) then
         -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")

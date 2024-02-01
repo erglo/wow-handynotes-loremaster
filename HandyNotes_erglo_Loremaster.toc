@@ -27,6 +27,7 @@
 embeds.xml
 utils/achievements.lua
 utils/libqtip.lua
+utils/worldmap.lua
 
 # Load main files
 Data.lua
