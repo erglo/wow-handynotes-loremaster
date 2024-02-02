@@ -6,12 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+* Quest Type Tags: added tag icon for profession quests.
+
 ### Changed
 
+* Quest Filter: updated quest IDs for races and switched faction groups.
 * Settings: moved "Single Line Achievements" option for zone stories to the "Select Display Type..." dropdown menu.
 * Settings: updated the display type options for each category.
 
-## [v0.6.0-beta+100205] - 2024-01-29
+## [0.6.0-beta+100205] - 2024-01-29
 
 ### Added
 
@@ -26,19 +31,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Settings: modified layout for continent icon options.
 * Settings: modified layout for quest tooltip options.
 * Tooltip: increased scrolling speed for the questline tooltip.
-* Quest filter: updated obsolete quest IDs.
+* Quest Filter: updated obsolete quest IDs.
 * Updated README files.
 
 ### Fixed
 
-* Active quests: fixed unnecessary blank line which appeared under the "Ready for turn-in" message.
-* Quest type tags: fixed multiple tag icons for turn-in quests appearing in questline quest lists.
+* Active Quests: fixed unnecessary blank line which appeared under the "Ready for turn-in" message.
+* Quest Type Tags: fixed multiple tag icons for turn-in quests appearing in questline quest lists.
 
-## [v0.5.0-beta+100205] - 2024-01-20
+## [0.5.0-beta+100205] - 2024-01-20
 
 ### Added
 
-* Quest type tags: added faction group tags.
+* Quest Type Tags: added faction group tags.
 * Campaign: added optional `campaign description`. Some campaigns provide further information about themselves.
 * Questlines: added highlight and counter for displaying the number of active (ongoing) quests.
 * New `tooltip handler` [LibQTip](https://www.curseforge.com/wow/addons/libqtip-1-0) for better organizing and displaying the tooltip content.
@@ -46,9 +51,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Updated TOC file version to `WoW 10.2.5`.
-* Quest type tags: combined account-wide quest types with the player's faction group, when they are limited to that, as can be seen in the game's quest log tooltip.
-* Quest type tags: quest types shown by Blizzard in the active quest tooltip will be ignored since they're already shown, eg. raids or dungeons.
-* Quest type tags: active (ongoing) quests now show a completion icon suitable for their own type.
+* Quest Type Tags: combined account-wide quest types with the player's faction group, when they are limited to that, as can be seen in the game's quest log tooltip.
+* Quest Type Tags: quest types shown by Blizzard in the active quest tooltip will be ignored since they're already shown, eg. raids or dungeons.
+* Quest Type Tags: active (ongoing) quests now show a completion icon suitable for their own type.
 * Tooltip: content categories can now be separated into `multiple tooltips`.
 * Tooltip: `tooltips are now scrollable` and clamped to the screen.
 * Tooltip: the plugin name in active quests is now only showing when at least the "Ready for turn-in" message is activated. Without any tooltip content there's no need for the plugin name to be shown. In short: w/o content from this plugin, the tooltip mimics Blizzard's default look and feel.
@@ -57,13 +62,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * Questlines: story quests now are now recognized properly, as long as zone story chapters provide additional information about them.
 
-## [v0.4.2-alpha+100200] - 2024-01-05
+## [0.4.2-alpha+100200] - 2024-01-05
 
 ### Fixed
 
 * Not all external library files have been included correctly in the previous release.
 
-## [v0.4.0-alpha+100200] - 2024-01-04
+## [0.4.0-alpha+100200] - 2024-01-04
 
 ### Added
 
@@ -134,3 +139,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * World Map hook for storyline quest pins.
 * New slash commands: `/lm`, `/loremaster`
 * Basic file structure for a HandyNotes plugin using Ace3.
+
+[Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development
+[0.6.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.5.0-beta...v0.6.0-beta
+[0.5.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.4.2-alpha...v0.5.0-beta
+[0.4.2-alpha+100200]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.4.0-alpha...v0.4.2-alpha
+[0.4.0-alpha+100200]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.3.0-alpha...v0.4.0-alpha
+[0.3.0-alpha+100107]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.2.0-alpha...v0.3.0-alpha
+[0.2.0-alpha+100107]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.1.1-alpha...v0.2.0-alpha
+[0.1.1-alpha+100107]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.1.0-alpha...v0.1.1-alpha
+[0.1.0-alpha+100105]: https://github.com/erglo/wow-handynotes-loremaster/releases/tag/v0.1.0-alpha
