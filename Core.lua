@@ -680,6 +680,7 @@ QuestFilterUtils.obsoleteQuests = {
     53031,  -- Battle for Azeroth, Hall of Communion, "The Speaker's Imperative"
     56065,  -- BfA, Nazjatar, (???)
     62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
+    -- 70846,  -- (???) C_TaskQuest.GetQuestInfoByQuestID(70846)
     72943,  -- Dragonflight, United Again
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
@@ -847,6 +848,7 @@ LocalUtils.QuestTag.Artifact = 107
 LocalUtils.QuestTag.BurningLegion = 145
 LocalUtils.QuestTag.Class = 21
 LocalUtils.QuestTag.Escort = 84
+LocalUtils.QuestTag.Profession = 267
 LocalUtils.QuestTag.WorldQuest = 109
 
 -- Expand the default quest tag atlas map
@@ -854,11 +856,12 @@ LocalUtils.QuestTag.WorldQuest = 109
 --
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
 --
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Artifact] = "ArtifactQuest"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegion] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Class] = "questlog-questtypeicon-class"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Escort] = "nameplates-InterruptShield"
-QUEST_TAG_ATLAS[LocalUtils.QuestTag.Artifact] = "ArtifactQuest"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Profession] = "Profession"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.WorldQuest] = "worldquest-tracker-questmarker"
-QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegion] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
