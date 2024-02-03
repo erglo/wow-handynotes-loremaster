@@ -1805,6 +1805,10 @@ end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
     local achievementID, achievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
+    local showInCompletedZones = not (ns.settings.hideZoneStoryInCompletedZones and LocalAchievementUtil.IsAchievementCompleted(achievementID))
+    if not showInCompletedZones then
+        return false
+    end
     if ( not ns.settings.showOptionalZoneStories and tContains(ns.lore.OptionalAchievements, achievementID) )  then
         return false
     end

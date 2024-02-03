@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Settings: added option to hide the zone story details/tooltip in zones where the achievement already has been completed.
+* Zone Story: added manually optional zone story for `Nazjatar` (not part of any Loremaster achievement).
 * Quest Type Tags: added tag icon for profession quests.
 
 ### Changed

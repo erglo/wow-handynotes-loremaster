@@ -80,6 +80,7 @@ ns.pluginInfo.defaultOptions = {
         ["scrollStep"] = 30,
         ["continentIconScale"] = 1.5,
         ["continentIconAlpha"] = 0.75,
+        ["hideZoneStoryInCompletedZones"] = false,
 	},
 }
 ns.pluginInfo.needWorldMapRefresh = {
@@ -245,6 +246,15 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
                                 order = 5,
+                            },
+                            only_in_incomplete_zones = {
+                                type = "toggle",
+                                name = "Hide in Completed Zones",
+                                desc = "Show zone story details only in zones with an incomplete achievement.",
+                                arg ="hideZoneStoryInCompletedZones",
+                                disabled = function() return not ns.settings["showZoneStory"] end,
+                                width = "double",
+                                order = 6,
                             },
                         },
                     },
