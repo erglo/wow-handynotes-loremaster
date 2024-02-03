@@ -91,6 +91,9 @@ LocalLoreUtil.AchievementsLocationMap = {
     },
     -- [1543] = nil,  --> "The Maw"
     -- [1970] = nil,  --> "Zereth Mortis"
+    [1355] = { --> Nazjatar
+        13709, -- (extra storyline) "Unfathomable" (Horde)
+    },
 }
 
 --------------------------------------------------------------------------------
