@@ -1778,6 +1778,11 @@ local function ShowAllTooltips()
     PrimaryTooltip:Show()
 
     if ZoneStoryTooltip then
+        local contentTooltip = QuestLineTooltip or PrimaryTooltip
+        if ns.isWorldMapMaximized and (ZoneStoryTooltip:GetRight() * uiScale > contentTooltip:GetLeft() * uiScale) then
+            ZoneStoryTooltip:ClearAllPoints()
+            ZoneStoryTooltip:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", 0, -38)
+        end
         ZoneStoryTooltip:Show()
     end
 
