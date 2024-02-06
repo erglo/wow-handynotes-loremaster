@@ -80,6 +80,7 @@ local GREEN = function(txt) return FACTION_GREEN_COLOR:WrapTextInColorCode(txt) 
 local RED = function(txt) return RED_FONT_COLOR:WrapTextInColorCode(txt) end
 local ORANGE = function(txt) return ORANGE_FONT_COLOR:WrapTextInColorCode(txt) end
 local BLUE = function(txt) return BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(txt) end  -- PURE_BLUE_COLOR, LIGHTBLUE_FONT_COLOR 
+local HIGHLIGHT = function(txt) return HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(txt) end
 
 local function StringIsEmpty(str)
 	return str == nil or strlen(str) == 0
@@ -114,6 +115,8 @@ L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff00000
 L.ZONE_NAME_FORMAT = "|T137176:16:16:0:-1|t %s"  -- 136366
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckmark:0:0:1:0|a"
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE = "%s"
+L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
+L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
 
 L.HINT_HOLD_KEY_FORMAT = "<Hold %s to see details>"
 L.HINT_HOLD_KEY_FORMAT_HOVER = "<Hold %s and hover icon to see details>"
@@ -148,7 +151,7 @@ ns.nodes = nodes
 
 ----- Debugging -----
 
-local DEV_MODE = true
+local DEV_MODE = false
 
 local debug = {}
 debug.isActive = DEV_MODE
@@ -535,18 +538,22 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         LibQTipUtil:SetColoredTitle(tooltip, ZONE_STORY_HEADER_COLOR, L.ZONE_NAME_FORMAT:format(storyName))
     end
 
-    -- Achievement details
-    local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
-    local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
-    achievementName = tContains(ns.lore.OptionalAchievements, storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
-    LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
+    -- Achievement name
+    if not pin.isOnContinent then
+        local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
+        local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
+        achievementName = tContains(ns.lore.OptionalAchievements, storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
+        LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
+    else
+        local achievementHeaderNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE
+        LibQTipUtil:SetColoredTitle(tooltip, ZONE_STORY_HEADER_COLOR, achievementHeaderNameTemplate:format(achievementInfo.icon, achievementInfo.name))
+    end
     if (not pin.isOnContinent and ns.settings.collapseType_zoneStory == "singleLine") then return true end
     if (pin.isOnContinent and ns.settings.collapseType_zoneStoryContinent == "singleLine") then return true end
 
-    if not (achievementInfo.completed and achievementInfo.wasEarnedByMe) then
-        if not StringIsEmpty(achievementInfo.earnedBy) then
-            LibQTipUtil:AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(achievementInfo.earnedBy))
-        end
+    if (not StringIsEmpty(achievementInfo.earnedBy) and not achievementInfo.wasEarnedByMe) then
+        LibQTipUtil:AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(HIGHLIGHT(achievementInfo.earnedBy)))
+        -- LibQTipUtil:AddNormalLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED)
     end
 
     -- Chapter status
@@ -2596,7 +2603,6 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         -- Header: Plugin + zone name
         local title = tContains(ns.lore.OptionalAchievements, node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
         LibQTipUtil:SetTitle(self.tooltip, title)
-        -- LibQTipUtil:SetTitle(self.tooltip, LoremasterPlugin.name)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
             local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
@@ -2611,7 +2617,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
             mapID = mapID,
             achievementInfo = node.achievementInfo,
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
-            isOnContinent = continentMapInfo.mapType == Enum.UIMapType.Continent,
+            isOnContinent = continentMapInfo.mapType <= Enum.UIMapType.Continent,
          }
          ZoneStoryUtils:AddZoneStoryDetailsToTooltip(self.tooltip, fakePin)
 
