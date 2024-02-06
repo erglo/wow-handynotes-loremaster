@@ -845,12 +845,13 @@ local QuestNameFactionGroupTemplate = {
 }
 
 LocalUtils.QuestTag = {}
-LocalUtils.QuestTag.Artifact = 107
-LocalUtils.QuestTag.BurningLegion = 145
 LocalUtils.QuestTag.Class = 21
 LocalUtils.QuestTag.Escort = 84
-LocalUtils.QuestTag.Profession = 267
+LocalUtils.QuestTag.Artifact = 107
 LocalUtils.QuestTag.WorldQuest = 109
+LocalUtils.QuestTag.BurningLegionWorldQuest = 145
+LocalUtils.QuestTag.BurningLegionInvasionWorldQuest = 146
+LocalUtils.QuestTag.Profession = 267
 
 -- Expand the default quest tag atlas map
 -- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
@@ -858,7 +859,8 @@ LocalUtils.QuestTag.WorldQuest = 109
 --> REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
 --
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Artifact] = "ArtifactQuest"
-QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegion] = "worldquest-icon-burninglegion"  -- Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegionWorldQuest] = "worldquest-icon-burninglegion"  --> Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegionInvasionWorldQuest] = "legioninvasion-map-icon-portal"  --> Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Class] = "questlog-questtypeicon-class"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Escort] = "nameplates-InterruptShield"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Profession] = "Profession"
@@ -888,7 +890,7 @@ local QuestTagNames = {
     ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
 }
 
-local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest}
+local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest, LocalUtils.QuestTag.BurningLegionInvasionWorldQuest}
 
 -- Add quest type tags (text or icon) to a quest name.
 function LocalQuestUtils:FormatQuestName(questInfo)
