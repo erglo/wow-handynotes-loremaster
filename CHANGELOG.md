@@ -8,13 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Zone Story: added manually all "Loremaster of ..." achievements to the `continent maps`.
+* Zone Story: added manually the following optional zone stories (not part of any Loremaster achievement):
+  + Shadowlands: `The Maw` and `Zereth Mortis`,
+  + Battle for Azeroth: `Nazjatar` and `Mechagon`,
+  + Legion: `Suramar`,
+  + Draenor: `The Garrison Campaign` chapters,
+  + Pandaria: `Isle of Thunder` and `Krasarang Wilds`,
+  + Northrend: `Zul'Drak`.
 * Settings: added option to hide the zone story details/tooltip in zones where the achievement already has been completed.
-* Zone Story: added manually optional zone story for `Nazjatar` (not part of any Loremaster achievement).
 * Quest Type Tags: added tag icon for profession quests.
 
 ### Changed
 
-* Quest Filter: updated quest IDs for races and switched faction groups.
+* Quest Filter: updated quest IDs for races and mixed-up faction groups.
 * Settings: moved "Single Line Achievements" option for zone stories to the "Select Display Type..." dropdown menu.
 * Settings: updated the display type options for each category.
 
@@ -22,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* Zone Story: added manually optional zone stories for `Zaralek Cavern`, `Forbidden Reach` and `Emerald Dream`. These are additional storylines and not part of any Loremaster achievement.
+* Zone Story: added manually optional zone stories for `Zaralek Cavern`, `Forbidden Reach` and `Emerald Dream`. (These are additional storylines and not part of any Loremaster achievement.)
 * Settings: added slider for adjusting `continent icon size + transparency`.
 * Settings: added slider for adjusting the `questline tooltip's scroll speed`.
 

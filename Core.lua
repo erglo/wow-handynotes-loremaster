@@ -97,6 +97,7 @@ L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready.
 L.CONGRATULATIONS = SPLASH_BOOST_HEADER
 
 L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
+L.TEXT_OPTIONAL = string_gsub(AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL, "|cff777777", NORMAL_FONT_COLOR_CODE)
 
 L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global string
 L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
@@ -147,7 +148,7 @@ ns.nodes = nodes
 
 ----- Debugging -----
 
-local DEV_MODE = false
+local DEV_MODE = true
 
 local debug = {}
 debug.isActive = DEV_MODE
@@ -2371,7 +2372,7 @@ LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
-local node2Offset = ns.isWorldMapMaximized and 0.0001 or 0.008
+local node2Offset = 0.008  -- ns.isWorldMapMaximized and 0.0001 or 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
     [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
     [62] = { x = -0.015, y = 0 }, -- Darkshore
@@ -2379,10 +2380,12 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
     [76] = { x = -0.02, y = 0 }, -- Azshara
     [77] = { x = -0.015, y = -0.01 }, -- Felwood
     [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
+    [118] = { x = 0, y = 0.02}, -- Icecrown
     [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
     [641] = { x = 0, y = -0.01 }, -- Val'sharah
     [646] = { x = 0.025, y = 0 }, -- Broken Shore
     [895] = { x = 0.08, y = -0.04 }, -- Tiragarde Sound
+    [1462] = { x = 0.015, y = 0 }, -- Mechagon
     -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
     [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
     [2133] = { x = -0.025, y = -0.01 }, -- Zaralek Cavern
@@ -2421,9 +2424,26 @@ local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
     nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, alpha=alpha, achievementInfo=achievementInfo}  --> zoneData
 end
 
+local additionalMapInfos = {
+    [LocalMapUtils.ZANDALAR_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
+    [LocalMapUtils.KUL_TIRAS_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
+    [LocalMapUtils.NAZJATAR_MAP_ID] = {LocalMapUtils.ZANDALAR_MAP_ID, LocalMapUtils.KUL_TIRAS_MAP_ID},
+    [LocalMapUtils.VASHJIR_MAP_ID] = {201, 204, 205},
+    [LocalMapUtils.BROKEN_ISLES_MAP_ID] = {LocalMapUtils.ARGUS_MAP_ID},
+    [LocalMapUtils.COSMIC_MAP_ID] = {LocalMapUtils.AZEROTH_MAP_ID},
+}
+
 local function SetContinentNodes(parentMapInfo)
     local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone)
-    -- print("numChildren:", #mapChildren)
+    if (parentMapInfo.mapType == Enum.UIMapType.World or parentMapInfo.mapType == Enum.UIMapType.Cosmic) then
+        mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Continent)
+    end
+    if additionalMapInfos[parentMapInfo.mapID] then
+        local addChild;
+        for i, mapID in ipairs(additionalMapInfos[parentMapInfo.mapID]) do
+            tInsert(mapChildren, LocalMapUtils:GetMapInfo( mapID ))
+        end
+    end
 
     if not nodes[parentMapInfo.mapID] then
         nodes[parentMapInfo.mapID] = {}
@@ -2442,6 +2462,11 @@ local function SetContinentNodes(parentMapInfo)
                     local offSet = zoneOffsetInfo[mapChildInfo.mapID]
                     centerX = centerX + offSet.x
                     centerY = centerY + offSet.y
+                end
+                if (parentMapInfo.mapType == Enum.UIMapType.Cosmic and mapChildInfo.mapID == LocalMapUtils.AZEROTH_MAP_ID) then
+                    node2Offset = 0.093
+                else
+                    node2Offset = 0.008
                 end
 
                 -- Get achievement details
@@ -2512,8 +2537,8 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
     -- debug:print(GRAY("GetNodes2"), "> uiMapID:", uiMapID, "minimap:", minimap)
     if minimap then return NodeIterator end  -- minimap is currently not used
 
-    if WorldMapFrame then
-        local isWorldMapShown = WorldMapFrame:IsShown()
+    if ( WorldMapFrame and WorldMapFrame:IsShown() ) then
+        -- local isWorldMapShown = WorldMapFrame:IsShown()
         local mapID = uiMapID or WorldMapFrame:GetMapID()
         local mapInfo = LocalMapUtils:GetMapInfo(mapID)
         debug:print(GRAY("GetNodes2"), "> mapID:", uiMapID, mapID, "mapType:", mapInfo.mapType, "parent:", mapInfo.parentMapID)
@@ -2523,15 +2548,14 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
         -- Keep track of World Map size changes, ie. to adjust icon scale, etc.
         ns.isWorldMapMaximized = WorldMapFrame:IsMaximized()
 
-        if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Zone) then
+        if (mapInfo.mapType == Enum.UIMapType.Zone) then
             debug:print(LocalQuestLineUtils, "Entering zone:", mapID, mapInfo.name)
             -- Update data cache for current zone
             local prepareCache = true
             ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
-        if (isWorldMapShown and (mapInfo.mapType == Enum.UIMapType.Continent or mapID == LocalMapUtils.VASHJIR_MAP_ID)) then
-        -- if (isWorldMapShown and mapInfo.mapType == Enum.UIMapType.Continent or mapInfo.mapType == Enum.UIMapType.World) then
+        if (mapInfo.mapType <= Enum.UIMapType.Continent or tContains({LocalMapUtils.VASHJIR_MAP_ID, LocalMapUtils.NAZJATAR_MAP_ID}, mapID) ) then
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
             SetContinentNodes(mapInfo)
@@ -2562,7 +2586,9 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         end
 
         -- Header: Plugin + zone name
-        LibQTipUtil:SetTitle(self.tooltip, LoremasterPlugin.name)
+        local title = tContains(ns.lore.OptionalAchievements, node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        LibQTipUtil:SetTitle(self.tooltip, title)
+        -- LibQTipUtil:SetTitle(self.tooltip, LoremasterPlugin.name)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
             local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
@@ -2659,6 +2685,19 @@ function Temp_ConvertActiveQuestlineQuests()
 end
 
 --@do-not-package@
+--------------------------------------------------------------------------------
+
+function Test_WaypointMapPosition()
+    -- REF.: { uiMapID = mapID, position = CreateVector2D(x, y), z = z }
+    local mapPoint = LocalMapUtils:GetUserWaypoint()
+    local positionMapInfo = C_Map.GetMapInfoAtPosition(mapPoint.uiMapID, mapPoint.position.x, mapPoint.position.y)
+    if positionMapInfo then
+        print("posInfo:", positionMapInfo.mapID, positionMapInfo.mapType, positionMapInfo.name)
+        print(">parent:", positionMapInfo.parentMapID)
+    else
+        print("Nothing found.")
+    end
+end
 
 --------------------------------------------------------------------------------
 --[[ Tests
