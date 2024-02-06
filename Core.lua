@@ -674,6 +674,7 @@ QuestFilterUtils.dailyQuestLines = {
 QuestFilterUtils.obsoleteQuests = {
     -- 25443,  -- Mount Hyjal, The Name Never Spoken (alternative Version of #25412)
     26398,  -- Kalimdor, Mulgore (previously Orgrimmar), "Walk With The Earth Mother"
+    43931,  -- Legion, Artifact, "Balance of Power"
     44556, 44886, 44887, 44944,  -- Legion, "Return to Karazhan"
     48017, 49970,  -- Battle for Azeroth, Zuldazar, "The Sunken City"
     48325, 48328,  -- Battle for Azeroth, Vol'dun, "Port of Zem'lan"
