@@ -2005,7 +2005,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Active quests have a timer for reloading and updating the tooltip
     -- content. The LibQTip tooltip needs to be released before a new one can
     -- be created. By default this only happens when the mouse leaves the
-    -- worldmap pin.
+    -- worldmap pin, so we do this here manually.
     Hook_QuestPin_OnLeave(true)
 
     -- Dev info
@@ -2017,7 +2017,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     end
 
     -- Pin tooltip
-    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimary", 1, "LEFT")
+    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimaryActive", 1, "LEFT")
     if not LocalUtils:HasBasicTooltipContent(pin) then
         PrimaryTooltip:SetPoint(GameTooltip:GetPoint())
     else
@@ -2031,18 +2031,18 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
 
     -- Content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
-        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestline", 1, "LEFT")
+        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestlineActive", 1, "LEFT")
         QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
         PrimaryTooltip:ClearAllPoints()
         PrimaryTooltip:SetPoint("BOTTOMLEFT", QuestLineTooltip, "TOPLEFT")
     end
     if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
-        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory", 1, "LEFT")
+        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStoryActive", 1, "LEFT")
         SetZoneStoryTooltipAnchorPoint()
     end
     if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
         local questLineTooltip = QuestLineTooltip or PrimaryTooltip
-        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaign", 1, "LEFT")
+        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaignActive", 1, "LEFT")
         CampaignTooltip:SetPoint("BOTTOMLEFT", questLineTooltip, "BOTTOMRIGHT")
     end
 

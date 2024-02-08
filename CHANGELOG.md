@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.0-beta+100205] - 2024-02-08
 
 ### Added
 
@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* Quest Filter: updated quest IDs for races and mixed-up faction groups.
+* Quest Filter: updated quest IDs for races, obsolete quests and mixed-up faction groups.
 * Settings: moved "Single Line Achievements" option for zone stories to the "Select Display Type..." dropdown menu.
 * Settings: updated the display type options for each category.
 
@@ -149,7 +149,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * New slash commands: `/lm`, `/loremaster`
 * Basic file structure for a HandyNotes plugin using Ace3.
 
-[Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development
+<!-- [Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development -->
+[0.7.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...v0.7.0-beta
 [0.6.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.5.0-beta...v0.6.0-beta
 [0.5.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.4.2-alpha...v0.5.0-beta
 [0.4.2-alpha+100200]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.4.0-alpha...v0.4.2-alpha
