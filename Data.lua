@@ -46,7 +46,7 @@ ns.QuestFactionGroupID = QuestFactionGroupID
 --------------------------------------------------------------------------------
 
 LocalLoreUtil.OptionalAchievements = {
-    16585, -- "Loremaster of the Dragon Isles" (still optional in 10.2.5)
+    -- 16585, -- "Loremaster of the Dragon Isles" (still optional in 10.2.5)
     15325, 15638, 17739, 19026, -- Dragonflight
     14961, 15259, 15579,        -- Shadowlands
     13553, 13700, 13709, 13710, -- Battle for Azeroth
