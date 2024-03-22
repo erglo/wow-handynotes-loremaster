@@ -1443,6 +1443,10 @@ end
 ---@return boolean hasQuestLineInfo
 --
 function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
+    if not mapID then
+        local activeMapInfo = LocalUtils:GetActiveMapInfo()
+        mapID = activeMapInfo.mapID
+    end
     return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
 
@@ -2195,10 +2199,11 @@ end
 local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
     local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
     local numThreshold = not isQuestCompleted and 1 or 0
+    local activeMapInfo = LocalUtils:GetActiveMapInfo()
     if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
         if campaignInfo then
-            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
+            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, activeMapInfo.mapID)
             if questLineInfo then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("You've completed %s quests of the %s chapter from the %s campaign.",
@@ -2214,7 +2219,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         end
     end
     if (questLineID and ns.settings.showQuestlineQuestProgressMessage) then
-        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, ns.activeZoneMapInfo.mapID)
+        local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, activeMapInfo.mapID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
             ns:cprintf("You've completed %s quests of the %s questline.",
@@ -2222,7 +2227,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
-                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), ns.activeZoneMapInfo.name))
+                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), activeMapInfo.name))
             end
         end
     end
@@ -2252,8 +2257,9 @@ local function PrintQuestAddedMessage(questInfo)
     if questInfo.isCampaign then
         local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
+        local activeMapInfo = LocalUtils:GetActiveMapInfo()
         if campaignInfo then
-            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, ns.activeZoneMapInfo.mapID)
+            local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, activeMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
@@ -2536,6 +2542,15 @@ local function NodeIterator(t, prev)
         end
         coord, zoneData = next(t, coord)
     end
+end
+
+function LocalUtils:GetBestMapInfoForPlayer()
+    local mapID = LocalMapUtils:GetBestMapForPlayer()
+    return LocalMapUtils:GetMapInfo(mapID)
+end
+
+function LocalUtils:GetActiveMapInfo()
+    return ns.activeZoneMapInfo or LocalUtils:GetBestMapInfoForPlayer()
 end
 
 -- Required standard function for HandyNotes to get a location node.
