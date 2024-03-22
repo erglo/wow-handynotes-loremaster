@@ -508,7 +508,7 @@ function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
 
     if (not isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
         local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-        isActive = questID == pin.questID
+        isActive = questID == pin.questID or C_QuestLog.IsQuestFlaggedCompleted(questID)
     end
 
     return isActive
