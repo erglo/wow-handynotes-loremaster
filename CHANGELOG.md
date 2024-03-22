@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1-beta+100206] - 2024-03-22
+
+### Changed
+
+* Updated TOC file version to `WoW 10.2.6`.
+* Refined map info retrieval for the player's current position.
+
+### Fixed
+
+* Tooltip: in continent view the achievement progress only updated once, eg. when logging-in or reloading the UI.
+* Zone Story: completed but not turned-in quest haven't been recognized as active quests.
+
 ## [0.7.0-beta+100205] - 2024-02-08
 
 ### Added
@@ -150,6 +162,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Basic file structure for a HandyNotes plugin using Ace3.
 
 <!-- [Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development -->
+[0.7.1-beta+100206]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.7.0-beta...v0.7.1-beta
 [0.7.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...v0.7.0-beta
 [0.6.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.5.0-beta...v0.6.0-beta
 [0.5.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.4.2-alpha...v0.5.0-beta
