@@ -2630,7 +2630,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         local continentMapInfo = LocalMapUtils:GetMapInfo(mapID)
          local fakePin = {
             mapID = mapID,
-            achievementInfo = node.achievementInfo,
+            achievementInfo = ZoneStoryUtils:GetAchievementInfo(node.achievementInfo.achievementID),
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
             isOnContinent = continentMapInfo.mapType <= Enum.UIMapType.Continent,
          }
