@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 * Updated TOC file version to `WoW 10.2.7`.
 
+### Fixed
+
+* Settings: some zone icons in continent view for optional achievements could not be hidden.
+
 ## [0.7.1-beta+100206] - 2024-03-22
 
 ### Changed

@@ -2455,6 +2455,10 @@ local additionalMapInfos = {
     [LocalMapUtils.COSMIC_MAP_ID] = {LocalMapUtils.AZEROTH_MAP_ID},
 }
 
+local function HideOptionalAchievement(achievementID)
+    return not ns.settings.showContinentOptionalZoneStories and tContains(ns.lore.OptionalAchievements, achievementID)
+end
+
 local function SetContinentNodes(parentMapInfo)
     local mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Zone)
     if (parentMapInfo.mapType == Enum.UIMapType.World or parentMapInfo.mapType == Enum.UIMapType.Cosmic) then
@@ -2472,8 +2476,7 @@ local function SetContinentNodes(parentMapInfo)
 
         for i, mapChildInfo in ipairs(mapChildren) do
             local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(mapChildInfo.mapID)
-            if ( not ns.settings.showContinentOptionalZoneStories and tContains(ns.lore.OptionalAchievements, storyAchievementID) ) then break end
-            if storyAchievementID then
+            if (storyAchievementID and not HideOptionalAchievement(storyAchievementID)) then
                 local minX, maxX, minY, maxY = C_Map.GetMapRectOnMap(mapChildInfo.mapID, parentMapInfo.mapID)
                 if (minX == 0) then return end
                 local centerX = (maxX - minX) / 2 + minX
@@ -2500,7 +2503,7 @@ local function SetContinentNodes(parentMapInfo)
                     centerX = storyAchievementID2 and centerX - node2Offset or centerX
                     AddAchievementNode(parentMapInfo.mapID, centerX, centerY, achievementInfo, storyMapInfo)
                 end
-                if storyAchievementID2 then
+                if (storyAchievementID2 and not HideOptionalAchievement(storyAchievementID2)) then
                     local achievementInfo2 = ZoneStoryUtils:GetAchievementInfo(storyAchievementID2)
                     if achievementInfo2 then
                         centerX = centerX + (node2Offset * 2)
