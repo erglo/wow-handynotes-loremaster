@@ -3,7 +3,7 @@
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
--- Copyright (C) 2024  Erwin D. Glockner (aka erglo)
+-- Copyright (C) 2023  Erwin D. Glockner (aka erglo)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -53,8 +53,6 @@ local PrimaryTooltip, ZoneStoryTooltip, QuestLineTooltip, CampaignTooltip
 local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
-
-LocalMapUtils.VASHJIR_MAP_ID = 203
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
@@ -2396,21 +2394,21 @@ local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
 local node2Offset = 0.008  -- ns.isWorldMapMaximized and 0.0001 or 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
-    [17] = { x = -0.005, y = -0.01 }, -- Blasted Lands
-    [62] = { x = -0.015, y = 0 }, -- Darkshore
-    [69] = { x = 0.005, y = -0.02 }, -- Feralas
-    [76] = { x = -0.02, y = 0 }, -- Azshara
-    [77] = { x = -0.015, y = -0.01 }, -- Felwood
-    [108] = { x = 0.005, y = 0.02 }, -- Terokkar Forest (Burning Crusade)
-    [118] = { x = 0, y = 0.02}, -- Icecrown
-    [418] = { x = 0, y = -0.02 }, -- Krasarang Wilds
-    [641] = { x = 0, y = -0.01 }, -- Val'sharah
-    [646] = { x = 0.025, y = 0 }, -- Broken Shore
-    [895] = { x = 0.08, y = -0.04 }, -- Tiragarde Sound
-    [1462] = { x = 0.015, y = 0 }, -- Mechagon
+    [LocalMapUtils.AZSHARA_MAP_ID] = { x = -0.02, y = 0 },
+    [LocalMapUtils.BLASTED_LANDS_MAP_ID] = { x = -0.005, y = -0.01 },
+    [LocalMapUtils.BROKEN_SHORE_MAP_ID] = { x = 0.025, y = 0 },
+    [LocalMapUtils.DARKSHORE_MAP_ID] = { x = -0.015, y = 0 },
+    [LocalMapUtils.FELWOOD_MAP_ID] = { x = -0.015, y = -0.01 },
+    [LocalMapUtils.FERALAS_MAP_ID] = { x = 0.005, y = -0.02 },
+    [LocalMapUtils.ICECROWN_MAP_ID] = { x = 0, y = 0.02},
+    [LocalMapUtils.KRASARANG_WILDS_MAP_ID] = { x = 0, y = -0.02 },
+    [LocalMapUtils.MECHAGON_ISLAND_MAP_ID] = { x = 0.015, y = 0 },
+    [LocalMapUtils.TEROKKAR_FOREST_MAP_ID] = { x = 0.005, y = 0.02 },
+    [LocalMapUtils.THALDRASZUS_MAP_ID] = { x = 0.03, y = 0.02 },
+    [LocalMapUtils.TIRAGARDE_SOUND_MAP_ID] = { x = 0.08, y = -0.04 },
+    [LocalMapUtils.VALSHARAH_MAP_ID] = { x = 0, y = -0.01 },
     -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
-    [2025] = { x = 0.03, y = 0.02 }, -- Thaldraszus
-    [2133] = { x = -0.025, y = -0.01 }, -- Zaralek Cavern
+    [LocalMapUtils.ZARALEK_CAVERN_MAP_ID] = { x = -0.025, y = -0.01 },
 }
 
 -- Convert an atlas file to a texture table with coordinates suitable for
@@ -2447,12 +2445,14 @@ local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
 end
 
 local additionalMapInfos = {
-    [LocalMapUtils.ZANDALAR_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
-    [LocalMapUtils.KUL_TIRAS_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
-    [LocalMapUtils.NAZJATAR_MAP_ID] = {LocalMapUtils.ZANDALAR_MAP_ID, LocalMapUtils.KUL_TIRAS_MAP_ID},
-    [LocalMapUtils.VASHJIR_MAP_ID] = {201, 204, 205},
     [LocalMapUtils.BROKEN_ISLES_MAP_ID] = {LocalMapUtils.ARGUS_MAP_ID},
     [LocalMapUtils.COSMIC_MAP_ID] = {LocalMapUtils.AZEROTH_MAP_ID},
+    [LocalMapUtils.EASTERN_KINGDOMS_MAP_ID] = {LocalMapUtils.GILNEAS_MAP_ID},
+    [LocalMapUtils.KUL_TIRAS_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
+    [LocalMapUtils.NAZJATAR_MAP_ID] = {LocalMapUtils.ZANDALAR_MAP_ID, LocalMapUtils.KUL_TIRAS_MAP_ID},
+    [LocalMapUtils.THE_SHADOWLANDS_MAP_ID] = {LocalMapUtils.ORIBOS_MAP_ID},
+    [LocalMapUtils.VASHJIR_MAP_ID] = {201, 204, 205},                           --> TODO - Add to 'utils/worldmap.lua'
+    [LocalMapUtils.ZANDALAR_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
 }
 
 local function HideOptionalAchievement(achievementID)
@@ -2465,7 +2465,6 @@ local function SetContinentNodes(parentMapInfo)
         mapChildren = C_Map.GetMapChildrenInfo(parentMapInfo.mapID, Enum.UIMapType.Continent)
     end
     if additionalMapInfos[parentMapInfo.mapID] then
-        local addChild;
         for i, mapID in ipairs(additionalMapInfos[parentMapInfo.mapID]) do
             tInsert(mapChildren, LocalMapUtils:GetMapInfo( mapID ))
         end

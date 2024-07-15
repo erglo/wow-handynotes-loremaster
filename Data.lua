@@ -29,6 +29,21 @@ local AddonID, ns = ...
 
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
+                                                                                --> TODO - Add to 'utils/worldmap.lua'
+LocalMapUtils.ZUL_DRAK_MAP_ID = 121
+LocalMapUtils.VASHJIR_MAP_ID = 203
+LocalMapUtils.GILNEAS_MAP_ID = 217
+LocalMapUtils.KRASARANG_WILDS_MAP_ID = 418
+LocalMapUtils.ISLE_OF_THUNDER_MAP_ID = 504
+LocalMapUtils.ORIBOS_MAP_ID = 1670
+
+LocalMapUtils.BLASTED_LANDS_MAP_ID = 17
+LocalMapUtils.DARKSHORE_MAP_ID = 62
+LocalMapUtils.FERALAS_MAP_ID = 69
+LocalMapUtils.AZSHARA_MAP_ID = 76
+LocalMapUtils.FELWOOD_MAP_ID = 77
+LocalMapUtils.TEROKKAR_FOREST_MAP_ID = 108
+LocalMapUtils.ICECROWN_MAP_ID = 118
 
 local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 --> TODO: Include debugging tools
 ns.lore = LocalLoreUtil
@@ -46,132 +61,131 @@ ns.QuestFactionGroupID = QuestFactionGroupID
 --------------------------------------------------------------------------------
 
 LocalLoreUtil.OptionalAchievements = {
-    -- 16585, -- "Loremaster of the Dragon Isles" (still optional in 10.2.5)
+    --> 16585 "Loremaster of the Dragon Isles" (still optional in 10.2.7)
     15325, 15638, 17739, 19026, -- Dragonflight
-    14961, 15259, 15579,        -- Shadowlands
+    14961, 15259,               -- Shadowlands
     13553, 13700, 13709, 13710, -- Battle for Azeroth
-    10617,                      -- Legion
-     9492,  9491,               -- Draenor
+    10617, 11546, 12066,        -- Legion
+     9491,  9492,               -- Draenor
      7928,  7929,  8099,        -- Pandaria
+     1596,                      -- Northrend
 }
+--[[
+Notes:
+    19026 --> "Defenders of the Dream" (Emerald Dream storylines)
+    17739 --> "Embers of Neltharion" (Zaralek Cavern storylines)
+    15638 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Horde)
+    15325 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Alliance)
+    15259 --> "Secrets of the First Ones" (Zereth Mortis storylines)
+    14961 --> "Chains of Domination" (The Maw storylines)
+    13710 --> "Sunken Ambitions" (Nazjatar storylines, Alliance)
+    13709 --> "Unfathomable" (Nazjatar storylines, Horde)
+    13700 --> "The Mechagonian Threat" (Mechagon storyline, Horde)
+    13553 --> "The Mechagonian Threat" (Mechagon storyline, Alliance)
+    12066 --> "You Are Now Prepared!" (Argus campaign)
+    11546 --> "Breaching the Tomb" (Legionfall campaign)
+]]
 
 LocalLoreUtil.AchievementsLocationMap = {
-    [2022] = { --> "Waken Shore"                        --> "Dragonflight"
+    ----- Dragonflight -----
+    [LocalMapUtils.THE_WAKING_SHORES_MAP_ID] = {
         16334, -- "Waking Hope"
         16401, -- "Sojourner of the Waking Shores"
     },
-    [2023] = { --> "Ohn'ahran Plains"
+    [LocalMapUtils.OHNAHRAN_PLAINS_MAP_ID] = {
         15394, -- "Ohn'a'Roll"
         16405, -- "Sojourner of Ohn'ahran Plains"
     },
-    [2024] = { --> "Azure Span"
+    [LocalMapUtils.THE_AZURE_SPAN_MAP_ID] = {
         16336, -- "Azure Spanner"
         16428, -- "Sojourner of Azure Span"
     },
-    [2025] = { --> "Thaldraszus"
+    [LocalMapUtils.THALDRASZUS_MAP_ID] = {
         16363, -- "Just Don't Ask Me to Spell It"
         16398, -- "Sojourner of Thaldraszus"
     },
-    [2133] = { --> "Zaralek Cavern"
-        17739, -- (extra storyline) "Embers of Neltharion"
+    [LocalMapUtils.ZARALEK_CAVERN_MAP_ID] = {
+        17739, -- (extra storylines) "Embers of Neltharion"
     },
-    [2151] = { --> "Forbidden Reach"
-        -- 15325, -- (extra storyline) "Dracthyr, Awaken" (Alliance)
-        -- 15638, -- (extra storyline) "Dracthyr, Awaken" (Horde)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 15638 or 15325,
+    [LocalMapUtils.THE_FORBIDDEN_REACH_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 15638 or 15325,  -- (extra storylines) "Dracthyr, Awaken"
     },
-    [2200] = { --> "Emerald Dream"
-        19026, -- (extra storyline) "Defenders of the Dream"
+    [LocalMapUtils.EMERALD_DREAM_MAP_ID] = {
+        19026, -- (extra storylines) "Defenders of the Dream"
     },
-    [1525] = { --> "Revendreth"                         --> "Shadowlands"
+    ----- Shadowlands -----
+    [LocalMapUtils.REVENDRETH_MAP_ID] = {
         13878, -- "The Master of Revendreth"
         14798, -- "Sojourner of Revendreth"
     },
-    [1533] = { --> "Bastion"
+    [LocalMapUtils.BASTION_MAP_ID] = {
         14281, -- "The Path to Ascension"
         14801, -- "Sojourner of Bastion"
     },
-    [1536] = { --> "Maldraxxus"
+    [LocalMapUtils.MALDRAXXUS_MAP_ID] = {
         14206, -- "Blade of the Primus"
         14799, -- "Sojourner of Maldraxxus"
     },
-    [1565] = { --> "Ardenweald"
+    [LocalMapUtils.ARDENWEALD_MAP_ID] = {
         14164, -- "Awaken, Ardenweald"
-        14800, -- "Sojourner of Ardenweald"
+        14800, -- "Sojourner of Ardenweald" (optional?)
     },
-    [1543] = { --> "The Maw"
+    [LocalMapUtils.THE_MAW_MAP_ID] = {
         14961, -- (extra storylines) "Chains of Domination"
     },
-    [LocalMapUtils.ZERETH_MORTIS_MAP_ID] = { --> "Zereth Mortis"
+    -- [LocalMapUtils.ORIBOS_MAP_ID] = {
+    --     -- 15579, -- (extra storyline) "Return to Lordaeron"
+    --     QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1295 or 1294  --> (storylineIDs)
+    -- },
+    [LocalMapUtils.ZERETH_MORTIS_MAP_ID] = {
         15259, -- (extra storylines) "Secrets of the First Ones"
         -- 15515, -- (extra storylines) "Path to Enlightenment"
         -- 15514, -- (meta) "Unlocking the Secrets"
     },
-
     ----- Battle for Azeroth -----
-
     [LocalMapUtils.NAZJATAR_MAP_ID] = {
-        -- 13709, -- (extra storyline) "Unfathomable" (Horde)
-        -- 13710, -- (extra storyline) "Sunken Ambitions" (Alliance)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13709 or 13710,
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13709 or 13710,  -- (extra storyline) "Unfathomable" (Horde), "Sunken Ambitions" (Alliance)
         -- 13638, -- (meta achievement) "Undersea Usurper"  --> "Complete the Nazjatar achievements listed below."
     },
     [LocalMapUtils.MECHAGON_ISLAND_MAP_ID] = {
-        -- 13700,  -- (extra storyline) "The Mechagonian Threat" (Horde)
-        -- 13553,  -- (extra storyline) "The Mechagonian Threat" (Alliance)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13700 or 13553,
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13700 or 13553,  -- (extra storyline) "The Mechagonian Threat"
         -- 13541, -- (meta achievement) "Mecha-Done"  --> "Complete the Mechagon achievements listed below."
     },
-
     ----- Legion -----
-
-    [680] = { --> Suramar
+    [LocalMapUtils.SURAMAR_MAP_ID] = {
         11124, -- "Good Suramaritan"
         10617, -- (extra storylines) "Nightfallen But Not Forgotten"  --> "Establish relations with the Nightfallen by completing the storylines below."
         -- 11340, -- (meta) "Insurrection"  --> "Complete the Suramar storylines listed below."
     },
-
     ----- Draenor -----
-
     [QuestFactionGroupID.Player == QuestFactionGroupID.Horde and LocalMapUtils.FROSTFIRE_RIDGE_MAP_ID or LocalMapUtils.SHADOWMOON_VALLEY_MAP_ID] = {
-        -- 8671, -- "You'll Get Caught Up In The... Frostfire!" (Horde)
-        -- 8845, -- "As I Walk Through the Valley of the Shadow of Moon" (Alliance)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8671 or 8845,
-        -- 9492, -- (extra) "The Garrison Campaign" (Horde)
-        -- 9491, -- (extra) "The Garrison Campaign" (Alliance)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9492 or 9491,
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8671 or 8845,  -- "You'll Get Caught Up In The... Frostfire!" (Horde), "As I Walk Through the Valley of the Shadow of Moon" (Alliance)
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9492 or 9491,  -- (extra) "The Garrison Campaign"
         -- 9529, -- (optional) "On the Shadow's Trail" (Horde)      --> "Complete the Frostfire Ridge storyline listed below."
         -- 9528, -- (optional) "On the Shadow's Trail" (Alliance)   --> "Complete the Shadowmoon Valley storyline listed below."
+        -- QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9529 or 9528,
     },
     -- [534] = { --> Tanaan Jungle
     --     10072, -- (meta) "Rumble in the Jungle" (Alliance)
     --     10265, -- (meta) "Rumble in the Jungle" (Horde)
     --     QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 10265 or 10072,
     -- },
-
     ----- Pandaria -----
-
-    [418] = { --> Krasarang Wilds
-        -- 6535, -- "Mighty Roamin' Krasaranger" (Alliance)
-        -- 6536, -- "Mighty Roamin' Krasaranger" (Horde)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 6536 or 6535,
-        -- 7928, -- (extra storylines) "Operation: Shieldwall Campaign" (Alliance)
-        -- 7929, -- (extra storylines) "Dominance Offensive Campaign" (Horde)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 7929 or 7928,
+    [LocalMapUtils.KRASARANG_WILDS_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 6536 or 6535,  -- "Mighty Roamin' Krasaranger" (Loremaster)
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 7929 or 7928,  -- (extra) "Dominance Offensive Campaign" (Horde), "Operation: Shieldwall Campaign" (Alliance)
     },
-    [504] = { --> Isle of Thunder
+    [LocalMapUtils.ISLE_OF_THUNDER_MAP_ID] = {
         8099, -- (extra storylines) "Isle of Thunder"
         -- 8121, -- (meta) "Stormbreaker"  --> "Complete the Isle of Thunder achievements listed below.""
     },
-
     ----- Northrend -----
-
-    [121] = { --> Zul'Drak
-        36, -- "The Empire of Zul'Drak"
+    [LocalMapUtils.ZUL_DRAK_MAP_ID] = {
+        36, -- "The Empire of Zul'Drak" (Loremaster)
         1596, -- (extra storyline) "Guru of Drakuru"
     },
 
-    ----- Continents -----
+    ----- Continents (Loremaster Achievements) -----
 
     [LocalMapUtils.DRAGON_ISLES_MAP_ID] = {
         16585, -- "Loremaster of the Dragon Isles"
@@ -181,23 +195,20 @@ LocalLoreUtil.AchievementsLocationMap = {
         14280, -- "Loremaster of Shadowlands"
     },
     [QuestFactionGroupID.Player == QuestFactionGroupID.Horde and LocalMapUtils.ZANDALAR_MAP_ID or LocalMapUtils.KUL_TIRAS_MAP_ID] = {
-        -- 12593, -- "Loremaster of Kul Tiras" (Alliance)
-        -- 13294, -- "Loremaster of Zandalar" (Horde)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13294 or 12593,
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13294 or 12593,  -- "Loremaster of Zandalar" (Horde), "Loremaster of Kul Tiras" (Alliance)
+        -- QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 12479 or 12891,  -- (optional, part of meta below) "Zandalar Forever!" (Horde), "A Nation United" (Alliance)
+        -- 13517,  -- (meta, "Two Sides to Every Tale")
     },
     [LocalMapUtils.BROKEN_ISLES_MAP_ID] = {
         11157, -- "Loremaster of Legion"
         -- 11544, -- (optional) "Defender of the Broken Isles"
         -- 11186, -- (optional) "Tehd & Marius' Excellent Adventure"
-        -- 11240, -- (optional) "Harbinger"  --> "Unearth the stories of the Harbingers of the Legion's invasion."
     },
-    [LocalMapUtils.ARGUS_MAP_ID] = {
-        12066, -- "You Are Now Prepared!" (part of "Loremaster of Legion", but needs workaround)
-    },
+    -- [LocalMapUtils.ARGUS_MAP_ID] = {
+    --     12066, -- (optional) "You Are Now Prepared!" (Argus campaign)
+    -- },
     [LocalMapUtils.DRAENOR_MAP_ID] = {
-        -- 9833, -- "Loremaster of Draenor" (Alliance)
-        -- 9923, -- "Loremaster of Draenor" (Horde)
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9923 or 9833,
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9923 or 9833,  -- "Loremaster of Draenor"
         -- 9564, -- (optional) "Securing Draenor" (Alliance)  --> "Complete the Draenor bonus objectives listed below."
         -- 9562, -- (optional) "Securing Draenor" (Horde)  --> "Complete the Draenor bonus objectives listed below."
         -- QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9562 or 9564,
@@ -225,7 +236,6 @@ LocalLoreUtil.AchievementsLocationMap = {
         1676, -- "Loremaster of Eastern Kingdoms"
     },
 }
--- [] = {},
 
 --------------------------------------------------------------------------------
 
@@ -347,42 +357,38 @@ LocalLoreUtil.LoremasterAchievementsLocationMap = {
         { id = 16585, type = "continent", fallbackName = "Loremaster of the Dragon Isles" },  --> (not yet added by Blizzard to the main Loremaster achievement)
         { id = 19307, type = "continent", fallbackName = "Dragon Isles Pathfinder" },
     },
-    ["2022"] = { -- Waken Shore
+    [LocalMapUtils.THE_WAKING_SHORES_MAP_ID] = {
         { id = 16334, type = "criteria", fallbackName = "Waking Hope", criteriaIDs = {"16585", "19307"} },
         { id = 16401, type = "criteria", fallbackName = "Sojourner of the Waking Shores", criteriaID = 16585 },
         -- { id = 16292, type = "storyline", fallbackName = "Mastering the Waygates", questLineID = 1363 },  -- (optional)
     },
-    ["2023"] = { -- Ohn'ahran Plains
+    [LocalMapUtils.OHNAHRAN_PLAINS_MAP_ID] = {
         {id = 15394, type = "criteria", fallbackName = "Ohn'a'Roll", criteriaIDs = {"16585", "19307"} },
         {id = 16405, type = "criteria", fallbackName = "Sojourner of Ohn'ahran Plains", criteriaID = 16585 },
         {id = 16574, type = "interaction", fallbackName = "Sleeping on the Job", includeDescription = true},  -- (optional)
     },
-    ["2024"] = { -- Azure Span
+    [LocalMapUtils.THE_AZURE_SPAN_MAP_ID] = {
         { id = 16336, type = "criteria", fallbackName = "Azure Spanner", criteriaIDs = {"16585", "19307"} },
         { id = 16428, type = "criteria", fallbackName = "Sojourner of Azure Span", criteriaID = 16585 },
         { id = 16580, type = "quests", fallbackName = "Lend a Helping Span", includeDescription = true},  -- (optional)
     },
-    [2025] = { --> Thaldraszus
+    [LocalMapUtils.THALDRASZUS_MAP_ID] = {
         { id = 16363, type = "criteria", fallbackName = "Just Don't Ask Me to Spell It", criteriaIDs = {"16585", "19307"} },
         { id = 16398, type = "criteria", fallbackName = "Sojourner of Thaldraszus", criteriaID = 16585 },
         { id = 16808, type = "reputation", fallbackName = "Friend of the Dragon Isles", includeDescription = true},  -- (optional)
     },
-    [2133] = { --> Zaralek Cavern
+    [LocalMapUtils.ZARALEK_CAVERN_MAP_ID] = {
         17739, -- (extra storyline) "Embers of Neltharion"   ==>  / 
-        -- 17785, -- (noteworthy) "Que Zara(lek), Zara(lek)" ==> 18804, "Neltharion's Legacy"
+        -- 17785, -- (noteworthy, meta?) "Que Zara(lek), Zara(lek)" ==> 18804, "Neltharion's Legacy"
     },
-    [2151] = { --> Forbidden Reach (extra storyline)
+    [LocalMapUtils.THE_FORBIDDEN_REACH_MAP_ID] = { --> (extra storyline)
         { id = 15325, type = "storyline", fallbackName = "Dracthyr, Awaken", factionGroupID = QuestFactionGroupID.Alliance, questLineIDs = {1261, 1270, 1271, 1272, 1274, 1275, 1276} },
         { id = 15638, type = "storyline", fallbackName = "Dracthyr, Awaken", factionGroupID = QuestFactionGroupID.Horde, questLineIDs = {1261, 1270, 1271, 1272, 1274, 1275, 1311} },
     },
-    [2200] = { --> Emerald Dream
+    [LocalMapUtils.EMERALD_DREAM_MAP_ID] = {
         19026, -- (extra storyline) "Defenders of the Dream"
     },
-    -- [830] = { --> Krokuun
-    --     12066, -- (optional) "You Are Now Prepared!"
-    --     18854, -- (optional, single ac) "Seeing Red" (Added in patch 10.1.7)
-    -- },
-    -- [217] = { --> Gilneas
+    -- [LocalMapUtils.GILNEAS_MAP_ID] = {
     --     19719, -- "Reclamation of Gilneas"  (Added in patch 10.2.5)
     --     --> storyline: 5538, "The Gilneas Reclamation"
     -- },
