@@ -578,9 +578,11 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                     LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
                 else
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName))
-                    -- Show chapter quests
-                    if (not pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and (ns.settings.showStoryChapterQuests or debug.isActive)) or
-                       (pin.isOnContinent and (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) and ns.settings.showContinentStoryChapterQuests) then
+                end
+                -- Show chapter quests
+                if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                    if (not pin.isOnContinent and (ns.settings.showStoryChapterQuests or debug.isActive)) or
+                       (pin.isOnContinent and ns.settings.showContinentStoryChapterQuests) then
                         -- Format quest name and optionally show to user
                         local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
                         local questInfo = LocalQuestUtils:GetQuestInfo(questID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
@@ -2005,7 +2007,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
 
     -- Create custom tooltip(s) ------------------------------------------------
 
-    -- Active quests have a timer for reloading and updating the tooltip
+    -- Note: Active quests have a timer for reloading and updating the tooltip
     -- content. The LibQTip tooltip needs to be released before a new one can
     -- be created. By default this only happens when the mouse leaves the
     -- worldmap pin, so we do this here manually.

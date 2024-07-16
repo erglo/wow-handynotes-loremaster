@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+* Tooltip: zone story chapter quests were only shown when eg. a chapter wasn't indicated as active.
 * Settings: some zone icons in continent view for optional zone stories could not be hidden.
 
 ## [0.7.1-beta+100206] - 2024-03-22
@@ -106,7 +107,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* Zone Story: added optional `chapter quests`. Some story chapter are directly linked to a quest which can be displayed.
+* Zone Story: added optional `chapter quests`. Some story chapters are directly linked to a quest which can be displayed.
 * A `waypoint` can now be created to the currently hovered quest icon.
 * Campaign: added optional `chapter description`. Only some campaign chapters have those, eg. when they are linked to other campaigns.
 * Settings: added option to get notified in `chat` whenever a `lore-relevant quest` has been accepted or turned-in.
