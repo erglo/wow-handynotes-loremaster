@@ -1,14 +1,12 @@
-(A) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip. @tooltip +map +pin +zoneStory
-(B) Add world map button @worldMapButton +map +button
+(A) Add world map button @worldMapButton +map +button
+(B) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip. @tooltip +map +pin +zoneStory
 (C) Check if possible, auto-scroll tooltip to quest @tooltip +map +pin
-(D) Add description of achievement to continent icon tooltip. @tooltip +continent +achievement
 (D) Add "requirement for" other achievement info. @tooltip +continent +achievement +data
 Track World Quests for eg. "Archive von Azeroth - Repeatable WQs" @hooks +map +pin
-Add Pathfinder achievements to data. @data +achievement
+Add meta achievements to data (???). @data +achievement
 Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
 Show achievement completion date @tooltip +map +achievement +zoneStory
 Show active QLs in world map button @worldMapButton +questLines +map +button
 Combine trivial quest type tags with tagInfo tags. @tooltip +questType +questTags
 Create turn-in quest icon for weekly quests. @icons +questType +questTags
-(A) Show Dungeon quest name for active quests. @tooltip +map +zoneStory
