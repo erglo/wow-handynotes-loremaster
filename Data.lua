@@ -45,9 +45,6 @@ LocalMapUtils.FELWOOD_MAP_ID = 77
 LocalMapUtils.TEROKKAR_FOREST_MAP_ID = 108
 LocalMapUtils.ICECROWN_MAP_ID = 118
 
-local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 --> TODO: Include debugging tools
-ns.lore = LocalLoreUtil
-
 local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
 
 ----- Faction Groups -----------------------------------------------------------
@@ -59,6 +56,9 @@ QuestFactionGroupID["Player"] = QuestFactionGroupID[ UnitFactionGroup("player") 
 ns.QuestFactionGroupID = QuestFactionGroupID
 
 --------------------------------------------------------------------------------
+
+local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 --> TODO: Include debugging tools
+ns.lore = LocalLoreUtil
 
 LocalLoreUtil.OptionalAchievements = {
     --> 16585 "Loremaster of the Dragon Isles" (still optional in 10.2.7)
@@ -85,6 +85,10 @@ Notes:
     12066 --> "You Are Now Prepared!" (Argus campaign)
     11546 --> "Breaching the Tomb" (Legionfall campaign)
 ]]
+
+function LocalLoreUtil:IsOptionalAchievement(achievementID)
+    return tContains(self.OptionalAchievements, achievementID)
+end
 
 LocalLoreUtil.AchievementsLocationMap = {
     ----- Dragonflight -----

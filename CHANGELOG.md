@@ -9,11 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Updated TOC file version to `WoW 10.2.7`.
-* Updated map and achievement IDs in data file.
+* World Map: Icons for optional zone stories are now yellow.
+* Zone Story: Updated map and achievement IDs.
+* Dragonflight: Updated weekly quest IDs.
 
 ### Fixed
 
-* Settings: some zone icons in continent view for optional achievements could not be hidden.
+* Settings: some zone icons in continent view for optional zone stories could not be hidden.
 
 ## [0.7.1-beta+100206] - 2024-03-22
 
@@ -25,13 +27,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 * Tooltip: in continent view the achievement progress only updated once, eg. when logging-in or reloading the UI.
-* Zone Story: completed but not turned-in quest haven't been recognized as active quests.
+* Zone Story: completed but not turned-in quests haven't been recognized as active quests.
 
 ## [0.7.0-beta+100205] - 2024-02-08
 
 ### Added
 
-* Zone Story: added manually all "Loremaster of ..." achievements to the `continent maps`.
+* Zone Story: added manually all "Loremaster of ..." achievements to the `continent view` of the World Map.
 * Zone Story: added manually the following optional zone stories (not part of any Loremaster achievement):
   + Shadowlands: `The Maw` and `Zereth Mortis`,
   + Battle for Azeroth: `Nazjatar` and `Mechagon`,

@@ -241,7 +241,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             optional_stories_sz = {
                                 type = "toggle",
                                 name = "Include Optional Zone Stories",
-                                desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
+                                desc = "Some zones have a story achievement of their own or an additional one which is not part of a Loremaster achievement.",
                                 arg = "showOptionalZoneStories",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
@@ -439,7 +439,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     optional_stories_szc = {
                         type = "toggle",
                         name = "Include Optional Zone Stories",
-                        desc = "Some zones have a story achievement of their own which is not part of any Loremaster achievement.",
+                        desc = "Some zones have a story achievement of their own or an additional one which is not part of a Loremaster achievement."..LocalOptionUtils.newParagraph.."These optional achievements will be displayed as yellow icons.",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             LocalOptionUtils:printOption(info.option.name, value)

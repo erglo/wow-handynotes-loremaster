@@ -540,7 +540,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if not pin.isOnContinent then
         local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
         local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
-        achievementName = tContains(ns.lore.OptionalAchievements, storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
+        achievementName = ns.lore:IsOptionalAchievement(storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
         LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
     else
         local achievementHeaderNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE
@@ -1828,7 +1828,7 @@ function LocalUtils:ShouldShowZoneStoryDetails(pin)
     if not showInCompletedZones then
         return false
     end
-    if ( not ns.settings.showOptionalZoneStories and tContains(ns.lore.OptionalAchievements, achievementID) )  then
+    if ( not ns.settings.showOptionalZoneStories and ns.lore:IsOptionalAchievement(achievementID) )  then
         return false
     end
     return ns.settings.showZoneStory and pin.questInfo.hasZoneStoryInfo
@@ -2392,6 +2392,9 @@ LoremasterPlugin:RegisterEvent("CRITERIA_EARNED")
 
 local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
+local iconOptionalZoneStoryComplete = "common-icon-checkmark-yellow"
+local iconOptionalZoneStoryIncomplete = "common-icon-yellowx"
+
 local node2Offset = 0.008  -- ns.isWorldMapMaximized and 0.0001 or 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
     [LocalMapUtils.AZSHARA_MAP_ID] = { x = -0.02, y = 0 },
@@ -2431,16 +2434,25 @@ local function GetTextureInfoFromAtlas(atlasName)
     end
 end
 
+local function GetAchievementTypeIcon(achievementInfo)
+    local isOptionalAchievement = ns.lore:IsOptionalAchievement(achievementInfo.achievementID)
+    if isOptionalAchievement then
+        return achievementInfo.completed and GetTextureInfoFromAtlas(iconOptionalZoneStoryComplete) or GetTextureInfoFromAtlas(iconOptionalZoneStoryIncomplete)
+    end
+
+    return achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
+end
+
 local function AddAchievementNode(mapID, x, y, achievementInfo, storyMapInfo)
-    local icon = achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
+    local icon = GetAchievementTypeIcon(achievementInfo)
     local iconSizeScale = achievementInfo.completed and 1.0 or 0.85 --> adjust size of red "x" icon, it is slightly bigger than the checkmark icon
     local mapSizeScale = ns.isWorldMapMaximized and 0.4 or 0   --> adjust icon size, they appear smaller on the full screen World Map
     local scale = ns.settings.continentIconScale * ( iconSizeScale + mapSizeScale)
 	local alpha = ns.settings.continentIconAlpha or 1.0
     local coord = HandyNotes:getCoord(x, y)
     -- local coord = ns.utils.handynotes:GetCoordFromXY(x, y)
-
     -- print(i, mapID, mapChildInfo.name, "-->", coord)
+
     nodes[mapID][coord] = {mapInfo=storyMapInfo, icon=icon, scale=scale, alpha=alpha, achievementInfo=achievementInfo}  --> zoneData
 end
 
@@ -2456,7 +2468,7 @@ local additionalMapInfos = {
 }
 
 local function HideOptionalAchievement(achievementID)
-    return not ns.settings.showContinentOptionalZoneStories and tContains(ns.lore.OptionalAchievements, achievementID)
+    return not ns.settings.showContinentOptionalZoneStories and ns.lore:IsOptionalAchievement(achievementID)
 end
 
 local function SetContinentNodes(parentMapInfo)
@@ -2619,7 +2631,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         end
 
         -- Header: Plugin + zone name
-        local title = tContains(ns.lore.OptionalAchievements, node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        local title = ns.lore:IsOptionalAchievement(node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
         LibQTipUtil:SetTitle(self.tooltip, title)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
