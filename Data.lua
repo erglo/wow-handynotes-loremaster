@@ -49,8 +49,12 @@ LocalMapUtils.SILITHUS_MAP_ID = 81
 LocalMapUtils.ULDUM_BFA_MAP_ID = 1527
 LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID = 1530
 LocalMapUtils.STRANGLETHORN_MAP_ID = 224
+                                                                                --> TODO - Add to 'utils/achievements.lua'
+local BIT_FLAG_ACCOUNT_WIDE_ACHIEVEMENT = 0x20000  --> == 131072
 
-local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
+local function IsAccountWideAchievement(achievementFlags)
+    return bit.band(BIT_FLAG_ACCOUNT_WIDE_ACHIEVEMENT, achievementFlags) ~= 0
+end
 
 ----- Faction Groups -----------------------------------------------------------
 
@@ -139,6 +143,10 @@ Notes:
 
 function LocalLoreUtil:IsOptionalAchievement(achievementID)
     return tContains(self.OptionalAchievements, achievementID)
+end
+
+function LocalLoreUtil:IsAccountWideAchievement(achievementFlags)
+    return IsAccountWideAchievement(achievementFlags)
 end
 
 LocalLoreUtil.AchievementsLocationMap = {
@@ -402,6 +410,8 @@ end
 
 --------------------------------------------------------------------------------
 
+local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
+
 function LocalLoreUtil:PrepareData()
     -- "The Loremaster" main achievement 
     self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(loremasterAchievementID)
@@ -414,23 +424,24 @@ function LocalLoreUtil:PrepareData()
 end
 
 --@do-not-package@
---------------------------------------------------------------------------------
 
------ Tests ----------
+--------------------------------------------------------------------------------
+------------------------------ Tests -------------------------------------------
+--------------------------------------------------------------------------------
 
 TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 -- TestList(7520)
 
 Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievementID
--- Test_GetWrappedCriteriaInfoByAchievementID(16585)
--- Test_GetWrappedCriteriaInfoByAchievementID(6541)
+-- Test_GetWrappedCriteriaInfoByAchievementID(16585)  --> flags=131072
+-- Test_GetWrappedCriteriaInfoByAchievementID(940)
 
 Test_PrepareData = function() return LocalLoreUtil:PrepareData() end
 
 --------------------------------------------------------------------------------
 
 ------------------------- (2023-10-16)
---  7520 "The Loremaster" (Horde)
+--  7520 "The Loremaster"
 ------------------------- (criteriaID, assetID, name)
 -- 01.   6143  1676 Loremaster of Eastern Kingdoms
 -- 02.   6144  1678 Loremaster of Kalimdor
