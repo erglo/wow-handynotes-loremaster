@@ -117,6 +117,7 @@ L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckm
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE = "%s"
 L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
+L.ZONE_NAME_ACCOUNT_ACHIEVEMENT_FORMAT = "%s |A:questlog-questtypeicon-account:0:0:1:0|a"
 
 L.HINT_HOLD_KEY_FORMAT = "<Hold %s to see details>"
 L.HINT_HOLD_KEY_FORMAT_HOVER = "<Hold %s and hover icon to see details>"
@@ -2639,6 +2640,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
 
         -- Header: Plugin + zone name
         local title = LoreUtil:IsOptionalAchievement(node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        title =  LoreUtil:IsAccountWideAchievement(node.achievementInfo.flags) and L.ZONE_NAME_ACCOUNT_ACHIEVEMENT_FORMAT:format(title) or title
         LibQTipUtil:SetTitle(self.tooltip, title)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
