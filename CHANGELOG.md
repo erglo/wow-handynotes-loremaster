@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+* Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
+* Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement)
+
 ### Changed
 
 * Updated TOC file version to `WoW 10.2.7`.
@@ -35,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * Zone Story: added manually all "Loremaster of ..." achievements to the `continent view` of the World Map.
-* Zone Story: added manually the following optional zone stories (not part of any Loremaster achievement):
+* Zone Story: added manually the following optional zone achievements (not part of any Loremaster achievement):
   + Shadowlands: `The Maw` and `Zereth Mortis`,
   + Battle for Azeroth: `Nazjatar` and `Mechagon`,
   + Legion: `Suramar`,
