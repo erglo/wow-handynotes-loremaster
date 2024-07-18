@@ -54,6 +54,8 @@ local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
+local LoreUtil = ns.lore
+
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
@@ -237,7 +239,7 @@ function LoremasterPlugin:OnInitialize()
 
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 
-    ns.lore:PrepareData()
+    LoreUtil:PrepareData()
 end
 
 function LoremasterPlugin:OnEnable()
@@ -450,8 +452,8 @@ ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
 function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
     if not self.storiesOnMap[mapID] then
         local storyAchievementID, storyAchievementID2, storyMapID = nil, nil, mapID
-        if (ns.lore.AchievementsLocationMap[mapID] ~= nil) then
-            storyAchievementID, storyAchievementID2 = SafeUnpack(ns.lore.AchievementsLocationMap[mapID])
+        if (LoreUtil.AchievementsLocationMap[mapID] ~= nil) then
+            storyAchievementID, storyAchievementID2 = SafeUnpack(LoreUtil.AchievementsLocationMap[mapID])
         else
             storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
         end
@@ -540,7 +542,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if not pin.isOnContinent then
         local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
         local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
-        achievementName = ns.lore:IsOptionalAchievement(storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
+        achievementName = LoreUtil:IsOptionalAchievement(storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
         LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
     else
         local achievementHeaderNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE
@@ -588,8 +590,8 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                         local questInfo = LocalQuestUtils:GetQuestInfo(questID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
                         local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
                         LibQTipUtil:AddDescriptionLine(tooltip, criteriaQuestName, 15)
-                        if not tContains(ns.lore.storyQuests, tostring(questID)) then
-                            tinsert(ns.lore.storyQuests, tostring(questID))
+                        if not tContains(LoreUtil.storyQuests, tostring(questID)) then
+                            tinsert(LoreUtil.storyQuests, tostring(questID))
                         end
                     end
                 end
@@ -1060,7 +1062,7 @@ function LocalQuestUtils:IsObsolete(questID)
 end
 
 function LocalQuestUtils:IsStory(questID)
-    return tContains(ns.lore.storyQuests, tostring(questID)) or IsStoryQuest(questID)
+    return tContains(LoreUtil.storyQuests, tostring(questID)) or IsStoryQuest(questID)
 end
 
 local function ShouldIgnoreQuestTypeTag(questInfo)
@@ -1830,7 +1832,7 @@ function LocalUtils:ShouldShowZoneStoryDetails(pin)
     if not showInCompletedZones then
         return false
     end
-    if ( not ns.settings.showOptionalZoneStories and ns.lore:IsOptionalAchievement(achievementID) )  then
+    if ( not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementID) )  then
         return false
     end
     return ns.settings.showZoneStory and pin.questInfo.hasZoneStoryInfo
@@ -2437,7 +2439,7 @@ local function GetTextureInfoFromAtlas(atlasName)
 end
 
 local function GetAchievementTypeIcon(achievementInfo)
-    local isOptionalAchievement = ns.lore:IsOptionalAchievement(achievementInfo.achievementID)
+    local isOptionalAchievement = LoreUtil:IsOptionalAchievement(achievementInfo.achievementID)
     if isOptionalAchievement then
         return achievementInfo.completed and GetTextureInfoFromAtlas(iconOptionalZoneStoryComplete) or GetTextureInfoFromAtlas(iconOptionalZoneStoryIncomplete)
     end
@@ -2470,7 +2472,7 @@ local additionalMapInfos = {
 }
 
 local function HideOptionalAchievement(achievementID)
-    return not ns.settings.showContinentOptionalZoneStories and ns.lore:IsOptionalAchievement(achievementID)
+    return not ns.settings.showContinentOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementID)
 end
 
 local function SetContinentNodes(parentMapInfo)
@@ -2633,7 +2635,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         end
 
         -- Header: Plugin + zone name
-        local title = ns.lore:IsOptionalAchievement(node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        local title = LoreUtil:IsOptionalAchievement(node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
         LibQTipUtil:SetTitle(self.tooltip, title)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
