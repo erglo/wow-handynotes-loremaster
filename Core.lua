@@ -560,9 +560,18 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if (not pin.isOnContinent and ns.settings.collapseType_zoneStory == "singleLine") then return true end
     if (pin.isOnContinent and ns.settings.collapseType_zoneStoryContinent == "singleLine") then return true end
 
+    -- earnedBy Info
     if (not StringIsEmpty(achievementInfo.earnedBy) and not achievementInfo.wasEarnedByMe) then
         LibQTipUtil:AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(HIGHLIGHT(achievementInfo.earnedBy)))
         -- LibQTipUtil:AddNormalLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED)
+    end
+
+    -- Parent achievement
+    local parentAchievementID = LoreUtil:GetParentAchievement(achievementInfo.achievementID)
+    if parentAchievementID then
+        local parentAchievementInfo = self:GetAchievementInfo(parentAchievementID)
+        local parentAchievementName = HIGHLIGHT(parentAchievementInfo and parentAchievementInfo.name or tostring(parentAchievementID))
+        LibQTipUtil:AddNormalLine(tooltip, "Part of: "..parentAchievementName) --> TODO - L10n
     end
 
     -- Chapter status

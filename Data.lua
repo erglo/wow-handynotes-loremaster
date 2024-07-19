@@ -29,6 +29,9 @@ local AddonID, ns = ...
 
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
+
+local THE_LOREMASTER_ID = 7520  -- "The Loremaster" (category "Quests")
+local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585  -- (still optional in 10.2.7)
                                                                                 --> TODO - Add to 'utils/worldmap.lua'
 LocalMapUtils.ZUL_DRAK_MAP_ID = 121
 LocalMapUtils.VASHJIR_MAP_ID = 203
@@ -70,8 +73,8 @@ local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 
 ns.lore = LocalLoreUtil
 
 LocalLoreUtil.OptionalAchievements = {
-    --> 16585 "Loremaster of the Dragon Isles" (still optional in 10.2.7)
-    15325, 15638, 17739, 19026,         -- Dragonflight
+    LOREMASTER_OF_THE_DRAGON_ISLES_ID,  -- Dragonflight
+    15325, 15638, 17739, 19026,
     14961, 15259,                       -- Shadowlands
     13553, 13700, 13709, 13710, 13791,  -- Battle for Azeroth
     12479, 12891, 13466, 13467, 14157,
@@ -89,6 +92,7 @@ LocalLoreUtil.OptionalAchievements = {
 --[[
 Notes:
     -- Dragonflight
+    16585 --> "Loremaster of the Dragon Isles" (still optional in 10.2.7)
     19026 --> "Defenders of the Dream" (Emerald Dream storylines)
     17739 --> "Embers of Neltharion" (Zaralek Cavern storylines)
     15638 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Horde)
@@ -410,11 +414,9 @@ local LocalCriteriaType = {
 
 --------------------------------------------------------------------------------
 
-local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
-
 -- function LocalLoreUtil:PrepareData()
 --     -- "The Loremaster" main achievement 
---     -- self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(loremasterAchievementID)
+--     -- self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(THE_LOREMASTER_ID)
 
 --     -- -- Add Dragonflight's "Loremaster of the Dragon Isles"
 --     -- -- (Not yet added by Blizzard to the main achievement)                      --> TODO - Check this frequently (latest: 2024-07-18)
@@ -424,8 +426,47 @@ local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
 --     self:GetStoryQuests()
 -- end
 
---@do-not-package@
+--------------------------------------------------------------------------------
 
+local achievementParentList = {}  -- {childID = parentID, ...}
+
+LocalLoreUtil.numAchievements = 0  -- Keep track of all Loremaster achievements
+
+local function FillAchievementParentList(parentAchievementID)
+    local candidateAchievementID = parentAchievementID or THE_LOREMASTER_ID
+
+    local criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(candidateAchievementID)
+
+    if criteriaInfoList then
+        for i, criteriaInfo in ipairs(criteriaInfoList) do
+            if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+                achievementParentList[criteriaInfo.assetID] = candidateAchievementID
+                LocalLoreUtil.numAchievements = LocalLoreUtil.numAchievements + 1
+                FillAchievementParentList(criteriaInfo.assetID)
+            end
+        end
+    end
+end
+
+function LocalLoreUtil:GetParentAchievement(achievementID)
+    if TableIsEmpty(achievementParentList) then
+        FillAchievementParentList()
+        -- Also add Dragonflight's "Loremaster of the Dragon Isles"
+        -- (Not yet added by Blizzard to the main achievement)                  --> TODO - Check this frequently (latest: 2024-07-18)
+        FillAchievementParentList(LOREMASTER_OF_THE_DRAGON_ISLES_ID)
+    end
+    return achievementParentList[achievementID]
+end
+
+function LocalLoreUtil:GetTotalNumLoremasterAchievements()
+    if (LocalLoreUtil.numAchievements == 0) then
+        FillAchievementParentList()
+        FillAchievementParentList(LOREMASTER_OF_THE_DRAGON_ISLES_ID)
+    end
+    return LocalLoreUtil.numAchievements
+end
+
+--@do-not-package@
 --------------------------------------------------------------------------------
 ------------------------------ Tests -------------------------------------------
 --------------------------------------------------------------------------------
