@@ -8,20 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Settings: added an option to toggle between `account-wide and character-specific` achievement progress.
 * Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
 * Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement)
 
 ### Changed
 
 * Updated TOC file version to `WoW 10.2.7`.
-* World Map: Icons for optional zone stories are now yellow.
+* World Map: optional zone stories are now displayed in `yellow icons`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.
 
 ### Fixed
 
 * Tooltip: zone story chapter quests were only shown when eg. a chapter wasn't indicated as active.
-* Settings: some zone icons in continent view for optional zone stories could not be hidden.
+* Settings: some zone icons in continent view for optional achievements could not be hidden.
 
 ## [0.7.1-beta+100206] - 2024-03-22
 

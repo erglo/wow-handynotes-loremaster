@@ -484,7 +484,7 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
     if not self.achievements[achievementID] then
         local achievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(achievementID)
         achievementInfo.numCriteria = LocalAchievementUtil.GetWrappedAchievementNumCriteria(achievementID)
-        achievementInfo.numCompleted = 0
+        achievementInfo.numCompleted = 0  --> track char-specific progress
         achievementInfo.criteriaList = {}
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
@@ -498,8 +498,12 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
             end
         end
 
-        -- Fix achievementInfo.completed - In some areas eg. Azshara it shows completed although it's not.
-        achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
+        -- Note: By default achievementInfo.completed shows you the account-wide
+        -- Loremaster achievement progress. Count completed criteria (above) for
+        -- user-specific progress.
+        if ns.settings.showCharSpecificProgress then
+            achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
+        end
 
         self.achievements[achievementID] = achievementInfo
         debug:print(self, "> Added achievementInfo:", achievementID, achievementInfo.name)
@@ -2719,6 +2723,7 @@ end
 
 function LoremasterPlugin:RefreshAll()
     wipe(nodes)
+    wipe(ZoneStoryUtils.achievements)
     self:Refresh()
 end
 
