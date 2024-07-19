@@ -389,39 +389,40 @@ local LocalCriteriaType = {
     Quest = 27,
 }
 
-LocalLoreUtil.storyQuests = {}
+-- LocalLoreUtil.storyQuests = {}
 
--- Get the criteria info list for given achievement or use LocalLoreUtil.criteriaInfoList.
----@param achievementID number|nil
---
-function LocalLoreUtil:GetStoryQuests(achievementID)
-    local criteriaInfoList = achievementID and LocalAchievementUtil.GetAchievementCriteriaInfoList(achievementID) -- or self.criteriaInfoList
-    if criteriaInfoList then
-        for i, criteriaInfo in ipairs(criteriaInfoList) do
-            if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
-                self:GetStoryQuests(criteriaInfo.assetID)
-            elseif (criteriaInfo.LocalCriteriaType == LocalCriteriaType.Quest) then
-                local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-                tinsert(self.storyQuests, tostring(questID))
-            end
-        end
-    end
-end
+-- -- Get the criteria info list for given achievement or use LocalLoreUtil.criteriaInfoList.
+-- ---@param achievementID number|nil
+-- --
+-- function LocalLoreUtil:GetStoryQuests(achievementID, parentAchievementID)
+--     local criteriaInfoList = achievementID and LocalAchievementUtil.GetAchievementCriteriaInfoList(achievementID) -- or self.criteriaInfoList
+--     if criteriaInfoList then
+--         for i, criteriaInfo in ipairs(criteriaInfoList) do
+--             if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+--                 self:GetStoryQuests(criteriaInfo.assetID)
+--             elseif (criteriaInfo.LocalCriteriaType == LocalCriteriaType.Quest) then
+--                 local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
+--                 tinsert(self.storyQuests, tostring(questID))
+--             end
+--         end
+--     end
+-- end
 
 --------------------------------------------------------------------------------
 
 local loremasterAchievementID = 7520  -- "The Loremaster" (category "Quests")
 
-function LocalLoreUtil:PrepareData()
-    -- "The Loremaster" main achievement 
-    self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(loremasterAchievementID)
+-- function LocalLoreUtil:PrepareData()
+--     -- "The Loremaster" main achievement 
+--     -- self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(loremasterAchievementID)
 
-    -- Add Dragonflight's "Loremaster of the Dragon Isles"
-    local dfCriteriaInfo = GetWrappedCriteriaInfoByAchievementID(16585)
-    tinsert(self.criteriaInfoList, dfCriteriaInfo)
+--     -- -- Add Dragonflight's "Loremaster of the Dragon Isles"
+--     -- -- (Not yet added by Blizzard to the main achievement)                      --> TODO - Check this frequently (latest: 2024-07-18)
+--     -- local dfCriteriaInfo = GetWrappedCriteriaInfoByAchievementID(16585)
+--     -- tinsert(self.criteriaInfoList, dfCriteriaInfo)
 
-    self:GetStoryQuests()
-end
+--     self:GetStoryQuests()
+-- end
 
 --@do-not-package@
 

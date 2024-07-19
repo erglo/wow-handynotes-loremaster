@@ -55,6 +55,7 @@ local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
 local LoreUtil = ns.lore
+LoreUtil.storyQuests = {}
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
@@ -240,7 +241,8 @@ function LoremasterPlugin:OnInitialize()
 
     self:RegisterHooks()    --> TODO - Switch to AceHook for unhooking
 
-    LoreUtil:PrepareData()
+    -- LoreUtil:PrepareData()
+    -- print("num storyQuests:", #LoreUtil.storyQuests)
 end
 
 function LoremasterPlugin:OnEnable()
@@ -490,6 +492,8 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
+                -- Add parent achievement
+                criteriaInfo.parentAchievementID = achievementID
                 tInsert(achievementInfo.criteriaList, criteriaInfo)
             end
         end
