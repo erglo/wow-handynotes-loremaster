@@ -649,9 +649,9 @@ QuestFilterUtils.weeklyQuests = {
     80385, 80386, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
-    61332, 62861, 62862, 62863, -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
-    61982, -- Shadowlands (Kyrian), "Replenish the Reservoir"
-    57301, -- Shadowlands, Maldraxxus, "Callous Concoctions"
+    61332, 62861, 62862, 62863,  -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
+    61982,  -- Shadowlands (Kyrian), "Replenish the Reservoir"
+    57301,  -- Shadowlands, Maldraxxus, "Callous Concoctions"
 }
 -- Noteworthy quests:
 -- 75665 - A Worthy Ally: Loamm Niffen (Weekly, neutral)
@@ -710,8 +710,9 @@ QuestFilterUtils.obsoleteQuests = {
     53031,  -- Battle for Azeroth, Hall of Communion, "The Speaker's Imperative"
     56065,  -- BfA, Nazjatar, (???)
     62699,  -- Shadowlands, Covenant Sanctum (Kyrian)
-    -- 70846,  -- (???) C_TaskQuest.GetQuestInfoByQuestID(70846)
-    72943,  -- Dragonflight, United Again
+    -- 70777,  -- Dragonflight, Waking Shores, "Tarjin the Blind"
+    70846,  -- Dragonflight, Thaldraszus, "The Spark of Ingenuity"
+    72943,  -- Dragonflight, "United Again"
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
 }
@@ -822,6 +823,15 @@ local correctFactionGroupQuests = {
     ["27090"] = QuestFactionGroupID.Horde,  -- Eastern Kingdoms, Western Plaguelands, "Andorhal, Once and For All"
     -- ["25561"] = QuestFactionGroupID.Alliance,  -- Kalimdor, Thousand Needles, "Circle the Wagons... er, Boats"
     ["70050"] = QuestFactionGroupID.Alliance,  -- Eastern Kingdoms, Stormwind City, (Dragonflight), "Chasing Storms"
+    ["69944"] = QuestFactionGroupID.Horde,  -- Kalimdor, Durotar, (Dragonflight), "Chasing Storms"
+    ["13260"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "Takes One to Know One"
+    ["13271"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "A Voice in the Dark"
+    -- ["13390"] = QuestFactionGroupID.Alliance,  -- Northrend, Icecrown, "A Voice in the Dark"
+    ["13275"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "Time to Hide"
+    ["13348"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "Futility"
+    ["13359"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "Where Dragons Fell"
+    ["13361"] = QuestFactionGroupID.Horde,  -- Northrend, Icecrown, "The Hunter and the Prince"
+    ["71025"] = QuestFactionGroupID.Horde,  -- Dragonflight, World PvP, 10.0 Faction Swap Protection [DNT], "Against Overwhelming Odds"
 }
 
 -- Some quest are specified as Neutral, but are Alliance or Horde quests instead.
@@ -1552,7 +1562,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
     local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
     if (numActiveQuestLines > 0) then
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format("+"..tostring(numActiveQuestLines)))
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(SPEC_ACTIVE..HEADER_COLON..L.TEXT_DELIMITER..tostring(numActiveQuestLines)))
     end
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
