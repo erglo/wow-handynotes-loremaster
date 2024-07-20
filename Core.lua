@@ -892,6 +892,7 @@ LocalUtils.QuestTag.BurningLegionWorldQuest = 145
 LocalUtils.QuestTag.BurningLegionInvasionWorldQuest = 146
 LocalUtils.QuestTag.Profession = 267
 LocalUtils.QuestTag.Nzoth = 268
+LocalUtils.QuestTag.WarModePvP = 255
 
 -- Expand the default quest tag atlas map
 -- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
@@ -907,6 +908,7 @@ QUEST_TAG_ATLAS[LocalUtils.QuestTag.Escort] = "nameplates-InterruptShield"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Profession] = "Profession"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.WorldQuest] = "worldquest-tracker-questmarker"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Nzoth] = "worldquest-icon-nzoth"  -- "poi-nzothvision"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.WarModePvP] = "questlog-questtypeicon-pvp"
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
