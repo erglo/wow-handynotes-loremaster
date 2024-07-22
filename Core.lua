@@ -2659,6 +2659,12 @@ end
 
 ----- Worldmap continent pin tooltip handler -----
 
+local function IsContinentPin(continentMapInfo)
+    local isOnContinentMap = continentMapInfo.mapType <= Enum.UIMapType.Continent
+    local isException = additionalMapInfos[continentMapInfo.mapID] ~= nil
+    return isOnContinentMap or isException
+end
+
 -- Function we will call when the mouse enters a HandyNote, you will generally produce a tooltip here.
 function LoremasterPlugin:OnEnter(mapID, coord)
     local node = nodes[mapID] and nodes[mapID][coord]
@@ -2690,7 +2696,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
             mapID = mapID,
             achievementInfo = ZoneStoryUtils:GetAchievementInfo(node.achievementInfo.achievementID),
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
-            isOnContinent = continentMapInfo.mapType <= Enum.UIMapType.Continent,
+            isOnContinent = IsContinentPin(continentMapInfo),
          }
          ZoneStoryUtils:AddZoneStoryDetailsToTooltip(self.tooltip, fakePin)
 
