@@ -35,10 +35,19 @@ local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585  -- (still optional in 10.2.7)
                                                                                 --> TODO - Add to 'utils/worldmap.lua'
 LocalMapUtils.ZUL_DRAK_MAP_ID = 121
 LocalMapUtils.VASHJIR_MAP_ID = 203
+LocalMapUtils.KELPTHAR_FOREST_MAP_ID = 201
+LocalMapUtils.ABYSSAL_DEPTHS_MAP_ID = 204
+LocalMapUtils.SHIMMERING_EXPANSE_MAP_ID = 205
 LocalMapUtils.GILNEAS_MAP_ID = 217
 LocalMapUtils.KRASARANG_WILDS_MAP_ID = 418
 LocalMapUtils.ISLE_OF_THUNDER_MAP_ID = 504
 LocalMapUtils.ORIBOS_MAP_ID = 1670
+
+LocalMapUtils.NAGRAND_MAP_ID = 107      -- Burning Crusade, Outland
+LocalMapUtils.NAGRAND_WOD_MAP_ID = 550  -- Warlords Of Draenor, Draenor         --> FIXME - Change this in 'utils/worldmap.lua'
+LocalMapUtils.SHOLAZAR_BASIN_MAP_ID = 119
+LocalMapUtils.GARRISON_ALLIANCE = 582
+LocalMapUtils.GARRISON_HORDE = 590
 
 LocalMapUtils.BLASTED_LANDS_MAP_ID = 17
 LocalMapUtils.DARKSHORE_MAP_ID = 62
@@ -49,13 +58,19 @@ LocalMapUtils.TEROKKAR_FOREST_MAP_ID = 108
 LocalMapUtils.ICECROWN_MAP_ID = 118
 LocalMapUtils.MOUNT_HYJAL_MAP_ID = 198
 LocalMapUtils.SILITHUS_MAP_ID = 81
-LocalMapUtils.ULDUM_BFA_MAP_ID = 1527
-LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID = 1530
+LocalMapUtils.ULDUM_MAP_ID = 249     -- Cataclysm
+LocalMapUtils.ULDUM_BFA_MAP_ID = 1527   -- Battle for Azeroth
+-- LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_MAP_ID = 390    -- Mists of Pandaria
+LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID = 1530  -- Battle for Azeroth
 LocalMapUtils.STRANGLETHORN_MAP_ID = 224
+LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID = 50
+LocalMapUtils.CAPE_OF_STRANGLETHORN_MAP_ID = 210
+LocalMapUtils.DALARAN_LEGION_MAP_ID = 627
                                                                                 --> TODO - Add to 'utils/achievements.lua'
 local BIT_FLAG_ACCOUNT_WIDE_ACHIEVEMENT = 0x20000  --> == 131072
 
 local function IsAccountWideAchievement(achievementFlags)
+    if not achievementFlags then return end
     return bit.band(BIT_FLAG_ACCOUNT_WIDE_ACHIEVEMENT, achievementFlags) ~= 0
 end
 
@@ -69,33 +84,36 @@ ns.QuestFactionGroupID = QuestFactionGroupID
 
 --------------------------------------------------------------------------------
 
-local LocalLoreUtil = {}  -- {debug=true, debug_prefix="LORE:"}                 --> TODO: Include debugging tools
+local LocalLoreUtil = {}
 ns.lore = LocalLoreUtil
 
 LocalLoreUtil.OptionalAchievements = {
-    LOREMASTER_OF_THE_DRAGON_ISLES_ID,  -- Dragonflight
-    15325, 15638, 17739, 19026,
+    -- LOREMASTER_OF_THE_DRAGON_ISLES_ID,
+    15325, 15638, 17739, 19026, 16406,  -- Dragonflight
+    15515,
     14961, 15259,                       -- Shadowlands
     13553, 13700, 13709, 13710, 13791,  -- Battle for Azeroth
     12479, 12891, 13466, 13467, 14157,
     13283, 13284, 13925, 13924, 13517,
     14153, 14154, 12480, 13049, 13251,
-    10617, 11546, 12066,                -- Legion
+    10617, 11546, 12066, 11240,         -- Legion
      9491,  9492,                       -- Draenor
      9606,  9602, 10265, 10072,
      9607,  9605,  9674,  9615,
      7928,  7929,  8099,                -- Pandaria
      5859,                              -- Cataclysm
      1596,                              -- Northrend
-      940,                              -- Eastern Kingdoms
+      941,   940,   939,   938,         -- Nesingwary quests
 }
 --[[
 Notes:
     -- Dragonflight
-    16585 --> "Loremaster of the Dragon Isles" (still optional in 10.2.7)
     19026 --> "Defenders of the Dream" (Emerald Dream storylines)
     17739 --> "Embers of Neltharion" (Zaralek Cavern storylines)
+    16585 --> "Loremaster of the Dragon Isles" (still optional in 10.2.7)
+    16406 --> "All Sides of the Story"
     15638 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Horde)
+    15515 --> "Path to Enlightenment" (Zaralek Cavern storylines)
     15325 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Alliance)
     -- Shadowlands
     15259 --> "Secrets of the First Ones" (Zereth Mortis storylines)
@@ -111,38 +129,43 @@ Notes:
     11546 --> "Breaching the Tomb" (Legionfall campaign)
     10617 --> "Nightfallen But Not Forgotten" (Suramar Nightfallen relationship)
     -- Draenor
-    9491 --> "The Garrison Campaign" (Alliance)
     9492 --> "The Garrison Campaign" (Horde)
+    9491 --> "The Garrison Campaign" (Alliance)
     -- Pandaria
     8099 --> "Isle of Thunder" (Isle of Thunder storylines)
-    7928 --> "Operation: Shieldwall Campaign" (Alliance, Krasarang Wilds, Operation: Shieldwall storylines)
     7929 --> "Dominance Offensive Campaign" (Horde, Krasarang Wilds, Dominance Offensive storylines)
-    -- Eastern Kingdoms
-    940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests in Stranglethorn)
+    7928 --> "Operation: Shieldwall Campaign" (Alliance, Krasarang Wilds, Operation: Shieldwall storylines)
+    -- Nesingwary quests
+    941 --> "Hemet Nesingwary: The Collected Quests"
+    940 --> "The Green Hills of Stranglethorn" (Eastern Kingdoms, Northern Stranglethorn)
+    939 --> "Hills Like White Elekk" (Outland, Nagrand)
+    938 --> "The Snows of Northrend" (Northrend)
 
     13467 --> "Tides of Vengeance" (Battle for Azeroth War Campaign, Alliance)
     13466 --> "Tides of Vengeance" (Battle for Azeroth War Campaign, Horde)
     12891 --> "A Nation United" (extra storylines for Kul Tiras, Alliance)
     12479 --> "Zandalar Forever!" (extra storylines for Zandalar, Horde)
 
-    13283 or 13284,  -- "Frontline Warrior" (Alliance/Horde)
+    14157,  -- "The Corruptor's End" (Black Empire Campaign storyline)
+    14154,  -- "Defend the Vale" (N'Zoth Assaults in Vale of Eternal Blossoms)
+    14153,  -- "Uldum Under Assault" (N'Zoth Assaults in Uldum)
     13925 or 13924, -- "The Fourth War" (Alliance/Horde)
     13517,  -- (meta, "Two Sides to Every Tale")
-    14153,  -- "Uldum Under Assault" (N'Zoth Assaults in Uldum)
-    14154,  -- "Defend the Vale" (N'Zoth Assaults in Vale of Eternal Blossoms)
-    12480,  -- "A Bargain of Blood" (Horde, Blood Gate storyline in Zuldazar)
-    13049,  -- "The Long Con" (Alliance, Roko the Wandering Merchant's storyline in Tiragarde Sound)
+    13283 or 13284,  -- "Frontline Warrior" (Alliance/Horde)
     13251,  -- "In Teldrassil's Shadow" (Tyrande's Ascension storyline, Alliance, storyline/in-darkest-night-797)
-    14157,  -- "The Corruptor's End" (Black Empire Campaign storyline)
+    13049,  -- "The Long Con" (Alliance, Roko the Wandering Merchant's storyline in Tiragarde Sound)
+    12480,  -- "A Bargain of Blood" (Horde, Blood Gate storyline in Zuldazar)
 
     10265 or 10072,  -- (meta) "Rumble in the Jungle" (Horde/Alliance)
-    9606 or 9602, -- "Frostfire Fridge" (Horde) (Frostfire Ridge bonus objectives), "Shoot For the Moon" (Alliance) (Shadowmoon Valley bonus objectives)
-    9607,  -- (bonus) "Make It a Bonus" (Gorgrond bonus objectives)
-    9605,  -- (bonus) "Arak Star" (Spires of Arak bonus objectives)
     9674,  -- (bonus) "I Want More Talador" (Talador bonus objectives)
     9615,  -- (bonus) "With a Nagrand Cherry On Top" (Nagrand bonus objectives)
+    9607,  -- (bonus) "Make It a Bonus" (Gorgrond bonus objectives)
+    9606 or 9602, -- "Frostfire Fridge" (Horde) (Frostfire Ridge bonus objectives), "Shoot For the Moon" (Alliance) (Shadowmoon Valley bonus objectives)
+    9605,  -- (bonus) "Arak Star" (Spires of Arak bonus objectives)
 
     5859,  -- (extra) "Legacy of Leyara" (Leyara quests in Mount Hyjal and the Molten Front)
+
+    11240,  -- (extra) "Harbinger" ("Unearth the stories of the Harbingers of the Legion's invasion.")
 ]]
 
 function LocalLoreUtil:IsOptionalAchievement(achievementID)
@@ -175,10 +198,10 @@ LocalLoreUtil.AchievementsLocationMap = {
         17739, -- (extra storylines) "Embers of Neltharion"
     },
     [LocalMapUtils.THE_FORBIDDEN_REACH_MAP_ID] = {
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 15638 or 15325,  -- (extra storylines) "Dracthyr, Awaken"
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 15638 or 15325,  -- (extra) "Dracthyr, Awaken"
     },
     [LocalMapUtils.EMERALD_DREAM_MAP_ID] = {
-        19026, -- (extra storylines) "Defenders of the Dream"
+        19026, -- (extra) "Defenders of the Dream"
     },
     ----- Shadowlands -----
     [LocalMapUtils.REVENDRETH_MAP_ID] = {
@@ -198,73 +221,102 @@ LocalLoreUtil.AchievementsLocationMap = {
         14800, -- "Sojourner of Ardenweald" (optional?)
     },
     [LocalMapUtils.THE_MAW_MAP_ID] = {
-        14961, -- (extra storylines) "Chains of Domination"
+        14961, -- (extra) "Chains of Domination"
+        --> Note: This zone has no Loremaster quest by default.
     },
-    -- [LocalMapUtils.ORIBOS_MAP_ID] = {
-    --     -- 15579, -- (extra storyline) "Return to Lordaeron"
-    --     QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1295 or 1294  --> (storylineIDs)
-    -- },
+    [LocalMapUtils.ORIBOS_MAP_ID] = {
+        15579, -- (extra storyline) "Return to Lordaeron"                       --> FIXME - Single achievement (w/o quests criteria, reqQuantity=1, quantity=1)
+        --> TODO - QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1295 or 1294  --> (storylineIDs of "Return to Lordaeron")
+        --> Note: This zone has no Loremaster quest by default.
+    },
     [LocalMapUtils.ZERETH_MORTIS_MAP_ID] = {
-        15259, -- (extra storylines) "Secrets of the First Ones"
-        -- 15515, -- (extra storylines) "Path to Enlightenment"
+        15259, -- (extra) "Secrets of the First Ones"
+        15515, -- (extra) "Path to Enlightenment"
         -- 15514, -- (meta) "Unlocking the Secrets"
+        --> Note: This zone has no Loremaster quest by default.
     },
     ----- Battle for Azeroth -----
     [LocalMapUtils.SILITHUS_MAP_ID] = {
+        4934,  -- (Loremaster) "Silithus Quests"
         14157,  -- "The Corruptor's End" (Black Empire Campaign storyline)
     },
     [LocalMapUtils.DARKSHORE_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 4928,  -- (Loremaster) "Darkshore Quests" (Alliance)
         QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 13251,  -- "In Teldrassil's Shadow" (Tyrande's Ascension storyline, Alliance, storyline/in-darkest-night-797)
+        --> FIXME - Single achievement
     },
     [LocalMapUtils.TIRAGARDE_SOUND_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 12473,  -- (Loremaster) "A Sound Plan" (Alliance)
         QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 13049,  -- "The Long Con" (Alliance, Roko the Wandering Merchant's storyline in Tiragarde Sound)
     },
     [LocalMapUtils.ZULDAZAR_MAP_ID] = {
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 12480,  -- "A Bargain of Blood" (Horde, Blood Gate storyline in Zuldazar)
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 11861,  -- (Loremaster) "The Throne of Zuldazar" (Horde)
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 12480,  -- (optional) "A Bargain of Blood" (Horde, Blood Gate storyline in Zuldazar)
+        --> FIXME - Single achievement
+    },
+    [LocalMapUtils.ULDUM_MAP_ID] = {
+        4872, -- (Loremaster) "Unearthing Uldum" (Cataclysm)
+        14153,  -- "Uldum Under Assault" (Battle for Azeroth) 
+        --> Note: Two mapIDs for Uldum, show same achievements on both.
     },
     [LocalMapUtils.ULDUM_BFA_MAP_ID] = {
-        14153,  -- "Uldum Under Assault"
+        4872, -- (Loremaster) "Unearthing Uldum" (Cataclysm)
+        14153,  -- "Uldum Under Assault" (Battle for Azeroth)
     },
     [LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID] = {
         14154,  -- "Defend the Vale" (N'Zoth Assaults)
+        --> Note: This zone has no Loremaster quest by default.
     },
 
     [LocalMapUtils.NAZJATAR_MAP_ID] = {
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13709 or 13710,  -- (extra storyline) "Unfathomable" (Horde), "Sunken Ambitions" (Alliance)
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13709 or 13710,  -- (extra) "Unfathomable" (Horde), "Sunken Ambitions" (Alliance)
         -- 13638, -- (meta achievement) "Undersea Usurper"  --> "Complete the Nazjatar achievements listed below."
+        --> Note: This zone has no Loremaster quest by default.
     },
     [LocalMapUtils.MECHAGON_ISLAND_MAP_ID] = {
-        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13700 or 13553,  -- (extra storyline) "The Mechagonian Threat"
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 13700 or 13553,  -- (extra) "The Mechagonian Threat"
         13791,  -- (optional) "Making the Mount"
         -- 13541, -- (meta achievement) "Mecha-Done"  --> "Complete the Mechagon achievements listed below."
+        --> Note: This zone has no Loremaster quest by default.
     },
     ----- Legion -----
     [LocalMapUtils.SURAMAR_MAP_ID] = {
         11124, -- (Loremaster) "Good Suramaritan"
-        10617, -- (extra storylines) "Nightfallen But Not Forgotten"
-        -- 11340, -- (meta) "Insurrection"  --> "Complete the Suramar storylines listed below."
+        10617, -- (extra) "Nightfallen But Not Forgotten"
+        -- 11340, -- (extra/meta) "Insurrection"  --> "Complete the Suramar storylines listed below."
     },
+    -- [LocalMapUtils.DALARAN_LEGION_MAP_ID] = {                                --> FIXME - Doesn't appear on the map
+    --     11240,  -- (extra) "Harbinger" (Harbingers' stories)
+    --     --> Note: This zone has no Loremaster quest by default.
+    -- },
     ----- Draenor -----
     [QuestFactionGroupID.Player == QuestFactionGroupID.Horde and LocalMapUtils.FROSTFIRE_RIDGE_MAP_ID or LocalMapUtils.SHADOWMOON_VALLEY_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8671 or 8845,  -- (Loremaster) "You'll Get Caught Up In The... Frostfire!" (Horde), "As I Walk Through the Valley of the Shadow of Moon" (Alliance)
-        -- QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 10074 or 10067-- (extra) "In Pursuit of Gul'dan" (Garrison Campaign chapters)
-        -- QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9529 or 9528,  -- (optional) "On the Shadow's Trail" (Horde/Alliance)
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9606 or 9602, -- "Frostfire Fridge" (Horde) (Frostfire Ridge bonus objectives), "Shoot For the Moon" (Alliance) (Shadowmoon Valley bonus objectives)
     },
+    -- [QuestFactionGroupID.Player == QuestFactionGroupID.Horde and LocalMapUtils.GARRISON_HORDE or LocalMapUtils.GARRISON_ALLIANCE] = {
+    --     QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 10074 or 10067,  -- (extra) "In Pursuit of Gul'dan" (Garrison Campaign chapters)
+    --     QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 9529 or 9528,  -- (optional) "On the Shadow's Trail" (Horde/Alliance)
+    -- },                                                                       --> FIXME - Doesn't appear on the map
     [LocalMapUtils.GORGROND_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8924 or 8923,  -- (Loremaster) "Putting the Gore in Gorgrond" (Horde/Alliance)
         9607,  -- (bonus) "Make It a Bonus" (Gorgrond bonus objectives)
     },
     [LocalMapUtils.SPIRES_OF_ARAK_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8926 or 8925,  -- (Loremaster) "Between Arak and a Hard Place" (Horde/Alliance)
         9605,  -- (bonus) "Arak Star" (Spires of Arak bonus objectives)
     },
     [LocalMapUtils.TALADOR_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8919 or 8920,  -- (Loremaster) "Don't Let the Tala-door Hit You on the Way Out" (Horde/Alliance)
         9674,  -- (bonus) "I Want More Talador" (Talador bonus objectives)
     },
-    [LocalMapUtils.NAGRAND_MAP_ID] = {
+    [LocalMapUtils.NAGRAND_WOD_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 8928 or 8927,  -- (Loremaster) "Nagrandeur" (Horde/Alliance)
         9615,  -- (bonus) "With a Nagrand Cherry On Top" (Nagrand bonus objectives)
     },
     [LocalMapUtils.TANAAN_JUNGLE_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 10265 or 10072,  -- (meta) "Rumble in the Jungle" (Horde/Alliance)
+        --> Note: This zone has no Loremaster quest by default.
     },
     ----- Pandaria -----
     [LocalMapUtils.KRASARANG_WILDS_MAP_ID] = {
@@ -274,6 +326,7 @@ LocalLoreUtil.AchievementsLocationMap = {
     [LocalMapUtils.ISLE_OF_THUNDER_MAP_ID] = {
         8099, -- (extra storylines) "Isle of Thunder"
         -- 8121, -- (meta) "Stormbreaker"  --> "Complete the Isle of Thunder achievements listed below.""
+        --> Note: This zone has no Loremaster quest by default.
     },
     ----- Cataclysm -----
     [LocalMapUtils.MOUNT_HYJAL_MAP_ID] = {
@@ -283,19 +336,33 @@ LocalLoreUtil.AchievementsLocationMap = {
     },
     ----- Northrend -----
     [LocalMapUtils.ZUL_DRAK_MAP_ID] = {
-        36, -- "The Empire of Zul'Drak" (Loremaster)
-        1596, -- (extra storyline) "Guru of Drakuru"
+        36, -- (Loremaster) "The Empire of Zul'Drak"
+        1596, -- (extra) "Guru of Drakuru"
+    },
+    [LocalMapUtils.SHOLAZAR_BASIN_MAP_ID] = {
+        39, -- (Loremaster) "Into the Basin"
+        938,  -- (optional) "The Snows of Northrend" (Hemet Nesingwary quests)  --> FIXME - Single achievement
+    },
+    ----- Outland -----
+    [LocalMapUtils.NAGRAND_MAP_ID] = {
+        QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1273 or 1192,  -- (Loremaster) "Nagrand Slam" (Horde/Alliance)
+        939,  -- (optional) "Hills Like White Elekk" (Hemet Nesingwary quests)  --> FIXME - Single achievement
     },
     ----- Eastern Kingdoms -----
+    [LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID] = {
+        4906,  -- (Loremaster) "Northern Stranglethorn Quests"
+        940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests)  --> FIXME - Single achievement
+    },
     [LocalMapUtils.STRANGLETHORN_MAP_ID] = {
-        4906, -- (Loremaster) "Northern Stranglethorn Quests"
-        940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests in Stranglethorn)
+        4906,  -- (Loremaster) "Northern Stranglethorn Quests"
+        4905,  -- (Loremaster) "Cape of Stranglethorn Quests"
     },
 
     ----- Continents (Loremaster Achievements) -----
 
     [LocalMapUtils.DRAGON_ISLES_MAP_ID] = {
         16585, -- "Loremaster of the Dragon Isles"
+        16406,  -- "All Sides of the Story"
         -- 19790, -- (meta) "The Archives Called, You Answered"
     },
     [LocalMapUtils.THE_SHADOWLANDS_MAP_ID] = {
@@ -337,6 +404,7 @@ LocalLoreUtil.AchievementsLocationMap = {
     },
     [LocalMapUtils.OUTLAND_MAP_ID] = {
         1262, -- "Loremaster of Outland"
+        941,  -- (optional) "Hemet Nesingwary: The Collected Quests"
     },
     [LocalMapUtils.EASTERN_KINGDOMS_MAP_ID] = {
         1676, -- "Loremaster of Eastern Kingdoms"
@@ -347,7 +415,6 @@ LocalLoreUtil.AchievementsLocationMap = {
     [LocalMapUtils.AZEROTH_MAP_ID] = {
         1678, -- "Loremaster of Kalimdor"
         1676, -- "Loremaster of Eastern Kingdoms"
-        --> TODO - 941,  -- (optional) "Hemet Nesingwary: The Collected Quests" (Hemet Nesingwary quests)
     },
 }
 
@@ -476,7 +543,7 @@ TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 
 Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievementID
 -- Test_GetWrappedCriteriaInfoByAchievementID(16585)  --> flags=131072
--- Test_GetWrappedCriteriaInfoByAchievementID(940)
+-- Test_GetWrappedCriteriaInfoByAchievementID(15579)
 
 Test_PrepareData = function() return LocalLoreUtil:PrepareData() end
 
@@ -566,16 +633,5 @@ LocalLoreUtil.LoremasterAchievementsLocationMap = {
     ----- Northrend -----
     -- (Single line description, must be linked to a quest or a questline)
     --> 547,  -- (extra) "Veteran of the Wrathgate" (Dragonblight quests)
-    --> 938,  -- (optional) "The Snows of Northrend" (Hemet Nesingwary quests in Northrend)
-
-    ----- Outland (Scherbenwelt) -----
-    -- (Single line description, must be linked to a quest or a questline)
-    -- [107] = { --> Nagrand
-    --     939, -- (optional) "Hills Like White Elekk" (Hemet Nesingwary quests in Nagrand, Outland)
-    -- },
-
-    ----- Eastern Kingdoms -----
-    --> 940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests in Stranglethorn)
 }
-
 --@end-do-not-package@

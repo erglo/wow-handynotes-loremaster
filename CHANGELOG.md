@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Tooltip: added the Blizzard icon to indicate account-wide achievements.
 * Quest Type Tags: added tag icon for War Mode PvP quests.
 * Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
-* Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement)
+* Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement).
 
 ### Changed
 

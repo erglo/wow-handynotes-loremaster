@@ -2447,7 +2447,6 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
     [LocalMapUtils.THALDRASZUS_MAP_ID] = { x = 0.03, y = 0.02 },
     [LocalMapUtils.TIRAGARDE_SOUND_MAP_ID] = { x = 0.08, y = -0.04 },
     [LocalMapUtils.VALSHARAH_MAP_ID] = { x = 0, y = -0.01 },
-    -- [1527] = { x = -0.02, y = 0 }, -- Uldum (past)
     [LocalMapUtils.ZARALEK_CAVERN_MAP_ID] = { x = -0.025, y = -0.01 },
 }
 
@@ -2499,8 +2498,9 @@ local additionalMapInfos = {
     [LocalMapUtils.EASTERN_KINGDOMS_MAP_ID] = {LocalMapUtils.GILNEAS_MAP_ID},
     [LocalMapUtils.KUL_TIRAS_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
     [LocalMapUtils.NAZJATAR_MAP_ID] = {LocalMapUtils.ZANDALAR_MAP_ID, LocalMapUtils.KUL_TIRAS_MAP_ID},
+    [LocalMapUtils.STRANGLETHORN_MAP_ID] = {LocalMapUtils.CAPE_OF_STRANGLETHORN_MAP_ID, LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID},
     [LocalMapUtils.THE_SHADOWLANDS_MAP_ID] = {LocalMapUtils.ORIBOS_MAP_ID},
-    [LocalMapUtils.VASHJIR_MAP_ID] = {201, 204, 205},                           --> TODO - Add to 'utils/worldmap.lua'
+    [LocalMapUtils.VASHJIR_MAP_ID] = {LocalMapUtils.KELPTHAR_FOREST_MAP_ID, LocalMapUtils.ABYSSAL_DEPTHS_MAP_ID, LocalMapUtils.SHIMMERING_EXPANSE_MAP_ID},
     [LocalMapUtils.ZANDALAR_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
 }
 
@@ -2637,7 +2637,7 @@ function LoremasterPlugin:GetNodes2(uiMapID, minimap)
             ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
             LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         end
-        if (mapInfo.mapType <= Enum.UIMapType.Continent or tContains({LocalMapUtils.VASHJIR_MAP_ID, LocalMapUtils.NAZJATAR_MAP_ID}, mapID) ) then
+        if (mapInfo.mapType <= Enum.UIMapType.Continent or tContains({LocalMapUtils.VASHJIR_MAP_ID, LocalMapUtils.NAZJATAR_MAP_ID, LocalMapUtils.STRANGLETHORN_MAP_ID}, mapID) ) then
             ns.activeContinentMapInfo = mapInfo
             -- ns.testDB = DBUtil:GetInitDbCategory("TEST_Zones")
             SetContinentNodes(mapInfo)
