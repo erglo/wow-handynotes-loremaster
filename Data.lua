@@ -91,7 +91,7 @@ LocalLoreUtil.OptionalAchievements = {
     -- LOREMASTER_OF_THE_DRAGON_ISLES_ID,
     15325, 15638, 17739, 19026, 16406,  -- Dragonflight
     15515,
-    14961, 15259,                       -- Shadowlands
+    14961, 15259, 15579,                -- Shadowlands
     13553, 13700, 13709, 13710, 13791,  -- Battle for Azeroth
     12479, 12891, 13466, 13467, 14157,
     13283, 13284, 13925, 13924, 13517,
@@ -117,6 +117,7 @@ Notes:
     15325 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Alliance)
     -- Shadowlands
     15259 --> "Secrets of the First Ones" (Zereth Mortis storylines)
+    15579 --> "Return to Lordaeron" (extra storyline)
     14961 --> "Chains of Domination" (The Maw storylines)
     -- Battle for Azeroth
     13791 --> "Making the Mount" (Mechaspider storyline in Mechagon)
@@ -225,7 +226,7 @@ LocalLoreUtil.AchievementsLocationMap = {
         --> Note: This zone has no Loremaster quest by default.
     },
     [LocalMapUtils.ORIBOS_MAP_ID] = {
-        15579, -- (extra storyline) "Return to Lordaeron"                       --> FIXME - Single achievement (w/o quests criteria, reqQuantity=1, quantity=1)
+        15579, -- (extra storyline) "Return to Lordaeron"
         --> TODO - QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1295 or 1294  --> (storylineIDs of "Return to Lordaeron")
         --> Note: This zone has no Loremaster quest by default.
     },
@@ -243,7 +244,6 @@ LocalLoreUtil.AchievementsLocationMap = {
     [LocalMapUtils.DARKSHORE_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 4928,  -- (Loremaster) "Darkshore Quests" (Alliance)
         QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 13251,  -- "In Teldrassil's Shadow" (Tyrande's Ascension storyline, Alliance, storyline/in-darkest-night-797)
-        --> FIXME - Single achievement
     },
     [LocalMapUtils.TIRAGARDE_SOUND_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Alliance and 12473,  -- (Loremaster) "A Sound Plan" (Alliance)
@@ -252,7 +252,6 @@ LocalLoreUtil.AchievementsLocationMap = {
     [LocalMapUtils.ZULDAZAR_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 11861,  -- (Loremaster) "The Throne of Zuldazar" (Horde)
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 12480,  -- (optional) "A Bargain of Blood" (Horde, Blood Gate storyline in Zuldazar)
-        --> FIXME - Single achievement
     },
     [LocalMapUtils.ULDUM_MAP_ID] = {
         4872, -- (Loremaster) "Unearthing Uldum" (Cataclysm)
@@ -341,17 +340,17 @@ LocalLoreUtil.AchievementsLocationMap = {
     },
     [LocalMapUtils.SHOLAZAR_BASIN_MAP_ID] = {
         39, -- (Loremaster) "Into the Basin"
-        938,  -- (optional) "The Snows of Northrend" (Hemet Nesingwary quests)  --> FIXME - Single achievement
+        938,  -- (optional) "The Snows of Northrend" (Hemet Nesingwary quests)
     },
     ----- Outland -----
     [LocalMapUtils.NAGRAND_MAP_ID] = {
         QuestFactionGroupID.Player == QuestFactionGroupID.Horde and 1273 or 1192,  -- (Loremaster) "Nagrand Slam" (Horde/Alliance)
-        939,  -- (optional) "Hills Like White Elekk" (Hemet Nesingwary quests)  --> FIXME - Single achievement
+        939,  -- (optional) "Hills Like White Elekk" (Hemet Nesingwary quests)
     },
     ----- Eastern Kingdoms -----
     [LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID] = {
         4906,  -- (Loremaster) "Northern Stranglethorn Quests"
-        940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests)  --> FIXME - Single achievement
+        940,  -- (optional) "The Green Hills of Stranglethorn" (Hemet Nesingwary quests)
     },
     [LocalMapUtils.STRANGLETHORN_MAP_ID] = {
         4906,  -- (Loremaster) "Northern Stranglethorn Quests"
@@ -453,12 +452,12 @@ local function GetWrappedCriteriaInfoByAchievementID(achievementID, criteriaType
     return criteriaInfo
 end
 
--- REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>
+-- REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>      --> TODO - Add to 'utils/worldmap.lua'
 --
-local LocalCriteriaType = {
-    Achievement = 8,
-    Quest = 27,
-}
+-- local LocalCriteriaType = {
+--     Achievement = 8,
+--     Quest = 27,
+-- }
 
 -- LocalLoreUtil.storyQuests = {}
 
@@ -477,20 +476,6 @@ local LocalCriteriaType = {
 --             end
 --         end
 --     end
--- end
-
---------------------------------------------------------------------------------
-
--- function LocalLoreUtil:PrepareData()
---     -- "The Loremaster" main achievement 
---     -- self.criteriaInfoList = LocalAchievementUtil.GetAchievementCriteriaInfoList(THE_LOREMASTER_ID)
-
---     -- -- Add Dragonflight's "Loremaster of the Dragon Isles"
---     -- -- (Not yet added by Blizzard to the main achievement)                      --> TODO - Check this frequently (latest: 2024-07-18)
---     -- local dfCriteriaInfo = GetWrappedCriteriaInfoByAchievementID(16585)
---     -- tinsert(self.criteriaInfoList, dfCriteriaInfo)
-
---     self:GetStoryQuests()
 -- end
 
 --------------------------------------------------------------------------------
@@ -543,7 +528,6 @@ TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 
 Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievementID
 -- Test_GetWrappedCriteriaInfoByAchievementID(16585)  --> flags=131072
--- Test_GetWrappedCriteriaInfoByAchievementID(15579)
 
 Test_PrepareData = function() return LocalLoreUtil:PrepareData() end
 

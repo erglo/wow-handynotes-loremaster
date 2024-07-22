@@ -1,7 +1,6 @@
 (A) Add world map button @worldMapButton +map +button
 (B) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip. @tooltip +map +pin +zoneStory
 (C) Check if possible, auto-scroll tooltip to quest @tooltip +map +pin
-(D) Add "requirement for" other achievement info. @tooltip +continent +achievement +data
 Track World Quests for eg. "Archive von Azeroth - Repeatable WQs" @hooks +map +pin
 Add meta achievements to data (???). @data +achievement
 Add right-click menu to continent pin @clickHandler +map +pin

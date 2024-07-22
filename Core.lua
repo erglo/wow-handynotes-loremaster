@@ -575,7 +575,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
 
     -- Chapter status
-    LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    if not TableIsEmpty(achievementInfo.criteriaList) then
+        LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+    else
+        -- Show description for single achievements.
+        LibQTipUtil:AddDescriptionLine(tooltip, achievementInfo.description, 0)
+    end
 
     -- Chapter list
     if (not pin.isOnContinent and GetCollapseTypeModifier(achievementInfo.completed, "collapseType_zoneStory")) or
