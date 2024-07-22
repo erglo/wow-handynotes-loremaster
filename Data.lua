@@ -58,9 +58,9 @@ LocalMapUtils.TEROKKAR_FOREST_MAP_ID = 108
 LocalMapUtils.ICECROWN_MAP_ID = 118
 LocalMapUtils.MOUNT_HYJAL_MAP_ID = 198
 LocalMapUtils.SILITHUS_MAP_ID = 81
-LocalMapUtils.ULDUM_MAP_ID = 249     -- Cataclysm
+LocalMapUtils.ULDUM_MAP_ID = 249        -- Cataclysm
 LocalMapUtils.ULDUM_BFA_MAP_ID = 1527   -- Battle for Azeroth
--- LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_MAP_ID = 390    -- Mists of Pandaria
+LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_MAP_ID = 390       -- Mists of Pandaria
 LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID = 1530  -- Battle for Azeroth
 LocalMapUtils.STRANGLETHORN_MAP_ID = 224
 LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID = 50
@@ -256,11 +256,16 @@ LocalLoreUtil.AchievementsLocationMap = {
     [LocalMapUtils.ULDUM_MAP_ID] = {
         4872, -- (Loremaster) "Unearthing Uldum" (Cataclysm)
         14153,  -- "Uldum Under Assault" (Battle for Azeroth) 
-        --> Note: Two mapIDs for Uldum, show same achievements on both.
+        --> Note: Two mapIDs for Uldum, do show same achievements on both.
     },
     [LocalMapUtils.ULDUM_BFA_MAP_ID] = {
         4872, -- (Loremaster) "Unearthing Uldum" (Cataclysm)
         14153,  -- "Uldum Under Assault" (Battle for Azeroth)
+    },
+    [LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_MAP_ID] = {
+        14154,  -- "Defend the Vale" (N'Zoth Assaults)
+        --> Note: This zone has no Loremaster quest by default.
+        --> Note: Two mapIDs for Vale of Eternal Blossoms, do show same achievements on both.
     },
     [LocalMapUtils.VALE_OF_ETERNAL_BLOSSOMS_BFA_MAP_ID] = {
         14154,  -- "Defend the Vale" (N'Zoth Assaults)

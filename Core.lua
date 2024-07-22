@@ -492,8 +492,6 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
-                -- Add parent achievement
-                criteriaInfo.parentAchievementID = achievementID
                 tInsert(achievementInfo.criteriaList, criteriaInfo)
             end
         end
@@ -504,6 +502,9 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         if ns.settings.showCharSpecificProgress then
             achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
         end
+
+        -- Add some additional values
+        achievementInfo.isOptionalAchievement = LoreUtil:IsOptionalAchievement(achievementID)
 
         self.achievements[achievementID] = achievementInfo
         debug:print(self, "> Added achievementInfo:", achievementID, achievementInfo.name)
@@ -528,7 +529,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID or pin.achievementID
     local is2nd = pin.achievementID == pin.achievementID2
-    local achievementInfo = pin.achievementInfo or self:GetAchievementInfo(storyAchievementID)
+    local achievementInfo = self:GetAchievementInfo(storyAchievementID)
 
     if not achievementInfo then return false end
 
@@ -551,7 +552,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if not pin.isOnContinent then
         local achievementNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE
         local achievementName = CONTENT_TRACKING_ACHIEVEMENT_FORMAT:format(achievementInfo.name)
-        achievementName = LoreUtil:IsOptionalAchievement(storyAchievementID) and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
+        achievementName = achievementInfo.isOptionalAchievement and achievementName..L.TEXT_DELIMITER..AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL or achievementName
         LibQTipUtil:AddNormalLine(tooltip, achievementNameTemplate:format(achievementName))
     else
         local achievementHeaderNameTemplate = achievementInfo.completed and L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE or L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE
@@ -563,7 +564,6 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     -- earnedBy Info
     if (not StringIsEmpty(achievementInfo.earnedBy) and not achievementInfo.wasEarnedByMe) then
         LibQTipUtil:AddNormalLine(tooltip, ACHIEVEMENT_EARNED_BY:format(HIGHLIGHT(achievementInfo.earnedBy)))
-        -- LibQTipUtil:AddNormalLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED)
     end
 
     -- Parent achievement
@@ -573,6 +573,10 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         local parentAchievementName = HIGHLIGHT(parentAchievementInfo and parentAchievementInfo.name or tostring(parentAchievementID))
         LibQTipUtil:AddNormalLine(tooltip, "Part of: "..parentAchievementName) --> TODO - L10n
     end
+
+    -- if LoreUtil:IsAccountWideAchievement(achievementInfo.flags) then
+    --     LibQTipUtil:AddDescriptionLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED, 0)
+    -- end
 
     -- Chapter status
     if not TableIsEmpty(achievementInfo.criteriaList) then
@@ -620,7 +624,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                 end
             end
         end
-    else
+    elseif not TableIsEmpty(achievementInfo.criteriaList) then
         local textTemplate = (pin.pinTemplate == LocalUtils.QuestPinTemplate) and L.HINT_HOLD_KEY_FORMAT or L.HINT_HOLD_KEY_FORMAT_HOVER
         textTemplate = (pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) and L.HINT_VIEW_ACHIEVEMENT_CRITERIA or textTemplate
         LibQTipUtil:AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
@@ -1962,7 +1966,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- CampaignTooltip:SetScale(0.6)                                        --> TODO - Add to options
     -- GetDefaultScale()  --> 0.639999
 
-    -- Content tooltips
+    -- Custom content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
         QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestline", 1, "LEFT")
         QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
@@ -2476,8 +2480,7 @@ local function GetTextureInfoFromAtlas(atlasName)
 end
 
 local function GetAchievementTypeIcon(achievementInfo)
-    local isOptionalAchievement = LoreUtil:IsOptionalAchievement(achievementInfo.achievementID)
-    if isOptionalAchievement then
+    if achievementInfo.isOptionalAchievement then
         return achievementInfo.completed and GetTextureInfoFromAtlas(iconOptionalZoneStoryComplete) or GetTextureInfoFromAtlas(iconOptionalZoneStoryIncomplete)
     end
 
@@ -2679,7 +2682,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         end
 
         -- Header: Plugin + zone name
-        local title = LoreUtil:IsOptionalAchievement(node.achievementInfo.achievementID) and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        local title = node.achievementInfo.isOptionalAchievement and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
         title =  LoreUtil:IsAccountWideAchievement(node.achievementInfo.flags) and L.ZONE_NAME_ACCOUNT_ACHIEVEMENT_FORMAT:format(title) or title
         LibQTipUtil:SetTitle(self.tooltip, title)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
