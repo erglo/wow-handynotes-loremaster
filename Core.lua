@@ -489,6 +489,15 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
+                if ns.settings.showCharSpecificProgress then
+                    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                        criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
+                    end
+                    if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+                        local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
+                        criteriaInfo.completed = criteriaAchievementInfo.completed and criteriaAchievementInfo.wasEarnedByMe
+                    end
+                end
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
@@ -580,10 +589,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     -- Chapter status
     if not TableIsEmpty(achievementInfo.criteriaList) then
-        LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+        -- Show the player's name behind chapter status for account-wide achievement display.
+        local suffixText = (not ns.settings.showCharSpecificProgress and not achievementInfo.wasEarnedByMe) and GRAY(L.TEXT_DELIMITER..PARENS_TEMPLATE:format(UnitName("player"))) or ''
+        LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria)..suffixText)
     else
         -- Show description for single achievements.
-        LibQTipUtil:AddDescriptionLine(tooltip, achievementInfo.description, 0)
+        LibQTipUtil:AddDescriptionLine(tooltip, NORMAL_FONT_COLOR:WrapTextInColorCode(achievementInfo.description), 0)
     end
 
     -- Chapter list
@@ -2697,7 +2708,7 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         local continentMapInfo = LocalMapUtils:GetMapInfo(mapID)
          local fakePin = {
             mapID = mapID,
-            achievementInfo = ZoneStoryUtils:GetAchievementInfo(node.achievementInfo.achievementID),
+            achievementInfo = node.achievementInfo,  -- ZoneStoryUtils:GetAchievementInfo(node.achievementInfo.achievementID),
             pinTemplate = LocalUtils.HandyNotesPinTemplate,
             isOnContinent = IsContinentPin(continentMapInfo),
          }
