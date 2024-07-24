@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* Updated TOC file version to `WoW 10.2.7`.
+* Updated TOC file version to `WoW 11.0.0`.
 * World Map: optional zone stories are now displayed in `yellow icons`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.
