@@ -1137,7 +1137,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
         local tagID = tagInfo.tagID
         local tagName = tagInfo.tagName
-        -- Account-wide quest type are usually only shown in the questlog
+        -- Account-wide quest types are usually only shown in the questlog
         if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
             local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
             tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
@@ -1934,9 +1934,18 @@ end
 
 ----------
 
+local candidateMapPinTemplates = {
+    "QuestOfferPinTemplate",
+    -- -- "QuestPinTemplate",  --> handled in Hook_ActiveQuestPin_OnEnter()
+    -- "ThreatObjectivePinTemplate",
+    -- "BonusObjectivePinTemplate",
+    -- "WorldMap_WorldQuestPinTemplate"
+}
+
 local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
-    if (pin.pinTemplate ~= LocalUtils.StorylineQuestPinTemplate) then return end
+    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
+    -- if (pin == currentPin) then return end
 
     currentPin = pin
 
@@ -2227,10 +2236,25 @@ function LoremasterPlugin:RegisterHooks()
     hooksecurefunc(QuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     -- hooksecurefunc(QuestPinMixin, "OnClick", Hook_QuestPin_OnClick)
 
+    -- Use for testing only!
+    -- hooksecurefunc(LegendHighlightablePoiPinMixin, "OnLegendPinMouseEnter", TestPin_OnEnter)  --> ALL pin templates
+
     debug:print(HookUtils, "Hooking storyline quests...")
-    hooksecurefunc(StorylineQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
-    hooksecurefunc(StorylineQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    hooksecurefunc(StorylineQuestPinMixin, "OnClick", Hook_QuestPin_OnClick)
+    -- Note: "StorylineQuestPinMixin" has been removed in 11.0.0 by Blizzard.
+    hooksecurefunc(QuestOfferPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
+    hooksecurefunc(QuestOfferPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    hooksecurefunc(QuestOfferPinMixin, "OnClick", Hook_QuestPin_OnClick)
+
+    --> TODO - Add this hooks
+    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
+    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
+    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
+    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
 
     -- HandyNotes Hooks
     --> Callback types: <https://www.wowace.com/projects/ace3/pages/ace-db-3-0-tutorial#title-5>
@@ -2795,6 +2819,39 @@ end
 --@do-not-package@
 --------------------------------------------------------------------------------
 
+-- POIButtonUtil.Style
+
+local testCurrentPin = nil
+
+local function TestPin_OnEnter(pin)
+    if not pin then return end
+    if (pin == testCurrentPin) then return end
+
+    testCurrentPin = pin
+
+    print("--> TestPin:", YELLOW(pin.pinTemplate), "-->", pin.questID and pin.questID, pin.isCampaign, pin.isLocalStory)
+    -- if tContains(candidateMapPinTemplates, pin.pinTemplate) then
+    --     -- for k,v in pairs(pin) do
+    --     --     if not tContains({"table", "function"}, type(v)) then
+    --     --         print(k, "-->", v)
+    --     --     end
+    --     -- end
+    --     print("questID/questName:", pin.questID, pin.questName)
+    --     print("pin.isCampaign:/isLocalStory", pin.isCampaign, pin.isLocalStory)
+    --     print("pin.inProgress:", pin.inProgress)
+    --     print("pin.isDaily:", pin.isDaily)
+    --     print("pin.isImportant/isLegendary/isMeta:", pin.isImportant, pin.isLegendary, pin.isMeta)
+    --     print("pin.pinLevel/questSortType:", pin.pinLevel, pin.questSortType)
+    -- end
+
+    local qtype = C_QuestLog.GetQuestType(pin.questID)  --> Enum.QuestTag
+    local questTagInfo = C_QuestLog.GetQuestTagInfo(pin.questID)  --> QuestTagInfo table
+    print("qtype, questTagInfo:", qtype, questTagInfo and questTagInfo.tagID, questTagInfo and questTagInfo.tagName, questTagInfo and questTagInfo.worldQuestType)
+end
+
+--------------------------------------------------------------------------------
+--[[ Tests
+--------------------------------------------------------------------------------
 function Test_WaypointMapPosition()
     -- REF.: { uiMapID = mapID, position = CreateVector2D(x, y), z = z }
     local mapPoint = LocalMapUtils:GetUserWaypoint()
@@ -2807,9 +2864,7 @@ function Test_WaypointMapPosition()
     end
 end
 
---------------------------------------------------------------------------------
---[[ Tests
---------------------------------------------------------------------------------
+-----
 
 function Temp_CountOldActiveQuests()
     local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")

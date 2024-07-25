@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Updated TOC file version to `WoW 11.0.0`.
+* Adjusted code to the many changes Blizzard made in the extension pre-patch.
 * World Map: optional zone stories are now displayed in `yellow icons`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.
