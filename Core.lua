@@ -2497,6 +2497,10 @@ local iconZoneStoryComplete = "common-icon-checkmark"
 local iconZoneStoryIncomplete = "common-icon-redx"
 local iconOptionalZoneStoryComplete = "common-icon-checkmark-yellow"
 local iconOptionalZoneStoryIncomplete = "common-icon-yellowx"
+local iconHiddenCharSpecificComplete = {"common-icon-checkmark-yellow", 0.019, 0.461, 0.99, 1}  --> {atlasName, r, g, b, a}
+local iconHiddenCharSpecificIncomplete = {"common-icon-yellowx", 0.019, 0.461, 0.99, 1}  -- dark green
+-- local iconHiddenCharSpecificIncomplete = {"common-icon-redx", 0.592, 0.137, 0.027, 1}  -- dark red
+-- local iconHiddenCharSpecificComplete = {"common-icon-checkmark-yellow", 0.831, 0, 1, 1}  -- red
 
 local node2Offset = 0.008  -- ns.isWorldMapMaximized and 0.0001 or 0.008
 local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on the map.
@@ -2518,27 +2522,39 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
 
 -- Convert an atlas file to a texture table with coordinates suitable for
 -- HandyNotes map icons.
----@param atlasName string
+---@param atlasData string|table
 ---@return table|nil textureInfo
 --
 -- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/a8e8163c1ebc6f41dd42690aa43dc6de13211c87/HandyNotes.lua#L379C35-L379C35>
 --
-local function GetTextureInfoFromAtlas(atlasName)
+local function GetTextureInfoFromAtlas(atlasData)
+    local atlasName = (type(atlasData) == "table") and atlasData[1] or atlasData
     local atlasInfo = C_Texture.GetAtlasInfo(atlasName)
     if atlasInfo then
-        return {
+        local iconpath = {
             tCoordLeft = atlasInfo.leftTexCoord,
             tCoordRight = atlasInfo.rightTexCoord,
             tCoordTop = atlasInfo.topTexCoord,
             tCoordBottom = atlasInfo.bottomTexCoord,
             icon = atlasInfo.file,
         }
+        if (type(atlasData) == "table") then
+            iconpath.r = atlasData[2]
+            iconpath.g = atlasData[3]
+            iconpath.b = atlasData[4]
+            iconpath.a = atlasData[5] or 1
+        end
+
+        return iconpath
     end
 end
 
 local function GetAchievementTypeIcon(achievementInfo)
     if achievementInfo.isOptionalAchievement then
         return achievementInfo.completed and GetTextureInfoFromAtlas(iconOptionalZoneStoryComplete) or GetTextureInfoFromAtlas(iconOptionalZoneStoryIncomplete)
+    end
+    if LoreUtil:IsHiddenCharSpecificAchievement(achievementInfo.achievementID) then
+        return achievementInfo.completed and GetTextureInfoFromAtlas(iconHiddenCharSpecificComplete) or GetTextureInfoFromAtlas(iconHiddenCharSpecificIncomplete)
     end
 
     return achievementInfo.completed and GetTextureInfoFromAtlas(iconZoneStoryComplete) or GetTextureInfoFromAtlas(iconZoneStoryIncomplete)
