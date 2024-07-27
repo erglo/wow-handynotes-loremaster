@@ -450,20 +450,20 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         width = "double",
                         order = 3,
                     },
-                    char_specific_icons = {
-                        type = "toggle",
-                        name = "Character-Specific Progress",
-                        desc = "By default Blizzard shows you the Loremaster achievements of all your characters. If activated, only the progress of your currently used char will be shown.",
-                        set = function(info, value)
-                            ns.settings[info.arg] = value
-                            LocalOptionUtils:printOption(info.option.name, value)
-                            LoremasterPlugin:RefreshAll()
-                        end,
-                        arg = "showCharSpecificProgress",
-                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
-                        width ="double",
-                        order = 4,
-                    },
+                    -- char_specific_icons = {
+                    --     type = "toggle",
+                    --     name = "Character-Specific Progress",
+                    --     desc = "By default Blizzard shows you the Loremaster achievements of all your characters. If activated, only the progress of your currently used char will be shown.",
+                    --     set = function(info, value)
+                    --         ns.settings[info.arg] = value
+                    --         LocalOptionUtils:printOption(info.option.name, value)
+                    --         LoremasterPlugin:RefreshAll()
+                    --     end,
+                    --     arg = "showCharSpecificProgress",
+                    --     disabled = function() return not ns.settings["showContinentZoneIcons"] end,
+                    --     width ="double",
+                    --     order = 4,
+                    -- },
                     continent_tooltip_group = {
                         type = "group",
                         name = "Tooltip",

@@ -478,6 +478,16 @@ function ZoneStoryUtils:HasZoneStoryInfo(mapID)
     return self.storiesOnMap[mapID] ~= nil
 end
 
+-- local playerName = UnitName("player")
+
+-- local function WasEarnedByMe(achievementInfo)
+--     -- local isAccountWideAchievement = LoreUtil:IsAccountWideAchievement(achievementInfo.flags)
+--     -- local earnedBy = achievementInfo.earnedBy
+--     -- local wasEarnedByMe = achievementInfo.earnedBy == playerName
+--     print(achievementInfo.achievementID, achievementInfo.earnedBy, playerName, achievementInfo.earnedBy == playerName)
+--     return achievementInfo.earnedBy == playerName
+-- end
+
 function ZoneStoryUtils:GetAchievementInfo(achievementID)
     if not achievementID then return end
 
@@ -489,15 +499,18 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
-                if ns.settings.showCharSpecificProgress then
-                    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                        criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
-                    end
-                    if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
-                        local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
-                        criteriaInfo.completed = criteriaAchievementInfo.completed and criteriaAchievementInfo.wasEarnedByMe
-                    end
-                end
+                -- Note: Currently (WoW 11.0.0) using Scouting Maps (toys) messes-up many achievements.
+                -- Sometimes char-specific ones become account or Warband achievements.
+                -- if ns.settings.showCharSpecificProgress then
+                --     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                --         criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
+                --     end
+                --     if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+                --         local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
+                --         criteriaInfo.completed = criteriaAchievementInfo.completed and WasEarnedByMe(achievementInfo)
+                --         -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
+                --     end
+                -- end
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
@@ -508,9 +521,11 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         -- Note: By default achievementInfo.completed shows you the account-wide
         -- Loremaster achievement progress. Count completed criteria (above) for
         -- user-specific progress.
-        if ns.settings.showCharSpecificProgress then
-            achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
-        end
+        -- if ns.settings.showCharSpecificProgress then
+        --     achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
+        --     -- achievementInfo.completed = WasEarnedByMe(achievementInfo)
+        -- end
+        -- achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
 
         -- Add some additional values
         achievementInfo.isOptionalAchievement = LoreUtil:IsOptionalAchievement(achievementID)
@@ -550,6 +565,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         debug:AddDebugLineToLibQTooltip(tooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     end
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text="account: "..tostring(LoreUtil:IsAccountWideAchievement(achievementInfo.flags)).." - earnedBy: "..tostring(achievementInfo.wasEarnedByMe)..", "..tostring(achievementInfo.earnedBy)})
 
     -- Zone name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
@@ -584,14 +600,17 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     end
 
     -- if LoreUtil:IsAccountWideAchievement(achievementInfo.flags) then
-    --     LibQTipUtil:AddDescriptionLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED, 0)
+        -- LibQTipUtil:AddDescriptionLine(tooltip, ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED, 0)
     -- end
+    -- local charName = achievementInfo.wasEarnedByMe and UnitName("player") or achievementInfo.earnedBy or '(?)'
+    -- LibQTipUtil:AddErrorLine(tooltip, ACHIEVEMENT_EARNED_BY:format(charName))
 
     -- Chapter status
     if not TableIsEmpty(achievementInfo.criteriaList) then
         -- Show the player's name behind chapter status for account-wide achievement display.
-        local suffixText = (not ns.settings.showCharSpecificProgress and not achievementInfo.wasEarnedByMe) and GRAY(L.TEXT_DELIMITER..PARENS_TEMPLATE:format(UnitName("player"))) or ''
-        LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria)..suffixText)
+        -- local suffixText = (not ns.settings.showCharSpecificProgress and not achievementInfo.wasEarnedByMe) and GRAY(L.TEXT_DELIMITER..PARENS_TEMPLATE:format(UnitName("player"))) or ''
+        -- LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria)..suffixText)
+        LibQTipUtil:AddHighlightLine(tooltip, QUEST_STORY_STATUS:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
     else
         -- Show description for single achievements.
         LibQTipUtil:AddDescriptionLine(tooltip, NORMAL_FONT_COLOR:WrapTextInColorCode(achievementInfo.description), 0)
@@ -610,6 +629,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                     criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
                 end
             end
+            -- criteriaName = criteriaName..(not StringIsEmpty(criteriaInfo.charName) and L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format(criteriaInfo.charName)) or " (?)")
             if criteriaInfo.completed then
                 LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName))
             else
@@ -2538,7 +2558,6 @@ end
 local additionalMapInfos = {
     [LocalMapUtils.BROKEN_ISLES_MAP_ID] = {LocalMapUtils.ARGUS_MAP_ID},
     [LocalMapUtils.COSMIC_MAP_ID] = {LocalMapUtils.AZEROTH_MAP_ID},
-    [LocalMapUtils.EASTERN_KINGDOMS_MAP_ID] = {LocalMapUtils.GILNEAS_MAP_ID},
     [LocalMapUtils.KUL_TIRAS_MAP_ID] = {LocalMapUtils.NAZJATAR_MAP_ID},
     [LocalMapUtils.NAZJATAR_MAP_ID] = {LocalMapUtils.ZANDALAR_MAP_ID, LocalMapUtils.KUL_TIRAS_MAP_ID},
     [LocalMapUtils.STRANGLETHORN_MAP_ID] = {LocalMapUtils.CAPE_OF_STRANGLETHORN_MAP_ID, LocalMapUtils.NORTHERN_STRANGLETHORN_MAP_ID},
