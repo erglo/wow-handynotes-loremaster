@@ -447,68 +447,24 @@ LocalLoreUtil.AchievementsLocationMap = {
 
 --------------------------------------------------------------------------------
 
--- Convert an achievement to a criteria info table.
----@param achievementID number
----@param criteriaType number|nil
----@return table criteriaInfo
---
---> REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>
---
-local function GetWrappedCriteriaInfoByAchievementID(achievementID, criteriaType)
-    local achievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(achievementID)
-    -- Default return values for GetAchievementInfo(): 
-	-- 1:achievementID, 2:name, 3:points, 4:completed, 5:month, 6:day, 7:year,
-	-- 8:description, 9:flags, 10:icon, 11:rewardText, 12:isGuild,
-	-- 13:wasEarnedByMe, 14:earnedBy, 15:isStatistic
-    local criteriaInfo = {
-        assetID = achievementInfo.achievementID,
-        charName = achievementInfo.wasEarnedByMe and UnitName("player") or achievementInfo.earnedBy,
-        completed = achievementInfo.completed,
-        criteriaID = 0,  -- Not (yet) added by Blizzard
-        criteriaString = achievementInfo.name,
-        criteriaType = criteriaType or 8,  -- 8: Another achievement (achievementID)
-        duration = achievementInfo.completed and 0 or nil,
-        elapsed = achievementInfo.completed and (time() - time({year=achievementInfo.year+2000, month=achievementInfo.month, day=achievementInfo.day})) or nil,
-        eligible = true,
-        flags = achievementInfo.flags,
-        quantity = achievementInfo.completed and 1 or 0,
-        quantityString = achievementInfo.completed and "1" or "0",
-        reqQuantity = 1,
-        -- icon = achievementInfo.icon,
-    }
-
-    return criteriaInfo
-end
-
--- REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>      --> TODO - Add to 'utils/worldmap.lua'
---
--- local LocalCriteriaType = {
+-- -- REF.: <https://wowpedia.fandom.com/wiki/API_GetAchievementCriteriaInfo>      --> TODO - Add to 'utils/achievements.lua'
+-- -- 
+-- LocalLoreUtil.CriteriaType = {
 --     Achievement = 8,
 --     Quest = 27,
 -- }
 
--- LocalLoreUtil.storyQuests = {}
-
--- -- Get the criteria info list for given achievement or use LocalLoreUtil.criteriaInfoList.
--- ---@param achievementID number|nil
--- --
--- function LocalLoreUtil:GetStoryQuests(achievementID, parentAchievementID)
---     local criteriaInfoList = achievementID and LocalAchievementUtil.GetAchievementCriteriaInfoList(achievementID) -- or self.criteriaInfoList
---     if criteriaInfoList then
---         for i, criteriaInfo in ipairs(criteriaInfoList) do
---             if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
---                 self:GetStoryQuests(criteriaInfo.assetID)
---             elseif (criteriaInfo.LocalCriteriaType == LocalCriteriaType.Quest) then
---                 local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
---                 tinsert(self.storyQuests, tostring(questID))
---             end
---         end
---     end
--- end
-
 --------------------------------------------------------------------------------
 
 local achievementParentList = {}  -- {childID = parentID, ...}
+
+-- Note: some achievements combine different zones
+local childParentExceptions = {
+    -- 12455 --> "Westfall & Duskwood Quests" (Alliance, Eastern Kingdoms)      [works]
+    -- 12456 --> "Loch Modan & Wetlands Quests" (Alliance, Eastern Kingdoms)    [needs work-around, why?]
+    [4899] = 12456,  -- Loch Modan Quests (Alliance)
+    [12429] = 12456, -- Wetlands Quests (Alliance)
+}
 
 LocalLoreUtil.numAchievements = 0  -- Keep track of all Loremaster achievements
 
@@ -535,7 +491,7 @@ function LocalLoreUtil:GetParentAchievement(achievementID)
         -- (Not yet added by Blizzard to the main achievement)                  --> TODO - Check this frequently (latest: 2024-07-18)
         FillAchievementParentList(LOREMASTER_OF_THE_DRAGON_ISLES_ID)
     end
-    return achievementParentList[achievementID]
+    return childParentExceptions[achievementID] or achievementParentList[achievementID]
 end
 
 function LocalLoreUtil:HasParentAchievement(achievementID)
@@ -558,9 +514,6 @@ end
 
 TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 -- TestList(7520)
-
-Test_GetWrappedCriteriaInfoByAchievementID = GetWrappedCriteriaInfoByAchievementID
--- Test_GetWrappedCriteriaInfoByAchievementID(16585)  --> flags=131072
 
 --------------------------------------------------------------------------------
 
