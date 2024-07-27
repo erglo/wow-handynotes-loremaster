@@ -444,6 +444,8 @@ end
 ZoneStoryUtils.storiesOnMap = {}  --> { [mapID] = {storyAchievementID, storyAchievementID2, storyMapInfo}, ... }
 ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
 
+local ZoneExceptions = { LocalMapUtils.RUINS_OF_GILNEAS_MAP_ID }
+
 -- Return the achievement ID for given zone.  
 -- **Note:** Shadowlands + Dragonflight have 2 story achievements per zone.
 ---@param mapID number
@@ -454,19 +456,20 @@ ZoneStoryUtils.achievements = {}  --> { [achievementID] = achievementInfo, ... }
 --
 function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
     if not self.storiesOnMap[mapID] then
-        local storyAchievementID, storyAchievementID2, storyMapID = nil, nil, mapID
-        if (LoreUtil.AchievementsLocationMap[mapID] ~= nil) then
-            storyAchievementID, storyAchievementID2 = SafeUnpack(LoreUtil.AchievementsLocationMap[mapID])
-        else
-            storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
+        local storyAchievementID, storyMapID = C_QuestLog.GetZoneStoryInfo(mapID)
+        local achievementMapID = storyMapID or mapID
+        local manualStoryAchievementID, storyAchievementID2 = nil, nil
+        if (LoreUtil.AchievementsLocationMap[achievementMapID] ~= nil) then
+            manualStoryAchievementID, storyAchievementID2 = SafeUnpack(LoreUtil.AchievementsLocationMap[achievementMapID])
         end
-        if not storyAchievementID then return end
+        local achievementID = not tContains(ZoneExceptions, achievementMapID) and storyAchievementID or manualStoryAchievementID  -- Prefer Blizzard's achievements
+        if not achievementID then return end
 
-        local mapInfo = LocalMapUtils:GetMapInfo(storyMapID or mapID)
-        self.storiesOnMap[mapID] = {storyAchievementID, storyAchievementID2, mapInfo}
-        debug:print(self, "Added zone story:", storyAchievementID, storyMapID, mapInfo.name)
+        local mapInfo = LocalMapUtils:GetMapInfo(achievementMapID)
+        self.storiesOnMap[mapID] = {achievementID, storyAchievementID2, mapInfo}
+        debug:print(self, "Added zone story:", achievementID, achievementMapID, mapInfo.name)
         if storyAchievementID2 then
-            debug:print(self, "Added 2nd zone story:", storyAchievementID2, storyMapID, mapInfo.name)
+            debug:print(self, "Added 2nd zone story:", storyAchievementID2, achievementMapID, mapInfo.name)
         end
     end
     if not prepareCache then
@@ -499,18 +502,17 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
-                -- Note: Currently (WoW 11.0.0) using Scouting Maps (toys) messes-up many achievements.
-                -- Sometimes char-specific ones become account or Warband achievements.
-                -- if ns.settings.showCharSpecificProgress then
-                --     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                --         criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
-                --     end
-                --     if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
-                --         local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
-                --         criteriaInfo.completed = criteriaAchievementInfo.completed and WasEarnedByMe(achievementInfo)
-                --         -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
-                --     end
-                -- end
+                -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
+                if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
+                    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                        criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
+                    end
+                    -- if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+                    --     local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
+                    --     criteriaInfo.completed = criteriaAchievementInfo.completed -- and WasEarnedByMe(achievementInfo)
+                    --     -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
+                    -- end
+                end
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
@@ -521,10 +523,10 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         -- Note: By default achievementInfo.completed shows you the account-wide
         -- Loremaster achievement progress. Count completed criteria (above) for
         -- user-specific progress.
-        -- if ns.settings.showCharSpecificProgress then
-        --     achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
-        --     -- achievementInfo.completed = WasEarnedByMe(achievementInfo)
-        -- end
+        if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
+            achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
+            -- achievementInfo.completed = WasEarnedByMe(achievementInfo)
+        end
         -- achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
 
         -- Add some additional values
@@ -2758,8 +2760,10 @@ function LoremasterPlugin:OnEnter(mapID, coord)
          ZoneStoryUtils:AddZoneStoryDetailsToTooltip(self.tooltip, fakePin)
 
          -- Hint to open achievement frame
-        LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
-        LibQTipUtil:AddInstructionLine(self.tooltip, L.HINT_VIEW_ACHIEVEMENT)
+         if not LoreUtil:IsHiddenCharSpecificAchievement(node.achievementInfo.achievementID) then
+            LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
+            LibQTipUtil:AddInstructionLine(self.tooltip, L.HINT_VIEW_ACHIEVEMENT)
+        end
 
         -- -- local questLines = LocalQuestLineUtils:GetAvailableQuestLines(node.mapInfo.mapID)
         -- -- -- LocalQuestLineUtils.questLineInfos
