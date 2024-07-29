@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 * Tooltip: added an optional text which tells you `who earned` the achievement.
-* Tooltip: added the Blizzard icon to indicate account-wide achievements.
+* Tooltip: added an icon to indicate account-wide achievements.
+* Tooltip: added a line to achievements to show the `parent achievement`.
 * Quest Type Tags: added tag icon for War Mode PvP quests.
 * Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
 * Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement but still lore related).
@@ -17,14 +18,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * World Map: char specific achievement are displayed in `darker green icons`.
-* Adjusted code to the many changes Blizzard made in the extension pre-patch.
-* Updated TOC file version to `WoW 11.0.0`.
+* World Map: updated mouse-over-quest-icon hooks.
 * World Map: optional zone stories are now displayed in `yellow icons`.
+* Adjusted code to the many changes Blizzard made in the extension pre-patch, to support eg. Warband achievements.
+* Updated TOC file version to `WoW 11.0.0`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.
 
 ### Fixed
 
+* Tooltip: quests completed by other chars were not indicated as active.
 * Tooltip: zone story chapter quests were only shown when eg. a chapter wasn't indicated as active.
 * Settings: some zone icons in continent view for optional achievements could not be hidden.
 
