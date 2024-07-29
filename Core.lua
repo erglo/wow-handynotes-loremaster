@@ -703,7 +703,7 @@ end
 QuestFilterUtils.weeklyQuests = {
     70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
     78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
-    80385, 80386, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
+    80385, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
     61332, 62861, 62862, 62863,  -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
@@ -772,6 +772,7 @@ QuestFilterUtils.obsoleteQuests = {
     72943,  -- Dragonflight, "United Again"
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
+    81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
 }
 
 -- 25328 (quest giver is inside a cave @ 27003601)                              --> TODO: Add hint to cave entrance ???
