@@ -181,13 +181,18 @@ function LocalLoreUtil:IsOptionalAchievement(achievementID)
 end
 
 function LocalLoreUtil:IsHiddenCharSpecificAchievement(achievementID)
-    local isOptionalAchievement = LocalLoreUtil:IsOptionalAchievement(achievementID)
+    local exceptions = {
+        40583,  -- "You Are Now Prepared! (char specific hidden copy)" (Added in patch 11.0.0)
+        40582,  -- "Breaching the Tomb (char specific hidden copy)" (Added in 11.0.0)
+        -- 40573,  -- "Shadow of the Betrayer (char specific hidden copy)" (Added in 11.0.0)
+    }
+    local isOptionalAchievement = self:IsOptionalAchievement(achievementID)
     local hasParentAchievement = self:HasParentAchievement(achievementID)
-    return not isOptionalAchievement and not hasParentAchievement
+    return tContains(exceptions, achievementID) or (not isOptionalAchievement and not hasParentAchievement)
 end
 
-function LocalLoreUtil:IsAccountWideAchievement(achievementFlags)
-    return IsAccountWideAchievement(achievementFlags)
+function LocalLoreUtil:IsAccountWideAchievement(achievementInfo)
+    return IsAccountWideAchievement(achievementInfo.flags)
 end
 
 LocalLoreUtil.AchievementsLocationMap = {
@@ -484,7 +489,7 @@ local function FillAchievementParentList(parentAchievementID)
     end
 end
 
-function LocalLoreUtil:GetParentAchievement(achievementID)
+function LocalLoreUtil:GetParentAchievementID(achievementID)
     if TableIsEmpty(achievementParentList) then
         FillAchievementParentList()
         -- Also add Dragonflight's "Loremaster of the Dragon Isles"
@@ -495,7 +500,7 @@ function LocalLoreUtil:GetParentAchievement(achievementID)
 end
 
 function LocalLoreUtil:HasParentAchievement(achievementID)
-    local parentAchievementID = self:GetParentAchievement(achievementID)
+    local parentAchievementID = self:GetParentAchievementID(achievementID)
     return parentAchievementID ~= nil
 end
 

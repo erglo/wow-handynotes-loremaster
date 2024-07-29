@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-* Settings: added an option to toggle between `account-wide and character-specific` achievement progress.
+* Tooltip: added an optional text which tells you `who earned` the achievement.
 * Tooltip: added the Blizzard icon to indicate account-wide achievements.
 * Quest Type Tags: added tag icon for War Mode PvP quests.
 * Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
@@ -16,8 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* Updated TOC file version to `WoW 11.0.0`.
+* World Map: char specific achievement are displayed in `darker green icons`.
 * Adjusted code to the many changes Blizzard made in the extension pre-patch.
+* Updated TOC file version to `WoW 11.0.0`.
 * World Map: optional zone stories are now displayed in `yellow icons`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.

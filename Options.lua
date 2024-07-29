@@ -450,6 +450,15 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         width = "double",
                         order = 3,
                     },
+                    wasEarnedBy_text = {
+                        type = "toggle",
+                        name = "Show Who Earned Achievement",
+                        desc = "Shows you additional information about who earned an achievement."..LocalOptionUtils:AppendExampleText(ACHIEVEMENT_COMPLETED_BY:format(UnitName("player")), nil, nil, nil, BRIGHTBLUE_FONT_COLOR),
+                        arg = "showEarnedByText",
+                        disabled = function() return not ns.settings["showContinentZoneIcons"] end,
+                        width ="double",
+                        order = 4,
+                    },
                     -- char_specific_icons = {
                     --     type = "toggle",
                     --     name = "Character-Specific Progress",
