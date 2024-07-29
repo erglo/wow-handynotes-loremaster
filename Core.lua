@@ -540,14 +540,15 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
 end
 
 function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
-    local isActive = pin.questInfo and pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString
-
-    if (not isActive and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+    if pin.questInfo and (pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString) then
+        return true
+    end
+    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
         local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-        isActive = questID == pin.questID or C_QuestLog.IsQuestFlaggedCompleted(questID)
+        return questID == pin.questID  -- or C_QuestLog.IsQuestFlaggedCompleted(questID)
     end
 
-    return isActive
+    return false
 end
 
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_AchievementUI/Blizzard_AchievementUI.lua> (see "AchievementShield_OnEnter")
@@ -645,27 +646,28 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
                 end
             end
             -- criteriaName = criteriaName..(not StringIsEmpty(criteriaInfo.charName) and L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format(criteriaInfo.charName)) or " (?)")
-            if criteriaInfo.completed then
+            local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
+            -- criteriaName = isActive and criteriaName.."|A:common-icon-backarrow:0:0:2:-1|a" or criteriaName
+            if (criteriaInfo.completed and isActive) then
+                LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
+            elseif criteriaInfo.completed then
                 LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(criteriaName))
+            elseif isActive then
+                LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
             else
-                local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
-                if isActive then
-                    LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
-                else
-                    LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName))
-                end
-                -- Show chapter quests
-                if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                    if (not pin.isOnContinent and (ns.settings.showStoryChapterQuests or debug.isActive)) or
-                       (pin.isOnContinent and ns.settings.showContinentStoryChapterQuests) then
-                        -- Format quest name and optionally show to user
-                        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-                        local questInfo = LocalQuestUtils:GetQuestInfo(questID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
-                        local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
-                        LibQTipUtil:AddDescriptionLine(tooltip, criteriaQuestName, 15)
-                        if not tContains(LoreUtil.storyQuests, tostring(questID)) then
-                            tinsert(LoreUtil.storyQuests, tostring(questID))
-                        end
+                LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(criteriaName))
+            end
+            -- Show chapter quests
+            if (not criteriaInfo.completed and criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                if (not pin.isOnContinent and (ns.settings.showStoryChapterQuests or debug.isActive)) or
+                    (pin.isOnContinent and ns.settings.showContinentStoryChapterQuests) then
+                    -- Format quest name and optionally show to user
+                    local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
+                    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "basic", pin.storyMapInfo and pin.storyMapInfo.mapID or pin.mapID)
+                    local criteriaQuestName = LocalQuestUtils:FormatAchievementQuestName(questInfo, criteriaName)
+                    LibQTipUtil:AddDescriptionLine(tooltip, criteriaQuestName, 15)
+                    if not tContains(LoreUtil.storyQuests, tostring(questID)) then
+                        tinsert(LoreUtil.storyQuests, tostring(questID))
                     end
                 end
             end
