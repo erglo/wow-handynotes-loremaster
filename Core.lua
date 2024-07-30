@@ -61,8 +61,9 @@ local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, 
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
-local QuestUtils_GetQuestName = QuestUtils_GetQuestName
--- local QuestUtils_AddQuestTagLineToTooltip = QuestUtils_AddQuestTagLineToTooltip
+local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
+local QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective
+local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest
 local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
@@ -154,7 +155,7 @@ ns.nodes = nodes
 
 ----- Debugging -----
 
-local DEV_MODE = false
+local DEV_MODE = true
 
 local debug = {}
 debug.isActive = DEV_MODE
@@ -703,7 +704,7 @@ end
 QuestFilterUtils.weeklyQuests = {
     70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
     78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
-    80385, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
+    80385, 80386, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
     66042,  -- Shadowlands, Zereth Mortis, "Patterns Within Patterns"
     63949,  -- Shadowlands, Korthia, "Shaping Fate"
     61332, 62861, 62862, 62863,  -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
@@ -1320,6 +1321,9 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
             questType = C_QuestLog.GetQuestType(questID),
+            isBonusObjective = QuestUtils_IsQuestBonusObjective(questID),
+            isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
+            isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
             -- Keep for further testing
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
@@ -1973,17 +1977,18 @@ end
 ----------
 
 local candidateMapPinTemplates = {
-    "QuestOfferPinTemplate",
-    -- -- "QuestPinTemplate",  --> handled in Hook_ActiveQuestPin_OnEnter()
-    -- "ThreatObjectivePinTemplate",
-    -- "BonusObjectivePinTemplate",
-    -- "WorldMap_WorldQuestPinTemplate"
+    "QuestOfferPinTemplate",            --> handled in Hook_StorylineQuestPin_OnEnter()
+    "ThreatObjectivePinTemplate",       --> handled in Hook_WorldQuestsPin_OnEnter()
+    "BonusObjectivePinTemplate",
+    "WorldMap_WorldQuestPinTemplate",
+    -- "QuestPinTemplate",              --> handled in Hook_ActiveQuestPin_OnEnter()
 }
 
 local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
     -- if (pin == currentPin) then return end
+    if (pin.questInfo and pin.questInfo.questType == 271) then return end  -- daily calling type
 
     currentPin = pin
 
@@ -2203,6 +2208,138 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     ShowAllTooltips()
 end
 
+----------
+
+local function IsRelevantQuest(questInfo)
+    return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
+            questInfo.questTagInfo ~= nil or questInfo.isBonusObjective) --  or questInfo.hasZoneStoryInfo
+end
+
+local function Hook_WorldQuestsPin_OnEnter(pin)
+    if not pin.questID then return end
+    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
+
+    currentPin = pin
+
+    -- Extend quest meta data
+    pin.mapID = pin:GetMap():GetMapID()
+    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not isSameAsPreviousPin then
+        -- Only update (once) when hovering a different quest pin
+        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+    end
+    -- Always update the following info for active quests
+    pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
+    pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
+
+    -- local tagInfo = pin.questInfo.questTagInfo
+    -- print("tagInfo:", tagInfo, tagInfo and tagInfo.tagID, tagInfo and tagInfo.tagName, tagInfo and tagInfo.worldQuestType, pin.questType)
+    -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
+    -- BONUS_OBJECTIVE_BANNER = "Bonusziel";
+
+    -- Ignore basic quests w/o any lore and skip tooltip creation.
+    if not IsRelevantQuest(pin.questInfo) then return end
+
+    -- Create custom tooltip(s) ------------------------------------------------
+
+    -- Note: World Quest quest pins have a timer for reloading and updating the
+    -- tooltip content. The LibQTip tooltip needs to be released before a
+    -- new one can be created. By default this only happens when the mouse
+    -- leaves the World Map pin, so we do this here manually.
+    local preservePin = true
+    Hook_QuestPin_OnLeave(preservePin)
+
+    -- Dev info
+    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
+        debug:CreateDebugQuestInfoTooltip(pin)  --> LibQTip type tooltip
+        SetDebugTooltipAnchorPoint(pin, debug.tooltip, GetAppropriateTooltip())
+        debug.tooltip:Show()
+        return
+    end
+
+    -- Pin tooltip
+    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimaryActive", 1, "LEFT")
+    if not LocalUtils:HasBasicTooltipContent(pin) then
+        PrimaryTooltip:SetPoint(GameTooltip:GetPoint())
+    else
+        -- Needs same anchor point as QuestLineTooltip would have for scrolling
+        PrimaryTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
+    end
+
+    -- Reposition the default tooltip
+    GameTooltip:ClearAllPoints();
+	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, x, y)
+
+    -- Content tooltips
+    if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
+        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestlineActive", 1, "LEFT")
+        QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
+        PrimaryTooltip:ClearAllPoints()
+        PrimaryTooltip:SetPoint("BOTTOMLEFT", QuestLineTooltip, "TOPLEFT")
+    end
+    if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
+        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStoryActive", 1, "LEFT")
+        SetZoneStoryTooltipAnchorPoint()
+    end
+    if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
+        local questLineTooltip = QuestLineTooltip or PrimaryTooltip
+        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaignActive", 1, "LEFT")
+        CampaignTooltip:SetPoint("BOTTOMLEFT", questLineTooltip, "BOTTOMRIGHT")
+    end
+
+    ----- Content -----
+
+    local contentTooltip = QuestLineTooltip or PrimaryTooltip
+
+    debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+
+    -- Quest title
+    LibQTipUtil:SetTitle(PrimaryTooltip, pin.questInfo.questName)
+
+    -- Plugin name
+    if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
+        LibQTipUtil:AddPluginNameLine(PrimaryTooltip)
+    end
+
+    if ShouldShowReadyForTurnInMessage(pin) then
+        if not ns.settings.showPluginName then
+            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
+        end
+        LibQTipUtil:AddInstructionLine(PrimaryTooltip, QUEST_WATCH_QUEST_READY)
+    end
+
+    if ShouldShowQuestType(pin) then
+        if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
+            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
+        end
+        LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+    end
+
+    if LocalUtils:ShouldShowZoneStoryDetails(pin) then
+        local zsTooltip = ZoneStoryTooltip or contentTooltip
+        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
+        ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
+        if pin.achievementID2 then
+            pin.achievementID = pin.achievementID2
+            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
+                LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
+            end
+            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
+        end
+    end
+    if LocalUtils:ShouldShowQuestLineDetails(pin) then
+        LocalQuestLineUtils:AddQuestLineDetailsToTooltip(contentTooltip, pin)
+    end
+    if LocalUtils:ShouldShowCampaignDetails(pin) then
+        local cpTooltip = CampaignTooltip or contentTooltip
+        CampaignUtils:AddCampaignDetailsTooltip(cpTooltip, pin, contentTooltip)
+    end
+
+    -- Waypoint hint - not needed for active quests
+
+    ShowAllTooltips()
+end
+
 -----
 
 local function Hook_QuestPin_OnClick(pin, mouseButton)
@@ -2283,16 +2420,17 @@ function LoremasterPlugin:RegisterHooks()
     hooksecurefunc(QuestOfferPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(QuestOfferPinMixin, "OnClick", Hook_QuestPin_OnClick)
 
-    --> TODO - Add this hooks
-    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
-    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
-    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
-    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
-    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
-    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+    -- Additional hooks
+    debug:print(HookUtils, "Hooking threat-, bonus-, and world quests...")
+    hooksecurefunc(ThreatObjectivePinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)  -- Hook_StorylineQuestPin_OnEnter)
+    hooksecurefunc(ThreatObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+    hooksecurefunc(BonusObjectivePinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)
+    hooksecurefunc(BonusObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+    hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)  -- Hook_StorylineQuestPin_OnEnter)
+    hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
+    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
 
     -- HandyNotes Hooks
     --> Callback types: <https://www.wowace.com/projects/ace3/pages/ace-db-3-0-tutorial#title-5>

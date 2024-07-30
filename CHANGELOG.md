@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+* Tooltip: added support for `World Quests`, `Threat and Bonus Objective Quests`.
 * Tooltip: added an optional text which tells you `who earned` the achievement.
 * Tooltip: added an icon to indicate account-wide achievements.
 * Tooltip: added a line to achievements to show the `parent achievement`.
