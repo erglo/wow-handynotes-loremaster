@@ -64,6 +64,7 @@ local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_Campa
 local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
 local QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective
 local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest
+local QuestUtil_GetWorldQuestAtlasInfo = QuestUtil.GetWorldQuestAtlasInfo
 local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
@@ -155,7 +156,7 @@ ns.nodes = nodes
 
 ----- Debugging -----
 
-local DEV_MODE = true
+local DEV_MODE = false
 
 local debug = {}
 debug.isActive = DEV_MODE
@@ -1044,14 +1045,13 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
             elseif (QUEST_TAG_ATLAS[questInfo.questType] == nil) then
                 -- This quest type is neither part of Blizzard's tag atlas variable, nor have I added it, yet.
-                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName or UNKNOWN))..L.TEXT_DELIMITER..questTitle
             elseif tContains(leftSidedTags, questInfo.questType) then
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 questTitle = iconString..questTitle
             else
                 atlasName = QuestUtils_GetQuestTagAtlas(questInfo.questTagInfo.tagID, questInfo.questTagInfo.worldQuestType)
                 iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(atlasName, 14, 16, 2) or CreateAtlasMarkup(atlasName, 16, 16, 2, -1)
-                -- iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
                 questTitle = questTitle..iconString
             end
         end
@@ -1160,8 +1160,8 @@ end
 local function ShouldIgnoreQuestTypeTag(questInfo)
     if not questInfo.questTagInfo then return true end
 
-    local isKnownQuestTypeTag = QUEST_TAG_DUNGEON_TYPES[questInfo.questTagInfo.tagID] ~= nil
-    local shouldIgnore = questInfo.isOnQuest and isKnownQuestTypeTag
+    local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID)
+    local shouldIgnore = (questInfo.isOnQuest or questInfo.questTagInfo and questInfo.questTagInfo.worldQuestType) and isKnownQuestTypeTag
     if shouldIgnore then debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName) end
 
     return shouldIgnore
@@ -1182,6 +1182,16 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
             tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
             tagName = tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
         end
+        if (tagInfo.worldQuestType ~= nil) then                                 --> TODO - Add to '<utils\libqtip.lua>'
+            local atlas, width, height = QuestUtil_GetWorldQuestAtlasInfo(questInfo.questID, tagInfo, questInfo.isActive)
+            local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
+            LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
+        end
+        -- if (tagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
+        --     local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
+        --     local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
+        --     LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
+        -- end
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
     end
 
@@ -2235,7 +2245,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     -- local tagInfo = pin.questInfo.questTagInfo
     -- print("tagInfo:", tagInfo, tagInfo and tagInfo.tagID, tagInfo and tagInfo.tagName, tagInfo and tagInfo.worldQuestType, pin.questType)
     -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
-    -- BONUS_OBJECTIVE_BANNER = "Bonusziel";
+    -- -- BONUS_OBJECTIVE_BANNER = "Bonusziel";
 
     -- Ignore basic quests w/o any lore and skip tooltip creation.
     if not IsRelevantQuest(pin.questInfo) then return end
@@ -2268,7 +2278,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
 
     -- Reposition the default tooltip
     GameTooltip:ClearAllPoints();
-	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, x, y)
+	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, 0, -1)
 
     -- Content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
@@ -2293,8 +2303,9 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
 
     debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
-    -- Quest title
-    LibQTipUtil:SetTitle(PrimaryTooltip, pin.questInfo.questName)
+    -- Add quest title + adjust tooltip width to the GameTooltip
+    local lineIndex, columnIndex = LibQTipUtil:SetTitle(PrimaryTooltip, '')  -- pin.questInfo.questName)
+    PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
 
     -- Plugin name
     if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then

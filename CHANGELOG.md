@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Tooltip: added an optional text which tells you `who earned` the achievement.
 * Tooltip: added an icon to indicate account-wide achievements.
 * Tooltip: added a line to achievements to show the `parent achievement`.
+* Quest Type Tags: added tag icon support for World Quests.
 * Quest Type Tags: added tag icon for War Mode PvP quests.
 * Quest Type Tags: added tag icon for N'Zoth's Black Empire quests.
 * Zone Story: added manually `more optional zone achievements` (not part of any Loremaster achievement but still lore related).
