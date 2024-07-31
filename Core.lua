@@ -69,6 +69,7 @@ local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGr
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
 local C_Map = C_Map  -- C_TaskQuest
+local C_QuestInfoSystem = C_QuestInfoSystem
 
 local GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR = GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR
 local BRIGHTBLUE_FONT_COLOR = BRIGHTBLUE_FONT_COLOR
@@ -108,8 +109,8 @@ L.GENERIC_FORMAT_FRACTION_STRING = GENERIC_FRACTION_STRING  --> "%d/%d"
 L.ACHIEVEMENT_NOT_COMPLETED_BY  = string_gsub(ACHIEVEMENT_NOT_COMPLETED_BY, "HIGHLIGHT_FONT_COLOR", "BRIGHTBLUE_FONT_COLOR")
 
 L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global string
-L.CATEGORY_NAME_QUESTLINE = "Questline"  -- Questreihe
-L.CATEGORY_NAME_CAMPAIGN = TRACKER_HEADER_CAMPAIGN_QUESTS  --> WoW global string
+L.CATEGORY_NAME_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
+L.CATEGORY_NAME_CAMPAIGN = QUEST_CLASSIFICATION_CAMPAIGN
 
 L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a"
 L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
@@ -1172,9 +1173,20 @@ local function ShouldIgnoreQuestTypeTag(questInfo)
     return shouldIgnore
 end
 
+local classificationIgnoreTable = {
+	-- Enum.QuestClassification.Important,
+	-- Enum.QuestClassification.Legendary,
+	Enum.QuestClassification.Campaign,
+	-- Enum.QuestClassification.Calling,
+	-- Enum.QuestClassification.Meta,
+	-- Enum.QuestClassification.Recurring,
+	-- Enum.QuestClassification.Questline,
+	-- Enum.QuestClassification.Normal,
+}
+
 -- Add daily and weekly quests to known quest types.
-function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
-    local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR
+function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
+    local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
 
     -- Blizzard's default tags
     local tagInfo = questInfo.questTagInfo
@@ -1200,6 +1212,12 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
     end
 
+    -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSystemDocumentation.lua>
+    -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua>
+    -- local classificationInfo = C_QuestInfoSystem.GetQuestClassification(questInfo.questID);
+    -- local classificationString = QuestUtil.GetQuestClassificationString(questInfo.questID)
+    local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
+
     -- Custom tags
     if questInfo.isDaily then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, "DAILY", nil, LineColor)
@@ -1220,6 +1238,10 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
         --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "WEEKLY"
         --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
         -- end
+    end
+    if (classificationID and not tContains(classificationIgnoreTable, classificationID)) then
+        local atlasMarkup = CreateAtlasMarkup(classificationAtlas, 20, 20)
+        LibQTipUtil:AddNormalLine(tooltip, LineColor:WrapTextInColorCode(string.format("%s %s", atlasMarkup, classificationText)))
     end
     if questInfo.isTrivial then
         if questInfo.isLegendary then
@@ -1249,8 +1271,8 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     end
     if questInfo.isBonusObjective then
         local atlas = "questbonusobjective"
-        local atlasMarkup = CreateAtlasMarkup(atlas, 30, 30)
-        LibQTipUtil:AddHighlightLine(tooltip, string.format("%s%s", atlasMarkup, BONUS_OBJECTIVE_BANNER))
+        local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
+        LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, BONUS_OBJECTIVE_BANNER))
     end
     if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Show faction group icon only when no tagInfo provided or not an account quest
@@ -1296,6 +1318,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
             questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),
         }
         if ns.settings.saveRecurringQuests then
             -- Enhance completion flagging for recurring quests
@@ -1344,6 +1367,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
             isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
+            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
             -- Keep for further testing
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
@@ -1358,6 +1382,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
                                                   -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
                                                   questInfo.isImportant, questInfo.isAccountQuest,
                                                   questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
+                                                  questInfo.questClassification ~= Enum.QuestClassification.Normal,
                                                   }, true)
 
         return questInfo
@@ -2028,8 +2053,9 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
-    -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
-    -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
+    -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID), "-->", pin.questInfo.questClassification)
+    -- -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
+    -- print("isDaily:", pin.isDaily, pin.questInfo.isDaily, pin.questInfo.isWeekly, pin.questInfo.isRepeatable)
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2139,6 +2165,9 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     -- Always update the following info for active quests
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
+
+    -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
+    -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2270,7 +2299,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     -- local tagInfo = pin.questInfo.questTagInfo
     -- print("tagInfo:", tagInfo, tagInfo and tagInfo.tagID, tagInfo and tagInfo.tagName, tagInfo and tagInfo.worldQuestType, pin.questType)
     -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
-    -- C_TaskQuest.GetQuestInfoByQuestID(51428)  --> questTitle, factionID, capped, displayAsObjective
+    -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
 
     -- Ignore basic quests w/o any lore and skip tooltip creation.
     if not IsRelevantQuest(pin.questInfo) then return end
