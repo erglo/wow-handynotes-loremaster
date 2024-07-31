@@ -150,6 +150,7 @@ L.SLASHCMD_USAGE = "Usage:"
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
 
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
+local BONUS_OBJECTIVE_BANNER = BONUS_OBJECTIVE_BANNER
 
 local currentPin;  -- Currently hovered worldmap pin
 local nodes = {}
@@ -1246,6 +1247,11 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
     if questInfo.isStory then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
     end
+    if questInfo.isBonusObjective then
+        local atlas = "questbonusobjective"
+        local atlasMarkup = CreateAtlasMarkup(atlas, 30, 30)
+        LibQTipUtil:AddHighlightLine(tooltip, string.format("%s%s", atlasMarkup, BONUS_OBJECTIVE_BANNER))
+    end
     if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Show faction group icon only when no tagInfo provided or not an account quest
         local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
@@ -1316,7 +1322,6 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isReplayedRecently = C_QuestLog.IsQuestReplayedRecently(questID),
-            isThreat = C_QuestLog.IsThreatQuest(questID),
             -- Keep
             isAccountQuest = C_QuestLog.IsAccountQuest(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
@@ -1338,6 +1343,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isBonusObjective = QuestUtils_IsQuestBonusObjective(questID),
             isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
             isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
+            isThreat = C_QuestLog.IsThreatQuest(questID),
             -- Keep for further testing
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
@@ -1926,7 +1932,7 @@ local function ShowAllTooltips()
 end
 
 local function ShouldShowQuestType(pin)
-    local hasTagsToShow = pin.questInfo.hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo)
+    local hasTagsToShow = pin.questInfo.hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo) or pin.questInfo.isBonusObjective
 
     return ns.settings.showQuestType and hasTagsToShow
 end
@@ -2259,7 +2265,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     -- local tagInfo = pin.questInfo.questTagInfo
     -- print("tagInfo:", tagInfo, tagInfo and tagInfo.tagID, tagInfo and tagInfo.tagName, tagInfo and tagInfo.worldQuestType, pin.questType)
     -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
-    -- -- BONUS_OBJECTIVE_BANNER = "Bonusziel";  pin.questInfo.isBonusObjective
+    -- C_TaskQuest.GetQuestInfoByQuestID(51428)  --> questTitle, factionID, capped, displayAsObjective
 
     -- Ignore basic quests w/o any lore and skip tooltip creation.
     if not IsRelevantQuest(pin.questInfo) then return end
