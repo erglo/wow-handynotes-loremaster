@@ -776,6 +776,7 @@ QuestFilterUtils.obsoleteQuests = {
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
     81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
+    78717, 78718, 78719, 7872, 78721, 78722, 79105, 79106, 80321,  -- The War Within (pre-patch), "Visions of Azeroth"
 }
 
 -- 25328 (quest giver is inside a cave @ 27003601)                              --> TODO: Add hint to cave entrance ???
