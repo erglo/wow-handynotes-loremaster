@@ -951,7 +951,7 @@ LocalUtils.QuestTag.WorldQuest = 109
 LocalUtils.QuestTag.BurningLegionWorldQuest = 145
 LocalUtils.QuestTag.BurningLegionInvasionWorldQuest = 146
 LocalUtils.QuestTag.Profession = 267
-LocalUtils.QuestTag.Nzoth = 268
+-- LocalUtils.QuestTag.Threat = 268
 LocalUtils.QuestTag.WarModePvP = 255
 
 -- Expand the default quest tag atlas map
@@ -967,7 +967,7 @@ QUEST_TAG_ATLAS[LocalUtils.QuestTag.Class] = "questlog-questtypeicon-class"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Escort] = "nameplates-InterruptShield"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Profession] = "Profession"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.WorldQuest] = "worldquest-tracker-questmarker"
-QUEST_TAG_ATLAS[LocalUtils.QuestTag.Nzoth] = "worldquest-icon-nzoth"  -- "poi-nzothvision"
+-- QUEST_TAG_ATLAS[LocalUtils.QuestTag.Threat] = "worldquest-icon-nzoth"   -- "Ping_Map_Threat"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.WarModePvP] = "questlog-questtypeicon-pvp"
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
@@ -994,7 +994,7 @@ local QuestTagNames = {
     ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
 }
 
-local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest, LocalUtils.QuestTag.BurningLegionInvasionWorldQuest, LocalUtils.QuestTag.Nzoth}
+local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest, LocalUtils.QuestTag.BurningLegionInvasionWorldQuest, LocalUtils.QuestTag.Threat}
 
 -- Add quest type tags (text or icon) to a quest name.
 function LocalQuestUtils:FormatQuestName(questInfo)
@@ -1047,6 +1047,8 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 -- This quest type is neither part of Blizzard's tag atlas variable, nor have I added it, yet.
                 questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName or UNKNOWN))..L.TEXT_DELIMITER..questTitle
             elseif tContains(leftSidedTags, questInfo.questType) then
+                -- -- Threat Object icons can vary, eg. N'Zoth vs. one of the Shadowlands main factions.
+                -- iconString = questInfo.questTagInfo.isThreat and QuestUtil.GetThreatPOIIcon(questInfo.questTagInfo.questID) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
                 questTitle = iconString..questTitle
             else
@@ -1187,11 +1189,11 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)
             local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
             LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
         end
-        -- if (tagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
-        --     local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
-        --     local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-        --     LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
-        -- end
+        if (tagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
+            local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
+            local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
+            LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
+        end
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
     end
 
@@ -1275,7 +1277,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
             isStory = self:IsStory(questID),
-            -- isThreat = C_QuestLog.IsThreatQuest(questID),
+            isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
             isWeekly = self:IsWeekly(questID),
             -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
@@ -2013,6 +2015,9 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
+    -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
+    -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
+
     -- Create custom tooltip(s) ------------------------------------------------
 
     -- Dev info
@@ -2245,7 +2250,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     -- local tagInfo = pin.questInfo.questTagInfo
     -- print("tagInfo:", tagInfo, tagInfo and tagInfo.tagID, tagInfo and tagInfo.tagName, tagInfo and tagInfo.worldQuestType, pin.questType)
     -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID))
-    -- -- BONUS_OBJECTIVE_BANNER = "Bonusziel";
+    -- -- BONUS_OBJECTIVE_BANNER = "Bonusziel";  pin.questInfo.isBonusObjective
 
     -- Ignore basic quests w/o any lore and skip tooltip creation.
     if not IsRelevantQuest(pin.questInfo) then return end
@@ -3184,11 +3189,34 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 -- CONTINENT = "Kontinent";
 -- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
 
--- GENERIC_FRACTION_STRING = "%d/%d";
 -- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
 -- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
 
 -- QuestMapLog_ShowStoryTooltip(QuestMapFrame)
+
+    -- -- if (pin.questInfo and pin.questInfo.questType == 271) then return end  -- daily calling type
+    -- for k,v in pairs(pin) do
+    --     if not tContains({"function", "table"}, type(v)) then
+    --         print(k, "-->", v)
+    --     end
+    -- end
+
+    --     inProgress
+    --     isAccountCompleted
+    --     isCampaign
+    --     isCombatAllyQuest
+    --     isDaily
+    --     isHidden
+    --     isImportant
+    --     isLegendary
+    --     isLocalStory
+    --     isMeta
+    --     isQuestStart
+    --     mapID
+    --     pinTemplate
+    --     questIcon
+    --     questID
+    --     questName
 
 ]]
 --@end-do-not-package@
