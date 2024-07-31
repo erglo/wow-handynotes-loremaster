@@ -2226,6 +2226,13 @@ end
 
 ----------
 
+local function GetWorldQuestQualityColor(questTagInfo)
+    if not questTagInfo then return NORMAL_FONT_COLOR; end
+
+    local quality = questTagInfo.quality or Enum.WorldQuestQuality.Common
+    return WORLD_QUEST_QUALITY_COLORS[quality].color
+end
+
 local function IsRelevantQuest(questInfo)
     return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
             questInfo.questTagInfo ~= nil or questInfo.isBonusObjective) --  or questInfo.hasZoneStoryInfo
@@ -2310,7 +2317,8 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
     -- Add quest title + adjust tooltip width to the GameTooltip
-    local lineIndex, columnIndex = LibQTipUtil:SetTitle(PrimaryTooltip, '')  -- pin.questInfo.questName)
+    local TitleColor = GetWorldQuestQualityColor(pin.questInfo.questTagInfo)
+    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(PrimaryTooltip, TitleColor, '')  -- pin.questInfo.questName)
     PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
 
     -- Plugin name
