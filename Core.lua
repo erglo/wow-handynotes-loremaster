@@ -1902,6 +1902,11 @@ local function ShowAllTooltips()
         QuestLineTooltip:Show()
     end
 
+    if (PrimaryTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
+        GameTooltip:ClearAllPoints();
+	    GameTooltip:SetPoint("BOTTOMLEFT", PrimaryTooltip, "BOTTOMRIGHT")  --, 0, -1)
+    end
+
     if not QuestLineTooltip and (primaryHeight > screenHeight) then
         PrimaryTooltip:UpdateScrolling()
         PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
