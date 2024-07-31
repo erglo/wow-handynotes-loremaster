@@ -103,6 +103,7 @@ L.CONGRATULATIONS = SPLASH_BOOST_HEADER
 
 L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
 L.TEXT_OPTIONAL = string_gsub(AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL, "|cff777777", NORMAL_FONT_COLOR_CODE)
+L.GENERIC_FORMAT_FRACTION_STRING = GENERIC_FRACTION_STRING  --> "%d/%d"
 
 L.ACHIEVEMENT_NOT_COMPLETED_BY  = string_gsub(ACHIEVEMENT_NOT_COMPLETED_BY, "HIGHLIGHT_FONT_COLOR", "BRIGHTBLUE_FONT_COLOR")
 
@@ -2479,7 +2480,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
             if questLineInfo then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("You've completed %s quests of the %s chapter from the %s campaign.",
-                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
+                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2495,7 +2496,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
             ns:cprintf("You've completed %s quests of the %s questline.",
-                       GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
+                       L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
@@ -2536,7 +2537,7 @@ local function PrintQuestAddedMessage(questInfo)
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
-                           GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
+                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2551,7 +2552,7 @@ local function PrintQuestAddedMessage(questInfo)
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the %s questline.",
-                            GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
+                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
@@ -2640,7 +2641,7 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
-            local criteriaAmount = PARENS_TEMPLATE:format(GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+            local criteriaAmount = PARENS_TEMPLATE:format(L.GENERIC_FORMAT_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
             -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
