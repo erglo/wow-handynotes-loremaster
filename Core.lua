@@ -2236,7 +2236,7 @@ end
 
 local function IsRelevantQuest(questInfo)
     return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
-            questInfo.questTagInfo ~= nil or questInfo.isBonusObjective) --  or questInfo.hasZoneStoryInfo
+            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective) --  or questInfo.hasZoneStoryInfo
 end
 
 local function Hook_WorldQuestsPin_OnEnter(pin)
