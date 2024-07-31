@@ -504,17 +504,17 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
-                -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
-                if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
-                    if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                        criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
-                    end
-                    -- if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
-                    --     local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
-                    --     criteriaInfo.completed = criteriaAchievementInfo.completed -- and WasEarnedByMe(achievementInfo)
-                    --     -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
-                    -- end
-                end
+                -- -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
+                -- if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
+                --     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
+                --         criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
+                --     end
+                --     -- if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
+                --     --     local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
+                --     --     criteriaInfo.completed = criteriaAchievementInfo.completed -- and WasEarnedByMe(achievementInfo)
+                --     --     -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
+                --     -- end
+                -- end
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
