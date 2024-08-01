@@ -1757,6 +1757,7 @@ end
 ----- Common Utilities ----------
 
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
+LocalUtils.ThreatObjectivePinTemplate = "ThreatObjectivePinTemplate"
 LocalUtils.WorldQuestPinTemplate = "WorldMap_WorldQuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
@@ -2074,11 +2075,11 @@ end
 ----------
 
 local candidateMapPinTemplates = {
-    "QuestOfferPinTemplate",            --> handled in Hook_StorylineQuestPin_OnEnter()
-    "ThreatObjectivePinTemplate",       --> handled in Hook_WorldQuestsPin_OnEnter()
+    "QuestOfferPinTemplate",                --> handled in Hook_StorylineQuestPin_OnEnter()
+    LocalUtils.ThreatObjectivePinTemplate,  --> handled in Hook_WorldQuestsPin_OnEnter()
     "BonusObjectivePinTemplate",
-    LocalUtils.WorldQuestPinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
-    -- "QuestPinTemplate",              --> handled in Hook_ActiveQuestPin_OnEnter()
+    LocalUtils.WorldQuestPinTemplate,       --> handled in Hook_WorldQuestsPin_OnEnter()
+    -- "QuestPinTemplate",                  --> handled in Hook_ActiveQuestPin_OnEnter()
 }
 
 local function Hook_StorylineQuestPin_OnEnter(pin)
@@ -2326,6 +2327,7 @@ end
 
 local function Hook_WorldQuestsPin_OnEnter(pin)
     if (not ns.settings.trackWorldQuests and pin.pinTemplate == LocalUtils.WorldQuestPinTemplate) then return end
+    if (not ns.settings.trackThreatObjectives and pin.pinTemplate == LocalUtils.ThreatObjectivePinTemplate) then return end
     if not pin.questID then return end
     if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
 
