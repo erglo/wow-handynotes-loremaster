@@ -40,11 +40,12 @@ local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR
 local NORMAL_FONT_COLOR_CODE = NORMAL_FONT_COLOR_CODE
 local FONT_COLOR_CODE_CLOSE = FONT_COLOR_CODE_CLOSE
 
-local ADVANCED_OPTIONS = ADVANCED_OPTIONS
+local ADVANCED_OPTIONS = ADVANCED_OPTIONS                                       --> TODO - Move to l10n
 local ADVANCED_OPTIONS_TOOLTIP = ADVANCED_OPTIONS_TOOLTIP
 local DEFAULT = DEFAULT
 local EXAMPLE_TEXT = EXAMPLE_TEXT
 local DESCRIPTION = DESCRIPTION
+local QUEST_CLASSIFICATION_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
 
 local LocalOptionUtils = {}
 LocalOptionUtils.newParagraph = "|n|n"
@@ -260,7 +261,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     },
                     ql_group = {
                         type = "group",
-                        name = "Questline",
+                        name = QUEST_CLASSIFICATION_QUESTLINE,
                         desc = "Show or hide questline details associated with the hovered quest.",
                         inline = false,
                         order = 20,
