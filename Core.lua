@@ -587,6 +587,11 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementInfo = self:GetAchievementInfo(storyAchievementID)
 
     if not achievementInfo then return false end
+    if (not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementInfo.achievementID) )  then return end
+
+    if (is2nd and ns.settings.collapseType_zoneStory ~= "singleLine") then
+        LibQTipUtil:AddBlankLineToTooltip(tooltip)
+    end
 
     -- Plugin / category name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
@@ -2165,9 +2170,6 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
-                LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
-            end
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         end
     end
@@ -2287,9 +2289,6 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
-                LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
-            end
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         end
     end
@@ -2428,9 +2427,6 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
         ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         if pin.achievementID2 then
             pin.achievementID = pin.achievementID2
-            if (ns.settings.collapseType_zoneStory ~= "singleLine") then
-                LibQTipUtil:AddBlankLineToTooltip(zsTooltip)
-            end
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         end
     end
