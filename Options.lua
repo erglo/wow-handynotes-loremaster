@@ -193,6 +193,14 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 width = "full",
                                 order = 4,
                             },
+                            track_worldquests = {
+                                type = "toggle",
+                                name = "Track World Quests",
+                                desc = "Show additional details for World Quests in a tooltip below the quest tooltip.",
+                                arg ="trackWorldQuests",
+                                width = "double",
+                                order = 5,
+                            },
                         },
                     },
                     zs_group = {

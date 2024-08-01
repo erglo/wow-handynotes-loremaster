@@ -1757,6 +1757,7 @@ end
 ----- Common Utilities ----------
 
 LocalUtils.QuestPinTemplate = "QuestPinTemplate"
+LocalUtils.WorldQuestPinTemplate = "WorldMap_WorldQuestPinTemplate"
 LocalUtils.StorylineQuestPinTemplate = "StorylineQuestPinTemplate"
 LocalUtils.HandyNotesPinTemplate = "HandyNotesWorldMapPinTemplate"
 LocalUtils.CriteriaType = {
@@ -2076,15 +2077,13 @@ local candidateMapPinTemplates = {
     "QuestOfferPinTemplate",            --> handled in Hook_StorylineQuestPin_OnEnter()
     "ThreatObjectivePinTemplate",       --> handled in Hook_WorldQuestsPin_OnEnter()
     "BonusObjectivePinTemplate",
-    "WorldMap_WorldQuestPinTemplate",
+    LocalUtils.WorldQuestPinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
     -- "QuestPinTemplate",              --> handled in Hook_ActiveQuestPin_OnEnter()
 }
 
 local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
-    -- if (pin == currentPin) then return end
-    if (pin.questInfo and pin.questInfo.questType == 271) then return end  -- daily calling type
 
     currentPin = pin
 
@@ -2098,6 +2097,12 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Always update these
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
+
+    -- Ignore daily calling quest types                                         --> FIXME - Find a solution for this!
+    if (pin.questInfo and pin.questInfo.questType == 271) then
+        GameTooltip:Show()
+        return
+    end
 
     -- print("questClassification:", QuestUtil.GetQuestClassificationString(pin.questID), "-->", pin.questInfo.questClassification)
     -- -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
@@ -2320,6 +2325,7 @@ local function IsRelevantQuest(questInfo)
 end
 
 local function Hook_WorldQuestsPin_OnEnter(pin)
+    if (not ns.settings.trackWorldQuests and pin.pinTemplate == LocalUtils.WorldQuestPinTemplate) then return end
     if not pin.questID then return end
     if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
 
