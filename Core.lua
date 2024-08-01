@@ -64,7 +64,7 @@ local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_Campa
 local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
 local QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective
 local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest
-local QuestUtil_GetWorldQuestAtlasInfo = QuestUtil.GetWorldQuestAtlasInfo
+local QuestUtil = QuestUtil
 local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
@@ -495,6 +495,10 @@ end
 --     return achievementInfo.earnedBy == playerName
 -- end
 
+function LocalQuestUtils:IsQuestFlaggedCompleted(questID)
+    return C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID)
+end
+
 function ZoneStoryUtils:GetAchievementInfo(achievementID)
     if not achievementID then return end
 
@@ -509,7 +513,7 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
                 -- -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
                 -- if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
                 --     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                --         criteriaInfo.completed = C_QuestLog.IsQuestFlaggedCompleted(criteriaInfo.assetID)
+                --         criteriaInfo.completed = LocalQuestUtils:IsQuestFlaggedCompleted(criteriaInfo.assetID)
                 --     end
                 --     -- if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
                 --     --     local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
@@ -550,7 +554,7 @@ function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
     end
     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
         local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-        return questID == pin.questID  -- or C_QuestLog.IsQuestFlaggedCompleted(questID)
+        return questID == pin.questID
     end
 
     return false
@@ -1200,7 +1204,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
             tagName = tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
         end
         if (tagInfo.worldQuestType ~= nil) then                                 --> TODO - Add to '<utils\libqtip.lua>'
-            local atlas, width, height = QuestUtil_GetWorldQuestAtlasInfo(questInfo.questID, tagInfo, questInfo.isActive)
+            local atlas, width, height = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, tagInfo, questInfo.isActive)
             local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
             LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
         end
@@ -1296,7 +1300,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
@@ -1337,7 +1341,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         local questInfo = {
             -- Test
             questMapID = GetQuestUiMapID(questID),
-            hasPOIInfo = QuestHasPOIInfo(questID),  -- QuestPOIGetIconInfo(questID)
+            hasPOIInfo = QuestHasPOIInfo(questID),
             isBounty = C_QuestLog.IsQuestBounty(questID),
             isCalling = C_QuestLog.IsQuestCalling(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
@@ -1350,7 +1354,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = self:IsDaily(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
@@ -1394,7 +1398,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questID = questID,
             questName = questName,
             questLevel = C_QuestLog.GetQuestDifficultyLevel(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
             isDaily = self:IsDaily(questID),
             isWeekly = self:IsWeekly(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
@@ -1593,6 +1597,43 @@ function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
     return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
 
+--> TODO - New in Patch 11.0.0.:
+--[[
+QuestLineInfo
+  + isLocalStory
+  + isAccountCompleted
+  + isCombatAllyQuest
+  + isMeta
+  + inProgress
+  + isQuestStart
+
+Enum.QuestTag
+  + Delve
+
+Enum.QuestTagType
+  + Capstone
+  + WorldBoss
+
+C_QuestLine.QuestLineIgnoresAccountCompletedFiltering
+C_QuestLog.IsMetaQuest
+C_QuestLog.IsQuestFlaggedCompletedOnAccount
+C_QuestLog.IsQuestRepeatableType
+C_QuestLog.QuestIgnoresAccountCompletedFiltering
+
+- New in Patch 11.0.2:
+
+Enum.QuestClassification
+  + BonusObjective
+  + Threat
+  + WorldQuest
+
+QuestInfo
+  + sortAsNormalQuest
+  + questClassification
+  - isLegendarySort
+
+
+]]
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
     debug:print(self, questID, "Searching questLineQuestsOnMap", mapID)
     if self.questLineQuestsOnMap[questID] then
@@ -2519,7 +2560,7 @@ end
 ---@param campaignID number|nil
 --
 local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
-    local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+    local isQuestCompleted = LocalQuestUtils:IsQuestFlaggedCompleted(questID)
     local numThreshold = not isQuestCompleted and 1 or 0
     local activeMapInfo = LocalUtils:GetActiveMapInfo()
     if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
@@ -3064,7 +3105,7 @@ function Temp_ConvertActiveQuestlineQuests()
     local count = 0
     for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
         local campaignID = activeQuestLineInfo.isCampaign and C_CampaignInfo.GetCampaignID(activeQuestLineInfo.questID)
-        local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(activeQuestLineInfo.questID)
+        local isQuestCompleted = LocalQuestUtils:IsQuestFlaggedCompleted(activeQuestLineInfo.questID)
         local success = not isQuestCompleted and DBUtil:AddActiveLoreQuest(activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
         if success then
             count = count + 1
