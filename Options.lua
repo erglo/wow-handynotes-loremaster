@@ -193,22 +193,48 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 width = "full",
                                 order = 4,
                             },
+                            separator_pre_advanced = {
+                                type = "description",
+                                name = LocalOptionUtils.newLine,
+                                order = 20,
+                            },
+                            header_advanced = {
+                                type = "header",
+                                name = ADVANCED_OPTIONS,
+                                width = "half",
+                                order = 21,
+                            },
+                            separator_post_advanced = {
+                                type = "description",
+                                name = LocalOptionUtils.newLine,
+                                order = 22,
+                            },
                             track_worldquests = {
                                 type = "toggle",
                                 name = "Track World Quests",
-                                desc = "Show additional details for World Quests in a tooltip below the quest tooltip.",
+                                desc = "Show additional details for World Quests in a separate tooltip below the quest tooltip.",
                                 arg ="trackWorldQuests",
                                 width = 1.2,
-                                order = 5,
+                                order = 30,
                             },
                             track_threatquests = {
                                 type = "toggle",
                                 name = "Track Threat Objectives",
-                                desc = "Show additional details for Threat Objectives in a tooltip below the quest tooltip.",
+                                desc = "Show additional details for Threat Objectives in a separate tooltip below the quest tooltip.",
                                 arg ="trackThreatObjectives",
                                 width = 1.2,
-                                order = 6,
+                                order = 35,
                             },
+                            track_bonusquests = {
+                                type = "toggle",
+                                name = "Track Bonus Objectives",
+                                desc = "Show additional details for Bonus Objectives in a separate tooltip below the quest tooltip.",
+                                arg ="trackBonusObjectives",
+                                width = 1.2,
+                                order = 36,
+                            },
+                            --> TODO - Track active quests / ready-for-turnin quests
+                            --> TODO - Add reminder for tracking trivial quests in World Map filter.
                         },
                     },
                     zs_group = {
