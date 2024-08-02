@@ -1183,8 +1183,8 @@ local function ShouldIgnoreQuestTypeTag(questInfo)
 end
 
 local classificationIgnoreTable = {
-	-- Enum.QuestClassification.Important,
-	-- Enum.QuestClassification.Legendary,
+	Enum.QuestClassification.Important,
+	Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
 	-- Enum.QuestClassification.Calling,
 	-- Enum.QuestClassification.Meta,
@@ -1262,18 +1262,19 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
         else
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, LineColor)
         end
-    end
-    if (questInfo.isCampaign and not questInfo.isTrivial) then -- and not questInfo.isDaily and not questInfo.isWeekly) then
-        local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
-    end
-    -- Default quest tags in QUEST_TAG_ATLAS which are not displayed by Blizzard for some reasons.
-    if (questInfo.isLegendary and not questInfo.isTrivial) then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["LEGENDARY"], Enum.QuestTag.Legendary, nil, LineColor)
-    end
-    if (questInfo.isImportant and not questInfo.isTrivial) then
-        local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], tagName, nil, LineColor)
+    else
+        if questInfo.isLegendary then
+            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_LEGENDARY" or Enum.QuestTag.Legendary
+            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["LEGENDARY"], tagName, nil, LineColor)
+        end
+        if questInfo.isImportant then
+            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
+            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], tagName, nil, LineColor)
+        end
+        if questInfo.isCampaign then -- and not questInfo.isDaily and not questInfo.isWeekly) then
+            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
+            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
+        end
     end
     if questInfo.isStory then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
