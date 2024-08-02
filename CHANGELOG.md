@@ -20,10 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* World Map: char specific achievement are displayed in `darker green icons`.
-* World Map: updated mouse-over-quest-icon hooks.
-* World Map: optional zone stories are now displayed in `yellow icons`.
 * Adjusted code to the many changes Blizzard made in the extension pre-patch, to support eg. Warband achievements.
+* World Map: char specific achievement are displayed in `darker green icons`.
+* World Map: optional zone stories are now displayed in `yellow icons`.
+* World Map: updated mouse-over-quest-icon hooks.
 * Updated TOC file version to `WoW 11.0.0`.
 * Zone Story: Updated map and achievement IDs.
 * Dragonflight: Updated weekly quest IDs.
