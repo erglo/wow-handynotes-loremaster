@@ -3030,8 +3030,8 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         if debug.isActive then
             local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
             LibQTipUtil:AddDisabledLine(self.tooltip, mapIDstring)
-        else
-            LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
+        -- else
+        --     LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
         end
 
          -- Zone Story details
