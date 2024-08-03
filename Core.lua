@@ -587,7 +587,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     local achievementInfo = self:GetAchievementInfo(storyAchievementID)
 
     if not achievementInfo then return false end
-    if (not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementInfo.achievementID) )  then return end
+    if (not pin.isOnContinent and not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementInfo.achievementID) )  then return end
 
     if (is2nd and ns.settings.collapseType_zoneStory ~= "singleLine") then
         LibQTipUtil:AddBlankLineToTooltip(tooltip)
