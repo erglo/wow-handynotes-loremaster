@@ -966,6 +966,7 @@ LocalUtils.QuestTag.BurningLegionInvasionWorldQuest = 146
 LocalUtils.QuestTag.Profession = 267
 -- LocalUtils.QuestTag.Threat = 268
 LocalUtils.QuestTag.WarModePvP = 255
+LocalUtils.QuestTag.Important = 282
 
 -- Expand the default quest tag atlas map
 -- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
@@ -985,10 +986,11 @@ QUEST_TAG_ATLAS[LocalUtils.QuestTag.WarModePvP] = "questlog-questtypeicon-pvp"
 QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
-QUEST_TAG_ATLAS["COMPLETED_IMPORTANT"] = "quest-important-turnin"
+QUEST_TAG_ATLAS["COMPLETED_IMPORTANT"] = "questlog-questtypeicon-importantturnin"  -- "quest-important-turnin"
 QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] = "QuestRepeatableTurnin"
 QUEST_TAG_ATLAS["DAILY_CAMPAIGN"] = "Quest-DailyCampaign-Available"
-QUEST_TAG_ATLAS["IMPORTANT"] = "quest-important-available"
+QUEST_TAG_ATLAS["IMPORTANT"] = "questlog-questtypeicon-important"  -- "quest-important-available"
+QUEST_TAG_ATLAS[LocalUtils.QuestTag.Important] = "questlog-questtypeicon-important"
 QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
 QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
 QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
@@ -1007,7 +1009,7 @@ local QuestTagNames = {
     ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
 }
 
-local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest, LocalUtils.QuestTag.BurningLegionInvasionWorldQuest, LocalUtils.QuestTag.Threat}
+local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.QuestTag.WorldQuest, LocalUtils.QuestTag.BurningLegionInvasionWorldQuest, LocalUtils.QuestTag.Threat, LocalUtils.QuestTag.Important}
 
 -- Add quest type tags (text or icon) to a quest name.
 function LocalQuestUtils:FormatQuestName(questInfo)
@@ -1267,10 +1269,10 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
             local tagName = questInfo.isReadyForTurnIn and "COMPLETED_LEGENDARY" or Enum.QuestTag.Legendary
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["LEGENDARY"], tagName, nil, LineColor)
         end
-        if questInfo.isImportant then
-            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], tagName, nil, LineColor)
-        end
+        -- if questInfo.isImportant then
+        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], RED(tagName), nil, LineColor)
+        -- end
         if questInfo.isCampaign then -- and not questInfo.isDaily and not questInfo.isWeekly) then
             local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
