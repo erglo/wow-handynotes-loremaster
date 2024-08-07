@@ -27,13 +27,14 @@
 -- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/master/HandyNotes.lua>
 --
 -- World of Warcraft API reference:
--- REF.: <https://www.townlong-yak.com/framexml/live/GlobalStrings.lua>
--- REF.: <https://www.townlong-yak.com/framexml/live/TableUtil.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Helix/GlobalStrings.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_SharedXMLBase/TableUtil.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
--- REF.: <https://www.townlong-yak.com/framexml/live/QuestMapFrame.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_UIPanels_Game/QuestMapFrame.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/MapConstantsDocumentation.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestConstantsDocumentation.lua>
--- REF.: <https://www.townlong-yak.com/framexml/live/Constants.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLBase/Constants.lua>
+-- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_SharedXML/SharedConstants.lua>
 -- (see also the function comments section for more reference)
 --
 --------------------------------------------------------------------------------
@@ -54,8 +55,10 @@ local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
-local LoreUtil = ns.lore
+local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
+
+local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
@@ -151,7 +154,6 @@ L.SLASHCMD_USAGE = "Usage:"
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
 
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
-local BONUS_OBJECTIVE_BANNER = BONUS_OBJECTIVE_BANNER
 
 local currentPin;  -- Currently hovered worldmap pin
 local nodes = {}
@@ -208,12 +210,20 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     debug.tooltip = LibQTip:Acquire(AddonID.."DebugLibQTooltip", 2, "LEFT", "RIGHT")
     LibQTipUtil:SetTitle(debug.tooltip, ns.pluginInfo.title, GRAY("questInfo"))
     local lineIndex, Column1Color, Column2Color
-    for k, v in pairs(pin.questInfo) do
-        lineIndex = debug.tooltip:AddLine(k, tostring(v))
-        Column1Color = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
-        Column2Color = (v == true) and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR
-        debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
-        debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
+    -- for k, v in pairs(pin.questInfo) do
+    --     lineIndex = debug.tooltip:AddLine(k, tostring(v))
+    --     Column1Color = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
+    --     Column2Color = (v == true) and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR
+    --     debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
+    --     debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
+    -- end
+    local tagData = LocalQuestTagUtil:GetAllQuestTags(pin.questInfo, 20, 20)
+    if tagData then
+        for tagLabel, tagAtlasMarkup in pairs(tagData) do
+            local text = string.format("%s %s", tagAtlasMarkup, tagLabel)
+            local tagID = pin.questInfo.questTagInfo and pin.questInfo.questTagInfo.tagID or (pin.questInfo.classificationID or (pin.questType and pin.questType or "??"))
+            lineIndex = debug.tooltip:AddLine(text, tostring(tagID))
+        end
     end
 end
 
@@ -972,7 +982,7 @@ LocalUtils.QuestTag.Important = 282
 -- **Note:** Before adding more tag icons, check if they're not already part of QUEST_TAG_ATLAS!
 --
 --> REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLBase/Constants.lua>
---> REF.: <https://wowpedia.fandom.com/wiki/API_C_QuestLog.GetQuestTagInfo>
+--> REF.: <https://warcraft.wiki.gg/wiki/API_C_QuestLog.GetQuestTagInfo>
 --
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Artifact] = "ArtifactQuest"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.BurningLegionWorldQuest] = "worldquest-icon-burninglegion"  --> Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
@@ -1001,7 +1011,7 @@ local QuestTagNames = {
     ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
     ["COMPLETED"] = COMPLETE,
     ["IMPORTANT"] = ENCOUNTER_JOURNAL_SECTION_FLAG5,
-    ["LEGENDARY"] = ITEM_QUALITY5_DESC,
+    ["LEGENDARY"] = MAP_LEGEND_LEGENDARY,  -- ITEM_QUALITY5_DESC,
     ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
     ["TRIVIAL_CAMPAIGN"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(TRACKER_HEADER_CAMPAIGN_QUESTS),
     ["TRIVIAL_IMPORTANT"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ENCOUNTER_JOURNAL_SECTION_FLAG5),
@@ -1016,6 +1026,14 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     local iconString, atlasName;
     local isReady = questInfo.isReadyForTurnIn
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
+
+    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo, 16)
+    -- if tagList then
+    --     print(questInfo.questID, questInfo.questName)
+    --     for tagLabel, tagAtlasMarkup in pairs(tagList) do
+    --         print("-->", tagAtlasMarkup, tagLabel)
+    --     end
+    -- end
 
     if not StringIsEmpty(questInfo.questName) then
         if ( isReady and not (questInfo.isDaily or questInfo.isWeekly) ) then
@@ -1199,6 +1217,14 @@ local classificationIgnoreTable = {
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
     local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
 
+    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo, 20, 20)
+    -- if tagList then
+    --     print(questInfo.questID, questInfo.questName)
+    --     for tagLabel, tagAtlasMarkup in pairs(tagList) do
+    --         print("-->", tagAtlasMarkup, tagLabel)
+    --     end
+    -- end
+
     -- Blizzard's default tags
     local tagInfo = questInfo.questTagInfo
     if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
@@ -1284,7 +1310,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
     if questInfo.isBonusObjective then
         local atlas = "questbonusobjective"
         local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-        LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, BONUS_OBJECTIVE_BANNER))
+        LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, MAP_LEGEND_BONUSOBJECTIVE))
     end
     if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Show faction group icon only when no tagInfo provided or not an account quest
@@ -1329,8 +1355,9 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table
             questClassification = C_QuestInfoSystem.GetQuestClassification(questID),
+            isFailed = C_QuestLog.IsFailed(questID),
         }
         if ns.settings.saveRecurringQuests then
             -- Enhance completion flagging for recurring quests
@@ -1373,13 +1400,14 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questID = questID,
             questName = questName,
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
+            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
             questType = C_QuestLog.GetQuestType(questID),
             isBonusObjective = QuestUtils_IsQuestBonusObjective(questID),
             isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
             isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
             questClassification = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
+            isFailed = C_QuestLog.IsFailed(questID),
             -- Keep for further testing
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
@@ -1423,7 +1451,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questFactionGroup = QuestFilterUtils:GetQuestFactionGroup(questID),
             questMapID = pinMapID or playerMapID,
-            questTagInfo = C_QuestLog.GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
         }
     end
@@ -3320,4 +3348,36 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
     --     questName
 
 ]]
+
+-- function Test_GetAllQuestTags(questID, mapID)
+--     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "pin", mapID)
+--     return LocalQuestTagUtil:GetAllQuestTags(questInfo, 16)
+-- end
+
+-- local quest = QuestCache:Get(53955);
+-- -- isLegendary
+-- -- isRepeatable
+-- -- questID
+-- -- requiredMoney
+-- -- title
+-- -- CheckRefresh()
+-- -- GetCampaignID()
+-- -- GetID()
+-- -- GetQuestLogIndex()
+-- -- GetSortType()
+-- -- IsCalling()
+-- -- IsCampaign()
+-- -- IsComplete()
+-- -- IsDisabledForSession()
+-- -- IsImportant()
+-- -- IsLegendary()
+-- -- IsMeta()
+-- -- IsOnMap()
+-- -- IsRepeatableQuest()
+-- for k,v in pairs(quest) do
+--     if not tContains({"function", "table"}, type(v)) then
+--         print(k, "-->", v)
+--     end
+-- end
+--------------------------------------------------------------------------------
 --@end-do-not-package@
