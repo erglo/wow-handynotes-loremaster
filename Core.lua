@@ -764,7 +764,7 @@ end
 
 -- All quests of these questlines are weekly quests.
 QuestFilterUtils.weeklyQuestLines = {
-    1416,  -- Dragonflight, "Bonus Event Holiday Quests"
+    1416,  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
 }
 
 -- All quests in this table are daily quests of different questlines.
@@ -796,11 +796,19 @@ QuestFilterUtils.obsoleteQuests = {
     72943,  -- Dragonflight, "United Again"
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
-    81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
     78717, 78718, 78719, 7872, 78721, 78722, 79105, 79106, 80321,  -- The War Within (pre-patch), "Visions of Azeroth"
+    81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
+    83360, 83363,  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
 }
 
--- 25328 (quest giver is inside a cave @ 27003601)                              --> TODO: Add hint to cave entrance ???
+local gameVersion = select(4, GetBuildInfo())
+
+if (gameVersion < 110002) then
+    MergeTable(QuestFilterUtils.obsoleteQuests, {83359, 83362, 83364, 83365})  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
+end
+if (gameVersion >= 110002) then
+    MergeTable(QuestFilterUtils.obsoleteQuests, {72719, 72724, 72725, 72726, 72727, 72810}) -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
+end
 
 ----- Player Race ----------
 
@@ -1160,10 +1168,6 @@ function LocalQuestUtils:IsWeekly(questID)
     local gameQuestInfo = QuestCache:Get(questID)
     if (gameQuestInfo and gameQuestInfo.frequency) then
         local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
-        if (isWeekly and tContains(QuestFilterUtils.weeklyQuests, questID) and debug.isActive) then
-            -- Note: The weekly flag might be added by Blizzard at some point. No need for duplicates.
-            debug:print(BLUE(format("Quest %s has been confirmed via API as weekly.", YELLOW(tostring(questID)))))
-        end
         return isWeekly
     end
 
