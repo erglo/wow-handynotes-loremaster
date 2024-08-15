@@ -210,13 +210,13 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     debug.tooltip = LibQTip:Acquire(AddonID.."DebugLibQTooltip", 2, "LEFT", "RIGHT")
     LibQTipUtil:SetTitle(debug.tooltip, ns.pluginInfo.title, GRAY("questInfo"))
     local lineIndex, Column1Color, Column2Color
-    -- for k, v in pairs(pin.questInfo) do
-    --     lineIndex = debug.tooltip:AddLine(k, tostring(v))
-    --     Column1Color = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
-    --     Column2Color = (v == true) and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR
-    --     debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
-    --     debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
-    -- end
+    for k, v in pairs(pin.questInfo) do
+        lineIndex = debug.tooltip:AddLine(k, tostring(v))
+        Column1Color = (v == true) and GREEN_FONT_COLOR or NORMAL_FONT_COLOR
+        Column2Color = (v == true) and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR
+        debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
+        debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
+    end
     local tagData = LocalQuestTagUtil:GetAllQuestTags(pin.questInfo, 20, 20)
     if tagData then
         for tagLabel, tagAtlasMarkup in pairs(tagData) do
@@ -797,18 +797,10 @@ QuestFilterUtils.obsoleteQuests = {
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
     78717, 78718, 78719, 7872, 78721, 78722, 79105, 79106, 80321,  -- The War Within (pre-patch), "Visions of Azeroth"
+    72719, 72724, 72725, 72726, 72727, 72810, -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
     81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
     83360, 83363,  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
 }
-
-local gameVersion = select(4, GetBuildInfo())
-
-if (gameVersion < 110002) then
-    MergeTable(QuestFilterUtils.obsoleteQuests, {83359, 83362, 83364, 83365})  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
-end
-if (gameVersion >= 110002) then
-    MergeTable(QuestFilterUtils.obsoleteQuests, {72719, 72724, 72725, 72726, 72727, 72810}) -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
-end
 
 ----- Player Race ----------
 
