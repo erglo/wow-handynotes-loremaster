@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---[[ Quest Type Tags - Constants and data handler. ]]--
+--[[ Quest Type Tags - Utility and wrapper functions for handling quest tags. ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
@@ -44,7 +44,7 @@ local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
 
 ----- Constants ----------------------------------------------------------------
 
---> TODO - Outsource table `L`
+--> TODO - L10n, outsource table `L`
 local L = {}
 L.CATEGORY_NAME_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
 L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string.gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
@@ -74,7 +74,8 @@ LocalQuestTag.Important = 282
 -- Expand the default quest tag atlas map
 -- **Note:** Before adding more tag icons, check if they're not already part of `QUEST_TAG_ATLAS`!
 --
-LocalQuestTagUtil.QUEST_TAG_ATLAS = {}
+local shallowCopy = true;
+LocalQuestTagUtil.QUEST_TAG_ATLAS = CopyTable(QUEST_TAG_ATLAS, shallowCopy);
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Artifact] = "ArtifactQuest"
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.BurningLegionWorldQuest] = "worldquest-icon-burninglegion"  --> Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.BurningLegionInvasionWorldQuest] = "legioninvasion-map-icon-portal"  --> Legion Invasion World Quest Wrapper (~= Enum.QuestTagType.Invasion)
@@ -87,41 +88,214 @@ LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.WarModePvP] = "questlog-questtyp
 LocalQuestTagUtil.QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
-LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_IMPORTANT"] = "questlog-questtypeicon-importantturnin"  -- "quest-important-turnin"
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_IMPORTANT"] = "questlog-questtypeicon-importantturnin"  -- "quest-important-turnin"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] = "QuestRepeatableTurnin"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["DAILY_CAMPAIGN"] = "Quest-DailyCampaign-Available"
-LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT"] = "questlog-questtypeicon-important"  -- "quest-important-available"
-LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Important] = "questlog-questtypeicon-important"
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT"] = "questlog-questtypeicon-important"  -- "quest-important-available"
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Important] = "questlog-questtypeicon-important"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
-LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 -- LocalQuestTagUtil.QUEST_TAG_ATLAS["MONTHLY"] = "questlog-questtypeicon-monthly"
 
--- local QuestTagNames = {
---     ["CAMPAIGN"] = TRACKER_HEADER_CAMPAIGN_QUESTS,
---     ["COMPLETED"] = COMPLETE,
---     ["IMPORTANT"] = ENCOUNTER_JOURNAL_SECTION_FLAG5,
---     ["LEGENDARY"] = MAP_LEGEND_LEGENDARY,  -- ITEM_QUALITY5_DESC,
---     ["STORY"] = LOOT_JOURNAL_LEGENDARIES_SOURCE_ACHIEVEMENT,
---     ["TRIVIAL_CAMPAIGN"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(TRACKER_HEADER_CAMPAIGN_QUESTS),
---     ["TRIVIAL_IMPORTANT"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ENCOUNTER_JOURNAL_SECTION_FLAG5),
---     ["TRIVIAL_LEGENDARY"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(ITEM_QUALITY5_DESC),
---     ["TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
--- }
-
 --------------------------------------------------------------------------------
 
+-- These types are handled separately or have fallback handler.
 local classificationIgnoreTable = {
-	Enum.QuestClassification.Important,
-	Enum.QuestClassification.Legendary,
+	-- Enum.QuestClassification.Important,
+	-- Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
 	-- Enum.QuestClassification.Calling,
 	-- Enum.QuestClassification.Meta,
 	-- Enum.QuestClassification.Recurring,
 	-- Enum.QuestClassification.Questline,
 	Enum.QuestClassification.Normal,
+    -- Enum.QuestClassification.BonusObjective,
+    -- Enum.QuestClassification.Threat,
+    -- Enum.QuestClassification.WorldQuest,
 }
+
+local function FormatTagName(tagName, questInfo)
+    if questInfo.isTrivial then
+        questInfo.hasTrivialTag = true;
+        return L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(tagName) or tagName;
+    end
+
+    return tagName;
+end
+
+LocalQuestTagUtil.defaultIconWidth = 20;
+LocalQuestTagUtil.defaultIconHeight = 20;
+
+function LocalQuestTagUtil:GetQuestTagInfoList(questID)
+    local questInfo = LocalQuestInfo:GetQuestInfo(questID);
+    -- local classificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questInfo.questClassification);
+    local width = self.defaultIconWidth;
+    local height = self.defaultIconHeight;
+    local tagInfoList = {};  --> {{atlasMarkup=..., tagName=..., tagID=...}, ...}
+
+    -- Note: Blizzard seems to currently prioritize the classification details over tag infos. We do so as well.
+    local classificationID, classificationText, classificationAtlas, clSize = LocalQuestInfo:GetQuestClassificationDetails(questID);
+    if (classificationID and not tContains(classificationIgnoreTable, classificationID)) then
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(classificationAtlas, width, height),
+            ["tagName"] = classificationText,
+            ["tagID"] = classificationID,
+            ["ranking"] = 1,  -- manually ranking the quest type
+        });
+        -- print("new classification:", classificationID, classificationText)
+    end
+    -- Quest (type) tags
+    if questInfo.questTagInfo then
+        local info = {};
+        info["tagID"] = questInfo.questTagInfo.tagID;
+        info["tagName"] = FormatTagName(questInfo.questTagInfo.tagName, questInfo);
+        info["ranking"] = 2;
+
+        if (questInfo.questTagInfo.worldQuestType ~= nil) then
+            local atlasName, atlasWidth, atlasHeight = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, questInfo.questTagInfo, questInfo.isActive)
+            info["atlasMarkup"] = CreateAtlasMarkup(atlasName, width, height);
+        else
+            -- Check WORLD_QUEST_TYPE_ATLAS and QUEST_TAG_ATLAS for a matching icon, alternatively try our local copy of QUEST_TAG_ATLAS.
+            -- Note: works only with `Enum.QuestTag` and partially with `Enum.QuestTagType`. (see `Constants.lua`)
+            local atlasName = QuestUtils_GetQuestTagAtlas(questInfo.questTagInfo.tagID, questInfo.questTagInfo.worldQuestType) or self.QUEST_TAG_ATLAS[questInfo.questTagInfo.tagID];
+            if atlasName then
+                info["atlasMarkup"] = CreateAtlasMarkup(atlasName, width, height);
+            end
+        end
+        if questInfo.isThreat then
+            local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID);
+            info["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height);
+        end
+        if (questInfo.questTagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+            local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE;
+            local factionTagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE";
+            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString);
+            info["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height);
+            info["tagName"] = FormatTagName(tagName, questInfo);
+        end
+        tinsert(tagInfoList, info);
+    end
+    -- Neglected or unsupported tags prior to Dragonflight (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
+    if questInfo.isDaily then
+        local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.DAILY
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+            ["tagName"] = DAILY,
+            ["tagID"] = "D",
+            ["ranking"] = 3,
+        });
+    end
+    if questInfo.isWeekly then
+        local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.WEEKLY
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+            ["tagName"] = WEEKLY,
+            ["tagID"] = "W",
+            ["ranking"] = 3,
+        });
+    end
+    if questInfo.isFailed then
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS.FAILED, width, height),
+            ["tagName"] = FAILED,
+            ["tagID"] = "F",
+            ["ranking"] = 3,
+        });
+    end
+    -- if questInfo.isStory then
+    --     tinsert(tagInfoList, {
+    --         ["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS.STORY, width, height),
+    --         ["tagName"] = STORY_PROGRESS,
+    --         ["tagID"] = "S",
+    --         ["ranking"] = 3,
+    --     });
+    -- end
+    -- Unsupported by QuestClassification                                       --> TODO- Check frequently, currently: 11.0.2
+    if questInfo.isBonusObjective then
+        local bonusClassificationID = Enum.QuestClassification.BonusObjective;
+        local bonusClassificationInfo = LocalQuestInfo:GetQuestClassificationInfo(bonusClassificationID);
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(bonusClassificationInfo.atlas, width, height),
+            ["tagName"] = bonusClassificationInfo.text,
+            ["tagID"] = bonusClassificationID,
+            ["ranking"] = 3,
+        });
+    end
+    if questInfo.isCampaign then
+        -- Is supported by classification, but icon is awful. We are going to replace it.
+        local atlas = questInfo.isReadyForTurnIn and "Quest-Campaign-TurnIn" or "Quest-Campaign-Available"
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+            ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CAMPAIGN, questInfo),
+            ["tagID"] = "C",
+            ["ranking"] = 3,
+        });
+    end
+    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) then
+        local questlineClassificationID = Enum.QuestClassification.Questline;
+        local questlineClassificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questlineClassificationID);
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(questlineClassificationInfo.atlas, width, height),
+            ["tagName"] = questlineClassificationInfo.text,
+            ["tagID"] = questlineClassificationID,
+            ["ranking"] = 3,
+        });
+    end
+    -- Legacy Tags (removed by Blizzard from `QUEST_TAG_ATLAS`)
+    if questInfo.isAccountQuest then
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup("questlog-questtypeicon-account", width, height),
+            ["tagName"] = ACCOUNT_QUEST_LABEL,
+            ["tagID"] = Enum.QuestTag.Account,
+            ["ranking"] = 3,
+        });
+    end
+    -- Custom tags
+    if questInfo.isCompletedOnAccount then
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup("questlog-questtypeicon-account", width, height),
+            ["tagName"] = ACCOUNT_COMPLETED_QUEST_LABEL,
+            ["tagID"] = -1,
+            ["ranking"] = 4,
+        });
+    end
+    if questInfo.isCompleted then
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup("questlog-questtypeicon-account", width, height),
+            ["tagName"] = GOAL_COMPLETED,
+            ["tagID"] = -1,
+            ["ranking"] = 4,
+        });
+    end
+    if questInfo.wasEarnedByMe then
+        local TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER;
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup("questlog-questtypeicon-account", width, height),
+            ["tagName"] = QUEST_COMPLETE..HEADER_COLON..TEXT_DELIMITER..UnitName("player"),
+            ["tagID"] = -1,
+            ["ranking"] = 4,
+        });
+    end
+
+    self:AddTrivialQuestTagInfo(questInfo, tagInfoList);
+
+    if (not questInfo.questTagInfo or questInfo.questTagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+        -- Add *faction group icon only* when no questTagInfo provided or not an account-wide quest
+        local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE;
+        local factionTagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE";
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height),
+            ["tagName"] = tagName,
+            ["tagID"] = factionTagID,
+            ["ranking"] = 5,
+        });
+    end
+
+    return tagInfoList, questInfo;
+end
+
 
 -- Return all available quest tags for given quest.
 ---@param questID number
@@ -162,7 +336,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
     -- Prefer classification over tag IDs
     if (questInfo.questClassification and not tContains(classificationIgnoreTable, questInfo.questClassification)) then  --> Enum.QuestClassification
         local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
-        print("questInfo.questClassification:", questInfo.questClassification, classificationText)
+        -- print("questInfo.questClassification:", questInfo.questClassification, classificationText)
         -- Note: Blizzard seems to currently prioritize the classification details over tag infos.
         local atlasMarkup = CreateAtlasMarkup(classificationAtlas, width, height)
         tagData[classificationText] = atlasMarkup
@@ -262,6 +436,85 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
         --     return a[0] < b[0];  --> 0-9
         -- end)
         return tagData
+    end
+end
+
+----- Tag: Important -----
+
+--> TODO - L10n
+-- local QUEST_TYPE_NAME_IMPORTANT = QUEST_CLASSIFICATION_IMPORTANT;
+
+-- LocalQuestInfo.TagName = {};
+-- LocalQuestInfo.TagName["IMPORTANT"] = QUEST_TYPE_NAME_IMPORTANT;
+-- LocalQuestInfo.TagName["IMPORTANT_TRIVIAL"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(QUEST_TYPE_NAME_IMPORTANT);
+
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT"] = "importantavailablequesticon";  -- "quest-important-available";
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT_ACTIVE"] = "importantactivequesticon";
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT_TURNIN"] = "quest-important-turnin";  -- "importantincompletequesticon";
+-- LocalQuestTagUtil.QUEST_TAG_ATLAS["IMPORTANT_TRIVIAL"] = "quest-important-available-trivial";
+-- -- LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Important] = "questlog-questtypeicon-important"
+
+-- function LocalQuestTagUtil:GetImportantTagInfo(questInfo, classificationInfo)
+--     -- Default values
+--     local tagName = classificationInfo and classificationInfo.text or self.TagName["IMPORTANT"];
+--     local atlas = classificationInfo and classificationInfo.atlas or self.QUEST_TAG_ATLAS["IMPORTANT"];
+--     local info = {tagName=tagName, atlas=atlas};
+
+--     if questInfo.isTrivial then
+--         info["tagName"] = self.TagName["IMPORTANT_TRIVIAL"];
+--         info["atlas"] = self.QUEST_TAG_ATLAS["IMPORTANT_TRIVIAL"];
+--     end
+--     if questInfo.isReadyForTurnIn then
+--         info["atlas"] = self.QUEST_TAG_ATLAS["IMPORTANT_TURNIN"];
+--     end
+--     if info.isActive then
+--         info["atlas"] = self.QUEST_TAG_ATLAS["IMPORTANT_ACTIVE"];
+--     end
+
+--     return info;
+-- end
+
+function LocalQuestTagUtil:AddTrivialQuestTagInfo(questInfo, tagInfoList)
+    -- local isShallowCopy = true;
+    -- local tagInfoListCopy = CopyTable(tagInfoList, isShallowCopy);
+    -- -- local questTypeAlpha = QuestUtil.GetAvailableQuestIconAlpha(questInfo.questID);
+    -- -- Replace primary and secondary quest type (ranking 1+2) with "trivial" details
+    -- for index, tagInfo in ipairs(tagInfoListCopy) do
+    --     if questInfo.isTrivial then
+    --         if tContains({1, 2}, tagInfo.ranking) then
+    --             tagInfoList[index] = {
+    --                 ["atlasMarkup"] = tagInfo.atlasMarkup,
+    --                 ["tagName"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(tagInfo.tagName),
+    --                 ["tagID"] = tagInfo.tagID,
+    --                 ["ranking"] = tagInfo.ranking,
+    --                 ["alpha"] = 0.5,
+    --             };
+    --         end
+    --         -- if not questInfo.hasTrivialTag then
+    --         if (tagInfo.tagID ~= "T") then
+    --             -- Add a standalone "trivial" tag
+    --             tinsert(tagInfoList, {
+    --                 ["atlasMarkup"] = CreateAtlasMarkup("TrivialQuests", 20, 20),
+    --                 ["tagName"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS.."-1"),
+    --                 ["tagID"] = "T",
+    --                 ["ranking"] = 0,
+    --                 ["alpha"] = 0.5,
+    --             });
+    --         end
+    --         -- questInfo.hasTrivialTag = true;
+    --     end
+    -- end
+    -- if (#tagInfoListCopy == 0 and questInfo.isTrivial and not questInfo.hasTrivialTag) then
+    if (#tagInfoList <= 1 and questInfo.isTrivial and not questInfo.hasTrivialTag) then
+        -- Add a standalone "trivial" tag
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup("TrivialQuests", 20, 20),
+            ["tagName"] = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS),
+            ["tagID"] = "T",
+            ["ranking"] = 0,
+            ["alpha"] = 0.5,
+        });
+        -- questInfo.hasTrivialTag = true;
     end
 end
 

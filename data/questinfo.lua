@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---[[ Quest Inform - Utility and Wrapper functions for handling quest data. ]]--
+--[[ Quest Information - Utility and Wrapper functions for handling quest data. ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
@@ -73,24 +73,28 @@ local function AddMoreQuestInfo(questInfo)
     questInfo.isDaily = questInfo.frequency and questInfo.frequency == Enum.QuestFrequency.Daily;
     questInfo.isWeekly = questInfo.frequency and questInfo.frequency == Enum.QuestFrequency.Weekly;
     questInfo.isFailed = C_QuestLog.IsFailed(questInfo.questID);
-    questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
+    questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isBonusObjective = classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
+    questInfo.isImportant = classificationID and classificationID == Enum.QuestClassification.Important or C_QuestLog.IsImportantQuest(questInfo.questID);
     questInfo.isLegendary = classificationID and classificationID == Enum.QuestClassification.Legendary or C_QuestLog.IsLegendaryQuest(questInfo.questID);
+    questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.isQuestlineQuest = classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
+    questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isThreat = classificationID and classificationID == Enum.QuestClassification.Threat or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = C_QuestLog.IsQuestTrivial(questInfo.questID);
-    questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = LocalQuestInfo:GetQuestFactionGroup(questInfo.questID);
     questInfo.questTagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
-    -- questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
+    -- Test
+    questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
     questInfo.isCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
+    questInfo.wasEarnedByMe = questInfo.isCompleted and not questInfo.isCompletedOnAccount;
     --> TODO: fix the following
-    print("questInfo.isStory:", questInfo.isStory)
-    print("questInfo.isDaily:", questInfo.isDaily)
-    print("questInfo.isWeekly:", questInfo.isWeekly)
+    -- print("questInfo.isStory:", questInfo.isStory)
+    -- print("questInfo.isDaily:", questInfo.isDaily)
+    -- print("questInfo.isWeekly:", questInfo.isWeekly)
     -- isMeta
 end
 
@@ -168,8 +172,19 @@ function LocalQuestInfo:GetQuestClassificationID(questID)
     return classificationID;
 end
 
--- -- return tagID, text, atlas
--- function QuestUtil.GetQuestTypeDetails(questID)
+function LocalQuestInfo:GetQuestClassificationDetails(questID, skipFormatting)
+    return QuestUtil.GetQuestClassificationDetails(questID, skipFormatting or true);
+end
+
+-- returns { text=..., atlas=..., size=...}
+function LocalQuestInfo:GetQuestClassificationInfo(classificationID)
+    local info = QuestUtil.GetQuestClassificationInfo(classificationID);
+    -- Add text + atlas for 'BonusObjective'. Leave 'Threat' and 'WorldQuest', since their type is dynamic and handled separately.
+    local classificationInfoTableMore = {
+        [Enum.QuestClassification.BonusObjective] =	{ text = MAP_LEGEND_BONUSOBJECTIVE, atlas = "questbonusobjective", size = 16 },
+    };
+    return info or classificationInfoTableMore[classificationID];
+end
 
 --@do-not-package@
 --------------------------------------------------------------------------------
@@ -193,7 +208,6 @@ C_QuestLog.GetQuestDifficultyLevel(questID)  --> level number
 C_QuestLog.GetQuestType(questID)  --> questType number
 C_QuestLog.GetZoneStoryInfo(uiMapID)  --> achievementID, storyMapID
 C_QuestLog.IsComplete(questID)  --> boolean
-C_QuestLog.IsImportantQuest(questID)  --> boolean
 C_QuestLog.IsMetaQuest(questID)  --> boolean
 C_QuestLog.IsOnMap(questID)  --> boolean                            (needed ??)
 C_QuestLog.IsOnQuest(questID)  --> boolean

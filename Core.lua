@@ -225,6 +225,20 @@ function debug:CreateDebugQuestInfoTooltip(pin)
             lineIndex = debug.tooltip:AddLine(text, tostring(tagID))
         end
     end
+    debug.tooltip:AddLine('New:')  --> blank line
+    local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID)
+    if (#tagInfoList > 0) then
+        for _, tagInfo in ipairs(tagInfoList) do
+            local text = string.format("%s %s", tagInfo.atlasMarkup, tagInfo.tagName)
+            lineIndex = debug.tooltip:AddLine(text, tostring(tagInfo.tagID))
+            -- if tagInfo.alpha then
+            if pin.questInfo.isTrivial then     --> TODO - Add to settings
+                local r, g, b = NORMAL_FONT_COLOR:GetRGB()
+                -- local LineColor = CreateColor(r, g, b, tagInfo.alpha)
+                debug.tooltip:SetCellTextColor(lineIndex, 1, r, g, b, tagInfo.alpha)
+            end
+        end
+    end
 end
 
 ----- Main ---------------------------------------------------------------------
@@ -1199,7 +1213,7 @@ local function ShouldIgnoreQuestTypeTag(questInfo)
 end
 
 local classificationIgnoreTable = {
-	Enum.QuestClassification.Important,
+	-- Enum.QuestClassification.Important,
 	Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
 	-- Enum.QuestClassification.Calling,
@@ -1208,6 +1222,22 @@ local classificationIgnoreTable = {
 	-- Enum.QuestClassification.Questline,
 	-- Enum.QuestClassification.Normal,
 }
+
+function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, questID)
+    local tagInfoList, questInfo = LocalQuestTagUtil:GetQuestTagInfoList(questID)
+    if (#tagInfoList == 0) then return; end
+
+    local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
+
+    for _, tagInfo in ipairs(tagInfoList) do
+        local text = string.format("%s %s", tagInfo.atlasMarkup, tagInfo.tagName)
+        local lineIndex = LibQTipUtil:AddColoredLine(tooltip, LineColor, text)
+        if questInfo.isTrivial then                                             --> TODO - Add to settings, eg. alpha
+            local r, g, b = LineColor:GetRGB()
+            tooltip:SetCellTextColor(lineIndex, 1, r, g, b, 0.5)
+        end
+    end
+end
 
 -- Add daily and weekly quests to known quest types.
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
@@ -1279,8 +1309,8 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
     if questInfo.isTrivial then
         if questInfo.isLegendary then
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_LEGENDARY"], "TRIVIAL_LEGENDARY", nil, LineColor)
-        elseif questInfo.isImportant then
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_IMPORTANT"], "TRIVIAL_IMPORTANT", nil, LineColor)
+        -- elseif questInfo.isImportant then
+        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_IMPORTANT"], "TRIVIAL_IMPORTANT", nil, LineColor)
         elseif questInfo.isCampaign then
             LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_CAMPAIGN"], "TRIVIAL_CAMPAIGN", nil, LineColor)
         else
@@ -2161,6 +2191,10 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
     end
+    if debug.isActive then
+        LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
+    end
 
     if LocalUtils:ShouldShowZoneStoryDetails(pin) then
         local zsTooltip = ZoneStoryTooltip or contentTooltip
@@ -2280,6 +2314,10 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
     end
+    if debug.isActive then
+        LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
+    end
 
     if LocalUtils:ShouldShowZoneStoryDetails(pin) then
         local zsTooltip = ZoneStoryTooltip or contentTooltip
@@ -2343,7 +2381,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     -- print("GetQuestClassificationDetails:", QuestUtil.GetQuestClassificationDetails(pin.questID))
 
     -- Ignore basic quests w/o any lore and skip tooltip creation.
-    if not IsRelevantQuest(pin.questInfo) then return end
+    if (not debug.isActive and not IsRelevantQuest(pin.questInfo)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2420,6 +2458,10 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
             LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+    end
+    if debug.isActive then
+        LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
     end
 
     if LocalUtils:ShouldShowZoneStoryDetails(pin) then
