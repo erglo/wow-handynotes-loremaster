@@ -217,7 +217,7 @@ function debug:CreateDebugQuestInfoTooltip(pin)
         debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
         debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
     end
-    local tagData = LocalQuestTagUtil:GetAllQuestTags(pin.questInfo, 20, 20)
+    local tagData = LocalQuestTagUtil:GetAllQuestTags(pin.questID, 20, 20)
     if tagData then
         for tagLabel, tagAtlasMarkup in pairs(tagData) do
             local text = string.format("%s %s", tagAtlasMarkup, tagLabel)
@@ -1027,7 +1027,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     local isReady = questInfo.isReadyForTurnIn
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
-    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo, 16)
+    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo.questID, 16)
     -- if tagList then
     --     print(questInfo.questID, questInfo.questName)
     --     for tagLabel, tagAtlasMarkup in pairs(tagList) do
@@ -1213,7 +1213,7 @@ local classificationIgnoreTable = {
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
     local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
 
-    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo, 20, 20)
+    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo.questID, 20, 20)
     -- if tagList then
     --     print(questInfo.questID, questInfo.questName)
     --     for tagLabel, tagAtlasMarkup in pairs(tagList) do
@@ -1303,11 +1303,11 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
     if questInfo.isStory then
         LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
     end
-    if questInfo.isBonusObjective then
-        local atlas = "questbonusobjective"
-        local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-        LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, MAP_LEGEND_BONUSOBJECTIVE))
-    end
+    -- if questInfo.isBonusObjective then
+    --     local atlas = "questbonusobjective"
+    --     local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
+    --     LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, MAP_LEGEND_BONUSOBJECTIVE))
+    -- end
     if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Show faction group icon only when no tagInfo provided or not an account quest
         local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
@@ -1352,7 +1352,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
             questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table
-            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),
+            classificationID = C_QuestInfoSystem.GetQuestClassification(questID),
             isFailed = C_QuestLog.IsFailed(questID),
         }
         if ns.settings.saveRecurringQuests then
@@ -1402,7 +1402,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
             isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
-            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
+            classificationID = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
             isFailed = C_QuestLog.IsFailed(questID),
             -- Keep for further testing
             questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
@@ -1418,7 +1418,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
                                                   -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
                                                   questInfo.isImportant, questInfo.isAccountQuest,
                                                   questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
-                                                  questInfo.questClassification ~= Enum.QuestClassification.Normal,
+                                                  questInfo.classificationID ~= Enum.QuestClassification.Normal,
                                                   }, true)
 
         return questInfo
@@ -1629,43 +1629,6 @@ function LocalQuestLineUtils:HasQuestLineInfo(questID, mapID)
     return (self.questLineQuestsOnMap[questID] or C_QuestLine.GetQuestLineInfo(questID, mapID)) ~= nil
 end
 
---> TODO - New in Patch 11.0.0.:
---[[
-QuestLineInfo
-  + isLocalStory
-  + isAccountCompleted
-  + isCombatAllyQuest
-  + isMeta
-  + inProgress
-  + isQuestStart
-
-Enum.QuestTag
-  + Delve
-
-Enum.QuestTagType
-  + Capstone
-  + WorldBoss
-
-C_QuestLine.QuestLineIgnoresAccountCompletedFiltering
-C_QuestLog.IsMetaQuest
-C_QuestLog.IsQuestFlaggedCompletedOnAccount
-C_QuestLog.IsQuestRepeatableType
-C_QuestLog.QuestIgnoresAccountCompletedFiltering
-
-- New in Patch 11.0.2:
-
-Enum.QuestClassification
-  + BonusObjective
-  + Threat
-  + WorldQuest
-
-QuestInfo
-  + sortAsNormalQuest
-  + questClassification
-  - isLegendarySort
-
-
-]]
 function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
     debug:print(self, questID, "Searching questLineQuestsOnMap", mapID)
     if self.questLineQuestsOnMap[questID] then

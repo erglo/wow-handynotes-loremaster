@@ -40,6 +40,7 @@ local LocalQuestTagUtil = {}
 ns.QuestTagUtil = LocalQuestTagUtil
 
 local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
+local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
 
 ----- Constants ----------------------------------------------------------------
 
@@ -111,55 +112,32 @@ LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 
 --------------------------------------------------------------------------------
 
+local classificationIgnoreTable = {
+	Enum.QuestClassification.Important,
+	Enum.QuestClassification.Legendary,
+	Enum.QuestClassification.Campaign,
+	-- Enum.QuestClassification.Calling,
+	-- Enum.QuestClassification.Meta,
+	-- Enum.QuestClassification.Recurring,
+	-- Enum.QuestClassification.Questline,
+	Enum.QuestClassification.Normal,
+}
+
 -- Return all available quest tags for given quest.
----@param questInfo table  The quest details as returned by `LocalQuestUtils:GetQuestInfo()`.
----@param iconWidth integer  The width of the icon.
----@param iconHeight integer|nil  The height of the icon. Defaults to the size of `iconWidth`.
+---@param questID number
+---@param iconWidth number
+---@param iconHeight number|nil  Defaults to the size of `iconWidth`.
 ---@return table|nil tagData  --> `{tagName: string = tagAtlasMarkup: string, ...}` or `nil`.
 --
 -- REF.: [Constants.lua](https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLBase/Constants.lua),
 --       [QuestUtils.lua](https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua)
 --
-function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
+function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
+    local questInfo = LocalQuestInfo:GetQuestInfo(questID)
     local width, height = iconWidth, iconHeight or iconWidth
     local tagData = {}
-    local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
-    if classificationID then  --> Enum.QuestClassification
-        questInfo.classificationID = classificationID
-        -- Note: Blizzard seems to currently prioritize the classification details over tag infos.
-        local atlasMarkup = CreateAtlasMarkup(classificationAtlas, width, height)
-        tagData[classificationText] = atlasMarkup
-    end
-    if questInfo.questTagInfo then
-        if (questInfo.questTagInfo.worldQuestType ~= nil) then
-            local atlasName, atlasWidth, atlasHeight = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, questInfo.questTagInfo, questInfo.isActive)
-            local atlasMarkup = CreateAtlasMarkup(atlasName, width, height)
-            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
-        end
-        -- Check WORLD_QUEST_TYPE_ATLAS and QUEST_TAG_ATLAS for a matching icon.
-        -- Note: works only with `Enum.QuestTag` and partially with `Enum.QuestTagType`. (see `Constants.lua`)
-        local atlasName = QuestUtils_GetQuestTagAtlas(questInfo.questTagInfo.tagID, questInfo.questTagInfo.worldQuestType)
-        if atlasName then
-            local atlasMarkup = CreateAtlasMarkup(atlasName, width, height)
-            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
-        -- else
-        --     print("NOT found:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName)
-        end
-        if (questInfo.questTagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
-            local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
-            local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
-            local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS[tagID], width, height)
-            tagData[tagName] = atlasMarkup
-        end
-        if (questInfo.questTagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
-            local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
-            local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
-            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
-        end
-    end
-    -- Tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`
-    -- if questInfo.isReadyForTurnIn then
+    -- Neglected tags (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
+    -- if questInfo.isReadyForTurnIn then                                       --> TODO - Keep ???
     --     local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS.COMPLETED, width, height)
     --     tagData[GOAL_COMPLETED] = atlasMarkup
     -- end
@@ -177,6 +155,47 @@ function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
         local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS.FAILED, width, height)
         tagData[FAILED] = atlasMarkup
     end
+    if questInfo.isCompletedOnAccount then
+        local atlasMarkup = CreateAtlasMarkup("questlog-questtypeicon-account", width, height)
+        tagData[ACCOUNT_COMPLETED_QUEST_LABEL ] = atlasMarkup
+    end
+    -- Prefer classification over tag IDs
+    if (questInfo.questClassification and not tContains(classificationIgnoreTable, questInfo.questClassification)) then  --> Enum.QuestClassification
+        local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
+        print("questInfo.questClassification:", questInfo.questClassification, classificationText)
+        -- Note: Blizzard seems to currently prioritize the classification details over tag infos.
+        local atlasMarkup = CreateAtlasMarkup(classificationAtlas, width, height)
+        tagData[classificationText] = atlasMarkup
+    end
+    -- Quest (type) tags
+    if questInfo.questTagInfo then
+        if (questInfo.questTagInfo.worldQuestType ~= nil) then
+            local atlasName, atlasWidth, atlasHeight = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, questInfo.questTagInfo, questInfo.isActive)
+            local atlasMarkup = CreateAtlasMarkup(atlasName, width, height)
+            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
+        end
+        -- Check WORLD_QUEST_TYPE_ATLAS and QUEST_TAG_ATLAS for a matching icon.
+        -- Note: works only with `Enum.QuestTag` and partially with `Enum.QuestTagType`. (see `Constants.lua`)
+        local atlasName = QuestUtils_GetQuestTagAtlas(questInfo.questTagInfo.tagID, questInfo.questTagInfo.worldQuestType)
+        if atlasName then
+            local atlasMarkup = CreateAtlasMarkup(atlasName, width, height)
+            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
+        -- else
+        --     print("NOT found:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName)
+        end
+        if (questInfo.questTagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
+            local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
+            local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
+            tagData[questInfo.questTagInfo.tagName] = atlasMarkup
+        end
+        if (questInfo.questTagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+            local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
+            local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
+            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
+            local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS[tagID], width, height)
+            tagData[tagName] = atlasMarkup
+        end
+    end
     if (not questInfo.questTagInfo or questInfo.questTagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Add faction group icon only when no questTagInfo provided or not an account-wide quest
         local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
@@ -185,8 +204,6 @@ function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
         tagData[tagName] = atlasMarkup
     end
 	if (QuestUtils_ShouldDisplayExpirationWarning(questInfo.questID) and QuestUtils_IsQuestWithinLowTimeThreshold(questInfo.questID)) then
-        -- local tagID = QuestUtils_IsQuestWithinCriticalTimeThreshold(questInfo.questID) and "EXPIRING_SOON" or "EXPIRING"
-        -- local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS[tagID], width, height)
         local atlas = QuestUtils_IsQuestWithinCriticalTimeThreshold(questInfo.questID) and "questlog-questtypeicon-clockorange" or "questlog-questtypeicon-clockyellow"
         local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
         tagData[PROFESSIONS_COLUMN_HEADER_EXPIRATION] = atlasMarkup
@@ -195,7 +212,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
         local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS.STORY, width, height)
         tagData[STORY_PROGRESS] = atlasMarkup
     end
-    -- Tags removed from `QUEST_TAG_ATLAS`
+    -- Legacy Tags (removed by Blizzard from `QUEST_TAG_ATLAS`)
     if questInfo.isAccountQuest then
         local tagName = Enum.QuestTag.Account
         local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS[tagName] or "questlog-questtypeicon-account", width, height)
@@ -207,7 +224,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
         tagData[MAP_LEGEND_LEGENDARY] = atlasMarkup
     end
     -- Custom tags
-    if questInfo.hasQuestLineInfo then
+    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) then
         local atlasMarkup = CreateAtlasMarkup("questlog-storylineicon", width, height)
         tagData[L.CATEGORY_NAME_QUESTLINE] = atlasMarkup
     end
@@ -215,6 +232,11 @@ function LocalQuestTagUtil:GetAllQuestTags(questInfo, iconWidth, iconHeight)
         local atlasMarkup = CreateAtlasMarkup("TrivialQuests", width, height)
         local tagName = L.QUEST_TYPE_NAME_FORMAT_TRIVIAL:format(UNIT_NAMEPLATES_SHOW_ENEMY_MINUS)
         tagData[tagName] = atlasMarkup
+    end
+    if questInfo.isCampaign then -- and not questInfo.isDaily and not questInfo.isWeekly) then
+        local atlas = questInfo.isReadyForTurnIn and "Quest-Campaign-TurnIn" or "Quest-Campaign-Available"
+        local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
+        tagData[MAP_LEGEND_CAMPAIGN] = atlasMarkup
     end
     if questInfo.isBonusObjective then
         local atlasMarkup = CreateAtlasMarkup("questbonusobjective", width, height)
@@ -246,6 +268,25 @@ end
 --@do-not-package@
 --------------------------------------------------------------------------------
 
+--> TODO - New in Patch 11.0.0.:
+--[[
+QuestLineInfo
+  + isLocalStory
+  + isAccountCompleted
+  + isCombatAllyQuest
+  + isMeta
+  + inProgress
+  + isQuestStart
+
+Enum.QuestTag
+  + Delve
+
+Enum.QuestTagType
+  + Capstone
+  + WorldBoss
+
+-----
+
 -- "Interface/QuestFrame/QuestFrameQuestIcons" (turn-in icons)
 -- 
 -->  only 16 pt
@@ -255,7 +296,7 @@ end
 -- "Interface/GossipFrame/LegendaryGossipIcons" (available + turn-in)
 -- "Interface/GossipFrame/RepeatableGossipIcons" (available + turn-in)
 -- "Interface/GossipFrame/WrapperGossipIcons" (meta?) (available + turn-in)
---[[
+
     --> 32 ("Interface/Minimap/ObjectIconsAtlas")
     "TrivialQuests"
     ok --> "QuestRepeatableTurnin" or "QuestDaily"
@@ -270,8 +311,8 @@ end
     "quest-wrapper-turnin" or ("quest-wrapper-trivial" or "quest-wrapper-available")
 
     "Callings-Turnin" or "Callings-Available"  --> 26, 33
-]]
---[[
+
+
     "questlog-questtypeicon-account"  --> 18 pt
     "questlog-questtypeicon-alliance"  --> 18 pt
     "questlog-questtypeicon-class"  --> 18 pt
@@ -301,6 +342,48 @@ end
     "questlog-questtypeicon-Wrapperturnin"  --> 18 pt
     "questlog-storylineicon"  --> 22 pt
     "questlog-questtypeicon-Delves"  --> 18 pt
+
+    Name = "QuestRepeatability",
+    Type = "Enumeration",
+    NumValues = 5,
+    MinValue = 0,
+    MaxValue = 4,
+    Fields =
+    {
+        { Name = "None", Type = "QuestRepeatability", EnumValue = 0 },
+        { Name = "Daily", Type = "QuestRepeatability", EnumValue = 1 },
+        { Name = "Weekly", Type = "QuestRepeatability", EnumValue = 2 },
+        { Name = "Turnin", Type = "QuestRepeatability", EnumValue = 3 },
+        { Name = "World", Type = "QuestRepeatability", EnumValue = 4 },
+    },
+
+    Name = "QuestTagType",
+    Type = "Enumeration",
+    NumValues = 19,
+    MinValue = 0,
+    MaxValue = 18,
+    Fields =
+    {
+        { Name = "Tag", Type = "QuestTagType", EnumValue = 0 },
+        { Name = "Profession", Type = "QuestTagType", EnumValue = 1 },
+        { Name = "Normal", Type = "QuestTagType", EnumValue = 2 },
+        { Name = "PvP", Type = "QuestTagType", EnumValue = 3 },
+        { Name = "PetBattle", Type = "QuestTagType", EnumValue = 4 },
+        { Name = "Bounty", Type = "QuestTagType", EnumValue = 5 },
+        { Name = "Dungeon", Type = "QuestTagType", EnumValue = 6 },
+        { Name = "Invasion", Type = "QuestTagType", EnumValue = 7 },
+        { Name = "Raid", Type = "QuestTagType", EnumValue = 8 },
+        { Name = "Contribution", Type = "QuestTagType", EnumValue = 9 },
+        { Name = "RatedReward", Type = "QuestTagType", EnumValue = 10 },
+        { Name = "InvasionWrapper", Type = "QuestTagType", EnumValue = 11 },
+        { Name = "FactionAssault", Type = "QuestTagType", EnumValue = 12 },
+        { Name = "Islands", Type = "QuestTagType", EnumValue = 13 },
+        { Name = "Threat", Type = "QuestTagType", EnumValue = 14 },
+        { Name = "CovenantCalling", Type = "QuestTagType", EnumValue = 15 },
+        { Name = "DragonRiderRacing", Type = "QuestTagType", EnumValue = 16 },
+        { Name = "Capstone", Type = "QuestTagType", EnumValue = 17 },
+        { Name = "WorldBoss", Type = "QuestTagType", EnumValue = 18 },
+    },
 ]]
 --------------------------------------------------------------------------------
 --@end-do-not-package@

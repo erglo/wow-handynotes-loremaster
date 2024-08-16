@@ -31,6 +31,6 @@ utils/worldmap.lua
 
 # Load main files
 Data.lua
-data/questtypetags.lua
+data\includes.xml
 Options.lua
 Core.lua
