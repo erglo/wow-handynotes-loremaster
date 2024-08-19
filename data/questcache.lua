@@ -32,13 +32,13 @@
 local AddonID, ns = ...;
 
 -- Upvalues
-local ORANGE = function(txt) return ORANGE_FONT_COLOR:WrapTextInColorCode(txt) end
+local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR;
 
 --------------------------------------------------------------------------------
 ----- Quest Cache Handler -----------------------------------------------------
 --------------------------------------------------------------------------------
 
-local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") };
+local LocalQuestCache = { debug = false, debug_prefix = ORANGE_FONT_COLOR:WrapTextInColorCode("Quest-CACHE:") };
 ns.QuestCacheUtil = LocalQuestCache;
 
 ----- Quest Lines -----

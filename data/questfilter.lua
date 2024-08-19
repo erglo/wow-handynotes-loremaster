@@ -36,6 +36,7 @@
 
 local AddonID, ns = ...;
 
+local DBUtil = ns.DatabaseUtil;  --> <data\database.lua>
 local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
 
 -- Upvalues

@@ -58,9 +58,10 @@ local LocalMapUtils = ns.utils.worldmap
 local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
 
-local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
-local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
+local DBUtil = ns.DatabaseUtil;  --> <data\database.lua>
 local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
+local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
+local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
@@ -182,7 +183,7 @@ end
 
 local HookUtils =           { debug = false, debug_prefix = "HOOKS:" }
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
-local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
+-- local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
 -- local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
@@ -354,77 +355,77 @@ function LoremasterPlugin:ProcessSlashCommands(msg)
     end
 end
 
------ Database utilities ----------
+-- ----- Database utilities ----------
 
-function DBUtil:GetInitDbCategory(categoryName, database)
-    local db = database or ns.charDB
-    if not db[categoryName] then
-        db[categoryName] = {}
-        debug:print(self, "Initialized DB:", categoryName)
-    end
-    return db[categoryName]
-end
+-- function DBUtil:GetInitDbCategory(categoryName, database)
+--     local db = database or ns.charDB
+--     if not db[categoryName] then
+--         db[categoryName] = {}
+--         debug:print(self, "Initialized DB:", categoryName)
+--     end
+--     return db[categoryName]
+-- end
 
-function DBUtil:HasCategoryTableAnyEntries(categoryName, database)
-    local db = database or ns.charDB
-    local value = db[categoryName] and TableHasAnyEntries(db[categoryName])
-    debug:print(self, "Has", categoryName, "table any entries:", value)
-    return value
-end
+-- function DBUtil:HasCategoryTableAnyEntries(categoryName, database)
+--     local db = database or ns.charDB
+--     local value = db[categoryName] and TableHasAnyEntries(db[categoryName])
+--     debug:print(self, "Has", categoryName, "table any entries:", value)
+--     return value
+-- end
 
-function DBUtil:DeleteDbCategory(categoryName, database)
-    local db = database or ns.charDB
-    if not db[categoryName] then
-        debug:print(self, format("DB category '%s' not found.", categoryName))
-        return
-    end
-    db[categoryName] = nil
-    debug:print(self, format("DB category '%s' has been removed.", categoryName))
-end
+-- function DBUtil:DeleteDbCategory(categoryName, database)
+--     local db = database or ns.charDB
+--     if not db[categoryName] then
+--         debug:print(self, format("DB category '%s' not found.", categoryName))
+--         return
+--     end
+--     db[categoryName] = nil
+--     debug:print(self, format("DB category '%s' has been removed.", categoryName))
+-- end
 
--- Save active lore quest to database.
-function DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
-    if not questID then return false end
-    if not questLineID then return false end
+-- -- Save active lore quest to database.
+-- function DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
+--     if not questID then return false end
+--     if not questLineID then return false end
 
-    local questIDstring = tostring(questID)
-    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
-    if not activeQuests[questIDstring] then
-        activeQuests[questIDstring] = {questLineID, campaignID}
-        debug:print(self, "Added active lore quest", questID, questLineID, campaignID)
-        return true
-    end
+--     local questIDstring = tostring(questID)
+--     local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+--     if not activeQuests[questIDstring] then
+--         activeQuests[questIDstring] = {questLineID, campaignID}
+--         debug:print(self, "Added active lore quest", questID, questLineID, campaignID)
+--         return true
+--     end
 
-    return false
-end
+--     return false
+-- end
 
--- Check whether given quest is an active lore quest.
-function DBUtil:IsQuestActiveLoreQuest(questID)
-    if not questID then return false end
-    if not self:HasCategoryTableAnyEntries("activeLoreQuests") then return false end
+-- -- Check whether given quest is an active lore quest.
+-- function DBUtil:IsQuestActiveLoreQuest(questID)
+--     if not questID then return false end
+--     if not self:HasCategoryTableAnyEntries("activeLoreQuests") then return false end
 
-    local questIDstring = tostring(questID)
-    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
-    return activeQuests[questIDstring] ~= nil
-end
+--     local questIDstring = tostring(questID)
+--     local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+--     return activeQuests[questIDstring] ~= nil
+-- end
 
--- Remove an active lore quest from database.
-function DBUtil:RemoveActiveLoreQuest(questID)
-    if not questID then return end
+-- -- Remove an active lore quest from database.
+-- function DBUtil:RemoveActiveLoreQuest(questID)
+--     if not questID then return end
 
-    local questIDstring = tostring(questID)
-    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
-    local questLineID, campaignID = SafeUnpack(activeQuests[questIDstring])
-    -- Remove from DB
-    activeQuests[questIDstring] = nil
-    debug:print(self, "Removed active lore quest", questID)
-    -- Remove DB itself if empty
-    if not self:HasCategoryTableAnyEntries("activeLoreQuests") then
-        self:DeleteDbCategory("activeLoreQuests")
-    end
+--     local questIDstring = tostring(questID)
+--     local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+--     local questLineID, campaignID = SafeUnpack(activeQuests[questIDstring])
+--     -- Remove from DB
+--     activeQuests[questIDstring] = nil
+--     debug:print(self, "Removed active lore quest", questID)
+--     -- Remove DB itself if empty
+--     if not self:HasCategoryTableAnyEntries("activeLoreQuests") then
+--         self:DeleteDbCategory("activeLoreQuests")
+--     end
 
-    return questLineID, campaignID
-end
+--     return questLineID, campaignID
+-- end
 
 --------------------------------------------------------------------------------
 ----- Tooltip Data Handler -----------------------------------------------------
