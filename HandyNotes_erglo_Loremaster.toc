@@ -29,8 +29,9 @@ utils/achievements.lua
 utils/libqtip.lua
 utils/worldmap.lua
 
+# Load data handler
+data/includes.xml
+
 # Load main files
-Data.lua
-data\includes.xml
 Options.lua
 Core.lua

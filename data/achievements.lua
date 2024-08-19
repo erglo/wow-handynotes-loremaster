@@ -1,9 +1,9 @@
 --------------------------------------------------------------------------------
---[[ HandyNotes: Loremaster - Options ]]--
+--[[ Achievements - Utility and wrapper functions for achievement data. ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
--- Copyright (C) 2023  Erwin D. Glockner (aka erglo)
+-- Copyright (C) 2024  Erwin D. Glockner (aka erglo, ergloCoder)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,11 +17,6 @@
 --
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see http://www.gnu.org/licenses.
---
---
--- Files used for reference:
--- REF.: <https://wowpedia.fandom.com/wiki/API_C_AddOns.GetAddOnMetadata>
--- (see also the function comments section for more reference)
 --
 --------------------------------------------------------------------------------
 
