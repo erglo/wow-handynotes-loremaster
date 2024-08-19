@@ -45,6 +45,7 @@ local C_QuestInfoSystem = C_QuestInfoSystem;
 local C_CampaignInfo = C_CampaignInfo;
 
 local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
+local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
 
 --------------------------------------------------------------------------------
 
@@ -70,8 +71,8 @@ end
 local function AddMoreQuestInfo(questInfo)
     local classificationID = questInfo.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
     local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
-    questInfo.isDaily = questInfo.frequency and questInfo.frequency == Enum.QuestFrequency.Daily;
-    questInfo.isWeekly = questInfo.frequency and questInfo.frequency == Enum.QuestFrequency.Weekly;
+    questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
+    questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
     questInfo.isFailed = C_QuestLog.IsFailed(questInfo.questID);
     questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
@@ -82,11 +83,12 @@ local function AddMoreQuestInfo(questInfo)
     questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.isQuestlineQuest = classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
+    questInfo.isStory = LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = classificationID and classificationID == Enum.QuestClassification.Threat or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = C_QuestLog.IsQuestTrivial(questInfo.questID);
     questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = LocalQuestInfo:GetQuestFactionGroup(questInfo.questID);
-    questInfo.questTagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
+    questInfo.questTagInfo = questInfo.tagInfo or tagInfo;
     -- Test
     questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
     questInfo.isCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);

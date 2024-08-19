@@ -33,6 +33,7 @@ local AddonID, ns = ...;
 
 -- Upvalues
 local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR;
+local QuestCache = QuestCache;
 
 --------------------------------------------------------------------------------
 ----- Quest Cache Handler -----------------------------------------------------
@@ -41,23 +42,32 @@ local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR;
 local LocalQuestCache = { debug = false, debug_prefix = ORANGE_FONT_COLOR:WrapTextInColorCode("Quest-CACHE:") };
 ns.QuestCacheUtil = LocalQuestCache;
 
------ Quest Lines -----
+----- Wrapper functions --------------------------------------------------------
+
+function LocalQuestCache:Get(questID)
+    return QuestCache:Get(questID);  --> WoW global
+end
+
+function LocalQuestCache:IsCached(questID)
+    return QuestCache.objects[questID] ~= nil;
+end
+
+----- Quest Lines --------------------------------------------------------------
 
 LocalQuestCache.questLineQuests = {}  --> { [questLineID] = {questID1, questID2, ...}, ... }
 
 function LocalQuestCache:GetQuestLineQuests(questLineID, prepareCache)
-    local questIDs = self.questLineQuests[questLineID]
+    local questIDs = self.questLineQuests[questLineID];
     if not questIDs then
         -- questIDs = DBUtil:GetSavedQuestLineQuests(questLineID) or C_QuestLine.GetQuestLineQuests(questLineID)
-        questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+        questIDs = C_QuestLine.GetQuestLineQuests(questLineID);
+        if (#questIDs == 0) then return; end
 
-        if (#questIDs == 0) then return end
-
-        self.questLineQuests[questLineID] = questIDs
+        self.questLineQuests[questLineID] = questIDs;
         -- debug:print(self, format("%d Added %d |4quest:quests; for QL", questLineID, #questIDs))
     end
 
     if not prepareCache then
-        return questIDs
+        return questIDs;
     end
 end

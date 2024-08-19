@@ -1149,7 +1149,7 @@ end
 
 ----- Quest Handler ----------
 
-LocalQuestUtils.cache = {}
+-- LocalQuestUtils.cache = {}
 
 LocalQuestUtils.GetQuestName = function(self, questID)
     -- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
@@ -1161,49 +1161,49 @@ LocalQuestUtils.GetQuestName = function(self, questID)
     return QuestUtils_GetQuestName(questID)   -- QuestCache:Get(questID).title
 end
 
-function LocalQuestUtils:IsDaily(questID)
-    if (currentPin and currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
-        return true
-    end
-    local questInfo = QuestCache:Get(questID)
-    if (questInfo and questInfo.frequency) then
-        return questInfo.frequency == Enum.QuestFrequency.Daily
-    end
+-- function LocalQuestUtils:IsDaily(questID)
+--     if (currentPin and currentPin.questType and currentPin.questID == questID and currentPin.questType == "Daily") then
+--         return true
+--     end
+--     local questInfo = QuestCache:Get(questID)
+--     if (questInfo and questInfo.frequency) then
+--         return questInfo.frequency == Enum.QuestFrequency.Daily
+--     end
 
-    return tContains(LocalQuestFilter.dailyQuests, questID) or LocalQuestFilter:IsCompletedRecurringQuest("Daily", questID)
-end
+--     return tContains(LocalQuestFilter.dailyQuests, questID) or LocalQuestFilter:IsCompletedRecurringQuest("Daily", questID)
+-- end
 
-function LocalQuestUtils:IsWeekly(questID)
-    local gameQuestInfo = QuestCache:Get(questID)
-    if (gameQuestInfo and gameQuestInfo.frequency) then
-        local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
-        return isWeekly
-    end
+-- function LocalQuestUtils:IsWeekly(questID)
+--     local gameQuestInfo = QuestCache:Get(questID)
+--     if (gameQuestInfo and gameQuestInfo.frequency) then
+--         local isWeekly = gameQuestInfo.frequency == Enum.QuestFrequency.Weekly
+--         return isWeekly
+--     end
 
-    return tContains(LocalQuestFilter.weeklyQuests, questID) or LocalQuestFilter:IsCompletedRecurringQuest("Weekly", questID)
-end
+--     return tContains(LocalQuestFilter.weeklyQuests, questID) or LocalQuestFilter:IsCompletedRecurringQuest("Weekly", questID)
+-- end
 
--- Some quests which are still in the game have been marked obsolete by Blizzard
--- and cannot be obtained or completed.
--- **Note:** This is not a foolproof solution, but seems to work so far.
-function LocalQuestUtils:IsObsolete(questID)
-    if tContains(LocalQuestFilter.obsoleteQuests, questID) then
-        -- Prioritize manually verified questIDs
-        return true
-    end
-    if (GetQuestExpansion(questID) < 0) then
-        return true
-    end
-    if not HaveQuestData(questID) and (QuestCache.objects[questID] == nil) then
-        return true
-    end
+-- -- Some quests which are still in the game have been marked obsolete by Blizzard
+-- -- and cannot be obtained or completed.
+-- -- **Note:** This is not a foolproof solution, but seems to work so far.
+-- function LocalQuestUtils:IsObsolete(questID)
+--     if tContains(LocalQuestFilter.obsoleteQuests, questID) then
+--         -- Prioritize manually verified questIDs
+--         return true
+--     end
+--     if (GetQuestExpansion(questID) < 0) then
+--         return true
+--     end
+--     if not HaveQuestData(questID) and (QuestCache.objects[questID] == nil) then
+--         return true
+--     end
 
-    return false
-end
+--     return false
+-- end
 
-function LocalQuestUtils:IsStory(questID)
-    return tContains(LoreUtil.storyQuests, tostring(questID)) or IsStoryQuest(questID)
-end
+-- function LocalQuestUtils:IsStory(questID)
+--     return tContains(LoreUtil.storyQuests, tostring(questID)) or IsStoryQuest(questID)
+-- end
 
 local function ShouldIgnoreQuestTypeTag(questInfo)
     if not questInfo.questTagInfo then return true end
@@ -1361,7 +1361,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isCalling = C_QuestLog.IsQuestCalling(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isComplete = C_QuestLog.IsComplete(questID),
-            isDaily = self:IsDaily(questID),
+            isDaily = LocalQuestFilter:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
             isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
@@ -1369,14 +1369,14 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
-            isObsolete = self:IsObsolete(questID),
+            isObsolete = LocalQuestFilter:IsObsolete(questID),
             -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
-            isStory = self:IsStory(questID),
+            isStory = LocalQuestFilter:IsStory(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
-            isWeekly = self:IsWeekly(questID),
+            isWeekly = LocalQuestFilter:IsWeekly(questID),
             -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
             questFactionGroup = LocalQuestFilter:GetQuestFactionGroup(questID),
@@ -1417,15 +1417,15 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isAccountQuest = C_QuestLog.IsAccountQuest(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isComplete = C_QuestLog.IsComplete(questID),
-            isDaily = self:IsDaily(questID),
+            isDaily = LocalQuestFilter:IsDaily(questID),
             isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
-            isStory = self:IsStory(questID),
+            isStory = LocalQuestFilter:IsStory(questID),
             isTrivial = C_QuestLog.IsQuestTrivial(questID),
-            isWeekly = self:IsWeekly(questID),
+            isWeekly = LocalQuestFilter:IsWeekly(questID),
             questFactionGroup = LocalQuestFilter:GetQuestFactionGroup(questID),
             questID = questID,
             questName = questName,
@@ -1464,10 +1464,10 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questLevel = C_QuestLog.GetQuestDifficultyLevel(questID),
             isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
-            isDaily = self:IsDaily(questID),
-            isWeekly = self:IsWeekly(questID),
+            isDaily = LocalQuestFilter:IsDaily(questID),
+            isWeekly = LocalQuestFilter:IsWeekly(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
-            isStory = self:IsStory(questID),
+            isStory = LocalQuestFilter:IsStory(questID),
             hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, playerMapID),
             playerMapID = playerMapID
         }

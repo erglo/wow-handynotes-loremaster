@@ -38,6 +38,7 @@ local AddonID, ns = ...;
 
 local DBUtil = ns.DatabaseUtil;  --> <data\database.lua>
 local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
+local LoreUtil = ns.lore;  --> <Data.lua>
 
 -- Upvalues
 local tinsert, tContains = tinsert, tContains;
@@ -298,7 +299,41 @@ end
 --> TODO - Add filter for wrong factionGroup quests
     -- [quest=54114]  -- Battle for Azeroth, Crucible of Storms, "Every Little Death Helps" (Alliance, not Neutral)
 
------ Faction Group Labels ----------
+----- Filtering Handler --------------------------------------------------------
+
+function LocalQuestFilter:IsDaily(questID, baseQuestInfo)
+    local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
+    local isDailyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Daily;
+
+    return isDailyQuest or tContains(self.dailyQuests, questID) or self:IsCompletedRecurringQuest("Daily", questID);
+end
+
+function LocalQuestFilter:IsWeekly(questID, baseQuestInfo)
+    local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
+    local isWeeklyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Weekly;
+
+    return isWeeklyQuest or tContains(self.weeklyQuests, questID) or self:IsCompletedRecurringQuest("Weekly", questID);
+end
+
+function LocalQuestFilter:IsStory(questID, baseQuestInfo)
+    local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
+
+    return questInfo.isStory or tContains(LoreUtil.storyQuests, tostring(questID)) or IsStoryQuest(questID);
+end
+
+----- QuestLine Quest Filter -----
+
+-- Some quests which are still in the game have been marked obsolete by Blizzard
+-- and cannot be obtained or completed.
+-- **Note:** This is not a foolproof solution, but seems to work so far.
+function LocalQuestFilter:IsObsolete(questID)
+    local isManuallyMarked = tContains(self.obsoleteQuests, questID);
+    local hasInvalidExpansionID = GetQuestExpansion(questID) < 0;
+    local hasCachedData = LocalQuestCache:IsCached(questID);
+    local hasQuestData = HaveQuestData(questID);
+
+    return isManuallyMarked or hasInvalidExpansionID or not hasCachedData or not hasQuestData;
+end
 
 --@do-not-package@
 --------------------------------------------------------------------------------
