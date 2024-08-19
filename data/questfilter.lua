@@ -63,6 +63,9 @@ end
 
 -- All quests in this table are weekly quests of different questlines.
 LocalQuestFilter.weeklyQuests = {
+    75665, 78444,  -- Dragonflight, "A Worthy Ally: Loamm Niffen/Dream Wardens"
+    78821,  -- Dragonflight, "Blooming Dreamseeds"
+    77251,  -- Dragonflight, "Shaping the Dreamsurge"
     70750, 72068, 72373, 72374, 72375, 75259, 75859, 75860, 75861, 77254, 77976,  -- Dragonflight, "Aiding the Accord" quests
     78446, 78447, 78861,  -- Dragonflight, "Aiding the Accord" quests
     80385, 80386, 80388, 80389,  -- Dragonflight, "Last Hurrah" quests
@@ -71,9 +74,7 @@ LocalQuestFilter.weeklyQuests = {
     61332, 62861, 62862, 62863,  -- Shadowlands, Covenant Sanctum (Kyrian), "Return Lost Souls" quests
     61982,  -- Shadowlands (Kyrian), "Replenish the Reservoir"
     57301,  -- Shadowlands, Maldraxxus, "Callous Concoctions"
-}
--- Noteworthy quests:
--- 75665 - A Worthy Ally: Loamm Niffen (Weekly, neutral)
+};
 
 function LocalQuestFilter:SetRecurringQuestCompleted(recurringTypeName, questID)
     local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
