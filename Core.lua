@@ -1908,11 +1908,12 @@ local function SetDebugTooltipAnchorPoint(pin, frame, anchorFrame)
 end
 
 local uiScale = UIParent:GetEffectiveScale()
-local screenWidth = GetScreenWidth() * uiScale    -- same as UIParent:GetRight() * uiScale
-local screenHeight = GetScreenHeight() * uiScale  -- same as UIParent:GetTop() * uiScale
+-- local screenWidth = GetScreenWidth() * uiScale    -- same as UIParent:GetRight() * uiScale
+-- local screenHeight = GetScreenHeight() * uiScale  -- same as UIParent:GetTop() * uiScale
 
 local function SetZoneStoryTooltipAnchorPoint()
     if WorldMapFrame:IsMaximized() then
+        local screenWidth = GetScreenWidth() * uiScale
         if ( GetCursorPosition() < screenWidth / 2 ) then
             ZoneStoryTooltip:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", 0, -38)
         else
@@ -1967,6 +1968,9 @@ end
 local function ShowAllTooltips()
     local primaryHeight = PrimaryTooltip:GetHeight() * uiScale
     local scrollStep = ns.settings.scrollStep
+    -- Note: screen sizes need to be here, not reliable at start-up
+    local screenHeight = GetScreenHeight() * uiScale
+    local screenWidth = GetScreenWidth() * uiScale
 
     if QuestLineTooltip then
         local questLineTop = QuestLineTooltip:GetTop() * uiScale
