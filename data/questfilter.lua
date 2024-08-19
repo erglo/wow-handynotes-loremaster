@@ -36,6 +36,12 @@
 
 local AddonID, ns = ...;
 
+local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
+
+-- Upvalues
+local tinsert, tContains = tinsert, tContains;
+local tostring = tostring;
+
 --------------------------------------------------------------------------------
 ----- Quest Filter Handler -----------------------------------------------------
 --------------------------------------------------------------------------------
@@ -52,7 +58,7 @@ function LocalQuestFilter:Init()
         local dailyQuestIDs = LocalQuestCache:GetQuestLineQuests(dailyQuestLineID)
         tAppendAll(self.dailyQuests, dailyQuestIDs)
     end
-    debug:print(self, "Filter data have been prepared")
+    -- debug:print(self, "Filter data have been prepared")
 end
 
 -- All quests in this table are weekly quests of different questlines.
@@ -74,10 +80,10 @@ function LocalQuestFilter:SetRecurringQuestCompleted(recurringTypeName, questID)
     DBUtil:GetInitDbCategory(catName_recurringQuest, ns.charDB)
 
     if not tContains(ns.charDB[catName_recurringQuest], questID) then
-        tInsert(ns.charDB[catName_recurringQuest], questID)
-        debug:print(DBUtil, questID, recurringTypeName, "quest has been saved.")
-    else
-        debug:print(DBUtil, questID, "Already saved.")
+        tinsert(ns.charDB[catName_recurringQuest], questID)
+    --     debug:print(DBUtil, questID, recurringTypeName, "quest has been saved.")
+    -- else
+    --     debug:print(DBUtil, questID, "Already saved.")
     end
 end
 
@@ -265,15 +271,15 @@ end
 --
 function LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo)
     if questInfo.isObsolete then
-        debug:print(self, "Skipping OBSOLETE quest:", questInfo.questID)
+        -- debug:print(self, "Skipping OBSOLETE quest:", questInfo.questID)
         return false
     end
     if not self:ShouldShowRaceQuest(questInfo.questID) then
-        debug:print(self, "Skipping RACE quest:", questInfo.questID)
+        -- debug:print(self, "Skipping RACE quest:", questInfo.questID)
         return false
     end
     if not self:ShouldShowClassQuest(questInfo.questID) then
-        debug:print(self, "Skipping CLASS quest:", questInfo.questID)
+        -- debug:print(self, "Skipping CLASS quest:", questInfo.questID)
         return false
     end
 

@@ -60,6 +60,7 @@ LoreUtil.storyQuests = {}
 
 local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
 local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
+local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
 local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
@@ -182,7 +183,7 @@ end
 local HookUtils =           { debug = false, debug_prefix = "HOOKS:" }
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
 local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
-local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
+-- local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
@@ -1501,24 +1502,24 @@ function LocalQuestUtils:GetCreateQuestLink(questInfo)
     return templateString:format(questInfo.questID, questInfo.questLevel, questInfo.questName)
 end
 
-LocalQuestCache.questLineQuests = {}  --> { [questLineID] = {questID1, questID2, ...}, ... }
+-- LocalQuestCache.questLineQuests = {}  --> { [questLineID] = {questID1, questID2, ...}, ... }
 
-function LocalQuestCache:GetQuestLineQuests(questLineID, prepareCache)
-    local questIDs = self.questLineQuests[questLineID]
-    if not questIDs then
-        -- questIDs = DBUtil:GetSavedQuestLineQuests(questLineID) or C_QuestLine.GetQuestLineQuests(questLineID)
-        questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+-- function LocalQuestCache:GetQuestLineQuests(questLineID, prepareCache)
+--     local questIDs = self.questLineQuests[questLineID]
+--     if not questIDs then
+--         -- questIDs = DBUtil:GetSavedQuestLineQuests(questLineID) or C_QuestLine.GetQuestLineQuests(questLineID)
+--         questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 
-        if (#questIDs == 0) then return end
+--         if (#questIDs == 0) then return end
 
-        self.questLineQuests[questLineID] = questIDs
-        debug:print(self, format("%d Added %d |4quest:quests; for QL", questLineID, #questIDs))
-    end
+--         self.questLineQuests[questLineID] = questIDs
+--         debug:print(self, format("%d Added %d |4quest:quests; for QL", questLineID, #questIDs))
+--     end
 
-    if not prepareCache then
-        return questIDs
-    end
-end
+--     if not prepareCache then
+--         return questIDs
+--     end
+-- end
 
 ----- Questline Handler ----------
 --
