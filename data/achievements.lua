@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---[[ Achievements - Utility and wrapper functions for achievement data. ]]--
+--[[ Lore Achievements - Utility and wrapper functions for achievement data. ]]--
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
@@ -26,8 +26,16 @@ local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
 local THE_LOREMASTER_ID = 7520  -- "The Loremaster" (category "Quests")
-local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585  -- (still optional in 11.0.0)
+local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585  -- (still optional in 11.0.2)
+local LOREMASTER_OF_KHAZ_ALGAR_ID = 20596  -- (still optional in 11.0.2)
                                                                                 --> TODO - Add to 'utils/worldmap.lua'
+-- The War Within
+LocalMapUtils.KHAZ_ALGAR_MAP_ID = 2274
+LocalMapUtils.RINGING_DEEPS_MAP_ID = 2214
+LocalMapUtils.HALLOWFALL_MAP_ID = 2215
+LocalMapUtils.ISLE_OF_DORN_MAP_ID = 2248
+LocalMapUtils.AZJ_KAHET_MAP_ID = 2255
+
 LocalMapUtils.ZUL_DRAK_MAP_ID = 121
 LocalMapUtils.VASHJIR_MAP_ID = 203
 LocalMapUtils.KELPTHAR_FOREST_MAP_ID = 201
@@ -86,6 +94,8 @@ local LocalLoreUtil = {}
 ns.lore = LocalLoreUtil
 
 LocalLoreUtil.OptionalAchievements = {
+    LOREMASTER_OF_KHAZ_ALGAR_ID,
+    20597,                              -- War Within
     LOREMASTER_OF_THE_DRAGON_ISLES_ID,
     15325, 15638, 17739, 19026, 16406,  -- Dragonflight
     15515, 19719,
@@ -106,11 +116,14 @@ LocalLoreUtil.OptionalAchievements = {
 }
 --[[
 Notes:
+    -- The War Within
+    20596 --> "Loremaster of Khaz Algar"  (optional in 11.0.2)
+    20597 --> "The War Within"
     -- Dragonflight
     19719 --> "Reclamation of Gilneas"  (Added in patch 10.2.5)
     19026 --> "Defenders of the Dream" (Emerald Dream storylines)
     17739 --> "Embers of Neltharion" (Zaralek Cavern storylines)
-    16585 --> "Loremaster of the Dragon Isles" (still optional in 11.0.0)
+    16585 --> "Loremaster of the Dragon Isles" (still optional in 11.0.2)
     16406 --> "All Sides of the Story"
     15638 --> "Dracthyr, Awaken" (Forbidden Reach storylines, Horde)
     15515 --> "Path to Enlightenment" (Zaralek Cavern storylines)
@@ -191,6 +204,24 @@ function LocalLoreUtil:IsAccountWideAchievement(achievementInfo)
 end
 
 LocalLoreUtil.AchievementsLocationMap = {
+    ----- War Within -----
+    [LocalMapUtils.RINGING_DEEPS_MAP_ID] = {
+        19560,  -- "The Ringing Deeps"
+        40799,  -- "Sojourner of The Ringing Deeps"
+    },
+    [LocalMapUtils.HALLOWFALL_MAP_ID] = {
+        20598,  -- "Hallowfall"
+        40844,  -- "Sojourner of Hallowfall"
+        40360,  -- (optional) "Life on the Farm"
+    },
+    [LocalMapUtils.ISLE_OF_DORN_MAP_ID] = {
+        20118,  -- "The Isle of Dorn"
+        20595,  -- "Sojourner of Isle of Dorn"
+    },
+    [LocalMapUtils.AZJ_KAHET_MAP_ID] = {
+        19559,  -- "Azj-Kahet"
+        40636,  -- "Sojourner of Azj-Kahet"
+    },
     ----- Dragonflight -----
     [LocalMapUtils.THE_WAKING_SHORES_MAP_ID] = {
         16334, -- "Waking Hope"
@@ -387,8 +418,12 @@ LocalLoreUtil.AchievementsLocationMap = {
 
     ----- Continents (Loremaster Achievements) -----
 
+    [LocalMapUtils.KHAZ_ALGAR_MAP_ID] = {
+        20596, --> "Loremaster of Khaz Algar" (optional in 11.0.2)
+        20597, --> (optional) "The War Within"
+    },
     [LocalMapUtils.DRAGON_ISLES_MAP_ID] = {
-        16585, -- "Loremaster of the Dragon Isles"
+        16585, -- "Loremaster of the Dragon Isles" (still optional in 11.0.2)
         16406,  -- "All Sides of the Story"
         -- 19790, -- (meta) "The Archives Called, You Answered"
     },
@@ -532,6 +567,7 @@ TestList = LocalAchievementUtil.GetAchievementCriteriaInfoList
 -- 09b. ----- 12593 Loremaster of Kul Tiras
 -- 10.  50305 14280 Loremaster of Shadowlands
 -- --.  ----- 16585 Loremaster of the Dragon Isles  (not yet added by Blizzard)
+-- --.  ----- 20596 Loremaster of Khaz Algar  (not yet added by Blizzard)
 
 --------------------------------------------------------------------------------
 
