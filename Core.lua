@@ -2099,7 +2099,7 @@ end
 
 local function IsRelevantQuest(questInfo)
     return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
-            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective) --  or questInfo.hasZoneStoryInfo
+            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective)
 end
 
 local candidateMapPinTemplates = {
@@ -2127,7 +2127,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not not LocalUtils:HasBasicTooltipContent(pin)) then return end
+    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2366,7 +2366,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not not LocalUtils:HasBasicTooltipContent(pin)) then return end
+    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
