@@ -2127,7 +2127,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
+    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2237,7 +2237,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
+    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
@@ -2366,7 +2366,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
 
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not debug.isActive and not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
+    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
 
