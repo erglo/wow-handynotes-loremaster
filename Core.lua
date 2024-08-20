@@ -1908,10 +1908,9 @@ local function SetDebugTooltipAnchorPoint(pin, frame, anchorFrame)
     frame:SetClampedToScreen(true)
 end
 
-local uiScale = UIParent:GetEffectiveScale()
-
 local function SetZoneStoryTooltipAnchorPoint()
     if WorldMapFrame:IsMaximized() then
+        local uiScale = UIParent:GetEffectiveScale()
         local screenWidth = GetScreenWidth() * uiScale
         if ( GetCursorPosition() < screenWidth / 2 ) then
             ZoneStoryTooltip:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", 0, -38)
@@ -1956,11 +1955,13 @@ end
 --           side of the map's border.
 -- 
 local function ShowAllTooltips()
+    local uiScale = UIParent:GetEffectiveScale()
+    local screenHeight = GetScreenHeight() * uiScale
+    local screenWidth = GetScreenWidth() * uiScale
+
     local primaryHeight = PrimaryTooltip:GetHeight() * uiScale
     local scrollStep = ns.settings.scrollStep
     -- Note: screen sizes need to be here, not reliable at start-up
-    local screenHeight = GetScreenHeight() * uiScale
-    local screenWidth = GetScreenWidth() * uiScale
 
     if QuestLineTooltip then
         local questLineTop = QuestLineTooltip:GetTop() * uiScale
@@ -1994,12 +1995,16 @@ local function ShowAllTooltips()
         QuestLineTooltip:Show()
     end
 
+    -- Too far on top, content tooltip is overlapping with the GameTooltip
     if (PrimaryTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
-        GameTooltip:ClearAllPoints();
+        GameTooltip:ClearAllPoints()
         if CampaignTooltip then
-	        GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")  --, 0, -1)
+            GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
+        elseif (((PrimaryTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale) > screenWidth) then
+            -- Too far in upper right corner
+            GameTooltip:SetPoint("TOPRIGHT", PrimaryTooltip, "BOTTOMRIGHT")
         else
-	        GameTooltip:SetPoint("BOTTOMLEFT", PrimaryTooltip, "BOTTOMRIGHT")  --, 0, -1)
+	        GameTooltip:SetPoint("BOTTOMLEFT", PrimaryTooltip, "BOTTOMRIGHT")
         end
     end
 
@@ -2145,7 +2150,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
 
     -- Game tooltip: reposition the default tooltip
     GameTooltip:ClearAllPoints();
-	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, 0, -1)
+	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
 
     -- Custom content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
@@ -2262,7 +2267,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
 
     -- Game tooltip: reposition the default tooltip
     GameTooltip:ClearAllPoints()
-    GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, 0, -1)    
+    GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
 
     -- Content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
@@ -2391,7 +2396,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
 
     -- Game tooltip: reposition the default tooltip
     GameTooltip:ClearAllPoints();
-	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")  --, 0, -1)
+	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
 
     -- Content tooltips
     if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
