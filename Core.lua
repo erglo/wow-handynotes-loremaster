@@ -2075,7 +2075,14 @@ end
 ----- Hooking Functions --------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local ticker = nil
+
 local function Hook_QuestPin_OnLeave(preservePin)
+    if ticker then
+        ticker:Cancel()
+	    ticker = nil
+    end
+
     currentPin = preservePin and currentPin or nil
     -- Release tooltip(s)
     if PrimaryTooltip then
@@ -2115,9 +2122,7 @@ local candidateMapPinTemplates = {
     -- LocalUtils.QuestPinTemplate,         --> handled in Hook_ActiveQuestPin_OnEnter()
 }
 
-local function Hook_StorylineQuestPin_OnEnter(pin)
-    if not pin.questID then return end
-    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
+local function StorylineQuestPin_Refresh(pin)
 
     currentPin = pin
 
@@ -2135,6 +2140,13 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
 
     -- Create custom tooltip(s) ------------------------------------------------
+
+    -- Note: Timed pins have a timer for reloading and updating the tooltip
+    -- content. The LibQTip tooltip needs to be released before a new one can
+    -- be created. By default this only happens when the mouse leaves the
+    -- worldmap pin, so we do this here manually w/o destroying the tooltip.
+    local preservePin = true
+    Hook_QuestPin_OnLeave(preservePin)
 
     -- Dev info
     if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
@@ -2220,6 +2232,17 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     end
 
     ShowAllTooltips()
+end
+
+local function Hook_StorylineQuestPin_OnEnter(pin)
+    if not pin.questID then return end
+    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
+
+    StorylineQuestPin_Refresh(pin)
+
+    -- REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
+    assert(ticker == nil)
+	ticker = C_Timer.NewTicker(0.5, function() StorylineQuestPin_Refresh(pin) end)
 end
 
 ----------

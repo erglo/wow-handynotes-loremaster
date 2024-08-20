@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Tooltip: added timer to quest offer tooltips for auto-updating the tooltip content.
+* Tooltip: updated tooltip anchors.
+* Tooltip: the tooltip no longer changes "hook" into the game's tooltip, but below it instead.
 * Updated TOC file version to `WoW 11.0.2`.
 
 ### Fixed
