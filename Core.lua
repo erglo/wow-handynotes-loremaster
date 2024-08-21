@@ -58,9 +58,10 @@ local LocalMapUtils = ns.utils.worldmap
 local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
 
-local DBUtil = ns.DatabaseUtil;  --> <data\database.lua>
-local LocalQuestCache = ns.QuestCacheUtil;  --> <data\questcache.lua>
+local DBUtil = ns.DatabaseUtil  --> <data\database.lua>
+local LocalQuestCache = ns.QuestCacheUtil  --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
+local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
 local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
 
 local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
@@ -184,14 +185,10 @@ end
 
 local HookUtils =           { debug = false, debug_prefix = "HOOKS:" }
 local CampaignUtils =       { debug = false, debug_prefix = "CP:" }
--- local DBUtil =              { debug = false, debug_prefix = GREEN("DB:") }
--- local LocalQuestCache =     { debug = false, debug_prefix = ORANGE("Quest-CACHE:") }
 local LocalQuestUtils =     { debug = false, debug_prefix = ORANGE("QuestUtils:") }
 local LocalQuestLineUtils = { debug = false, debug_prefix = "QL:" }
 local ZoneStoryUtils =      { debug = false, debug_prefix = "ZS:" }
--- local LocalQuestFilter =    { debug = false, debug_prefix = "QFilter:" }
 -- MergeTable(LocalMapUtils,   { debug = false, debug_prefix = "MAP:" })
--- local TooltipUtils =        { debug = true, debug_prefix = "TTU:" }
 local LocalUtils = {}
 
 --> TODO: CampaignCache, QuestCache
@@ -1247,14 +1244,6 @@ end
 function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
     local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
 
-    -- local tagList = LocalQuestTagUtil:GetAllQuestTags(questInfo.questID, 20, 20)
-    -- if tagList then
-    --     print(questInfo.questID, questInfo.questName)
-    --     for tagLabel, tagAtlasMarkup in pairs(tagList) do
-    --         print("-->", tagAtlasMarkup, tagLabel)
-    --     end
-    -- end
-
     -- Blizzard's default tags
     local tagInfo = questInfo.questTagInfo
     if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
@@ -1385,7 +1374,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questMapID = GetQuestUiMapID(questID),
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
-            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questTagInfo = LocalQuestInfo:GetQuestTagInfo(questID),  --> QuestTagInfo table
             classificationID = C_QuestInfoSystem.GetQuestClassification(questID),
             isFailed = C_QuestLog.IsFailed(questID),
         }
@@ -1430,7 +1419,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questFactionGroup = LocalQuestFilter:GetQuestFactionGroup(questID),
             questID = questID,
             questName = questName,
-            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
+            questTagInfo = LocalQuestInfo:GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
             questType = C_QuestLog.GetQuestType(questID),
             isBonusObjective = QuestUtils_IsQuestBonusObjective(questID),
             isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
@@ -1481,7 +1470,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questFactionGroup = LocalQuestFilter:GetQuestFactionGroup(questID),
             questMapID = pinMapID or playerMapID,
-            questTagInfo = LocalQuestTagUtil:GetQuestTagInfo(questID),  --> QuestTagInfo table
+            questTagInfo = LocalQuestInfo:GetQuestTagInfo(questID),  --> QuestTagInfo table
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
         }
     end
@@ -2132,6 +2121,7 @@ local function StorylineQuestPin_Refresh(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
     end
     -- Always update this
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
@@ -3389,34 +3379,5 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 --     end
 -- end
 
---[[
-for k,v in pairs(pin) do
-    if not tContains({"function", "table"}, type(v)) then
-        print(k, "-->", v)
-    end
-end
--- achievementID
--- isAccountCompleted
--- isCampaign
--- isCombatAllyQuest
--- isDaily
--- isHidden
--- isImportant
--- isLegendary
--- isLocalStory
--- isMeta
--- isQuestStart  --> true
--- mapID
--- pinAlpha
--- pinLevel
--- pinTemplate
--- questClassification
--- questIcon
--- questID
--- questLineID
--- questLineName
--- questName
--- x, y, normalizedX, normalizedY
-]]
 --------------------------------------------------------------------------------
 --@end-do-not-package@
