@@ -45,7 +45,11 @@ ns.QuestCacheUtil = LocalQuestCache;
 ----- Wrapper functions --------------------------------------------------------
 
 function LocalQuestCache:Get(questID)
-    return QuestCache:Get(questID);  --> WoW global
+    local questInfo = QuestCache:Get(questID);  --> WoW global
+    if questInfo then
+        questInfo.isGameData = true;
+    end
+    return questInfo;
 end
 
 function LocalQuestCache:IsCached(questID)
