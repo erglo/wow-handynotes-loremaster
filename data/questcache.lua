@@ -24,7 +24,6 @@
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_SharedXML/SharedConstants.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSystemDocumentation.lua>
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
--- REF.: <https://warcraft.wiki.gg/wiki/API_C_QuestLog.GetQuestTagInfo>
 -- (see also the function comments section for more reference)
 --
 --------------------------------------------------------------------------------
@@ -42,7 +41,7 @@ local QuestCache = QuestCache;
 local LocalQuestCache = { debug = false, debug_prefix = ORANGE_FONT_COLOR:WrapTextInColorCode("Quest-CACHE:") };
 ns.QuestCacheUtil = LocalQuestCache;
 
------ Wrapper functions --------------------------------------------------------
+----- Wrapper ------------------------------------------------------------------
 
 function LocalQuestCache:Get(questID)
     local questInfo = QuestCache:Get(questID);  --> WoW global
