@@ -44,13 +44,61 @@ local C_QuestLog = C_QuestLog;
 local C_QuestInfoSystem = C_QuestInfoSystem;
 local C_CampaignInfo = C_CampaignInfo;
 
-local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
-local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
+local QuestFactionGroupID = ns.QuestFactionGroupID;  --> <Data.lua>
+local LocalQuestFilter = ns.QuestFilter;  --> <data\questfilter.lua>
 
 --------------------------------------------------------------------------------
 
 local LocalQuestInfo = {};
 ns.QuestInfo = LocalQuestInfo;
+
+----- Wrapper -----
+
+function LocalQuestInfo:GetQuestTagInfo(questID)
+    return C_QuestLog.GetQuestTagInfo(questID);
+end
+
+-- Wrapper functions for quest classificationIDs.
+---@param questID number
+---@return (Enum.QuestClassification)? classificationID
+-- 
+-- Supported Enum.QuestClassification types (value/name): <br>
+-- *  0 "Important" <br>
+-- *  1 "Legendary" <br>
+-- *  2 "Campaign" <br>
+-- *  3 "Calling" <br>
+-- *  4 "Meta" <br>
+-- *  5 "Recurring" <br>
+-- *  6 "Questline" <br>
+-- *  7 "Normal" <br>
+-- *  8 "BonusObjective" <br>
+-- *  9 "Threat" <br>
+-- * 10 "WorldQuest" <br>
+--
+-- REF.: [QuestInfoSharedDocumentation.lua](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSharedDocumentation.lua) <br>
+-- REF.: [QuestInfoSystemDocumentation.lua](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSystemDocumentation.lua) <br>
+-- REF.: [QuestUtils.lua](https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua) <br>
+--
+function LocalQuestInfo:GetQuestClassificationID(questID)
+    local classificationID = C_QuestInfoSystem.GetQuestClassification(questID);
+    return classificationID;
+end
+
+function LocalQuestInfo:GetQuestClassificationDetails(questID, skipFormatting)
+    return QuestUtil.GetQuestClassificationDetails(questID, skipFormatting);
+end
+
+-- returns { text=..., atlas=..., size=...}
+function LocalQuestInfo:GetQuestClassificationInfo(classificationID)
+    local info = QuestUtil.GetQuestClassificationInfo(classificationID);
+    -- Add text + atlas for 'BonusObjective'. Leave 'Threat' and 'WorldQuest', since their type is dynamic and handled separately.
+    local classificationInfoTableMore = {
+        [Enum.QuestClassification.BonusObjective] =	{ text = MAP_LEGEND_BONUSOBJECTIVE, atlas = "questbonusobjective", size = 16 },
+    };
+    return info or classificationInfoTableMore[classificationID];
+end
+
+----- Handler -----
 
 -- Return the factionGroupID for the given quest.
 function LocalQuestInfo:GetQuestFactionGroup(questID)
@@ -64,7 +112,7 @@ function LocalQuestInfo:HasQuestLineInfo(questID, uiMapID)                      
     if not uiMapID then
         uiMapID = ns.activeZoneMapInfo and ns.activeZoneMapInfo.mapID or WorldMapFrame:GetMapID();
     end
-    return (C_QuestLine.GetQuestLineInfo(questID, uiMapID)) ~= nil
+    return (C_QuestLine.GetQuestLineInfo(questID, uiMapID)) ~= nil;
 end
 
 -- Extend a default World Map quest pin with additional details needed for this
@@ -108,7 +156,7 @@ end
 function LocalQuestInfo:GetQuestInfoForPin(pin)
     local questInfo = {};
     local classificationID = pin.questClassification or LocalQuestInfo:GetQuestClassificationID(pin.questID);
-    local tagInfo = C_QuestLog.GetQuestTagInfo(pin.questID);
+    local tagInfo = self:GetQuestTagInfo(pin.questID);
     questInfo.isDaily = pin.isDaily or LocalQuestFilter:IsDaily(pin.questID);
     questInfo.isWeekly = LocalQuestFilter:IsWeekly(pin.questID);
     questInfo.isFailed = C_QuestLog.IsFailed(pin.questID);                      --> TODO - Check if these quests would be even visible on the map
@@ -125,7 +173,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isThreat = (classificationID and classificationID == Enum.QuestClassification.Threat) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = pin.isHidden or C_QuestLog.IsQuestTrivial(pin.questID);
     -- questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
-    questInfo.questFactionGroup = LocalQuestInfo:GetQuestFactionGroup(pin.questID);
+    questInfo.questFactionGroup = self:GetQuestFactionGroup(pin.questID);
     questInfo.questTagInfo = tagInfo;
     questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(pin.questID);
     -- Test
@@ -139,7 +187,7 @@ end
 
 local function AddMoreQuestInfo(questInfo)
     local classificationID = questInfo.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
-    local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID);
+    local tagInfo = LocalQuestInfo:GetQuestTagInfo(questInfo.questID);
     questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
     questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
     questInfo.isFailed = C_QuestLog.IsFailed(questInfo.questID);
@@ -171,7 +219,7 @@ end
 
 -- Retrieve native quest info for given quest.
 ---@param questID number
----@return QuestInfo?
+---@return QuestInfo? questInfo
 -- 
 -- `QuestInfo` structure (name/type): <br>
 -- * `campaignID` --> `number?`  <br>
@@ -215,46 +263,6 @@ function LocalQuestInfo:GetQuestInfo(questID)
     AddMoreQuestInfo(questInfo);
 
     return questInfo;
-end
-
--- Wrapper functions for quest classificationIDs.
----@param questID number
----@return (Enum.QuestClassification)? classificationID
--- 
--- Supported Enum.QuestClassification types (value/name): <br>
--- *  0 "Important" <br>
--- *  1 "Legendary" <br>
--- *  2 "Campaign" <br>
--- *  3 "Calling" <br>
--- *  4 "Meta" <br>
--- *  5 "Recurring" <br>
--- *  6 "Questline" <br>
--- *  7 "Normal" <br>
--- *  8 "BonusObjective" <br>
--- *  9 "Threat" <br>
--- * 10 "WorldQuest" <br>
---
--- REF.: [QuestInfoSharedDocumentation.lua](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSharedDocumentation.lua) <br>
--- REF.: [QuestInfoSystemDocumentation.lua](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSystemDocumentation.lua) <br>
--- REF.: [QuestUtils.lua](https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua) <br>
---
-function LocalQuestInfo:GetQuestClassificationID(questID)
-    local classificationID = C_QuestInfoSystem.GetQuestClassification(questID);
-    return classificationID;
-end
-
-function LocalQuestInfo:GetQuestClassificationDetails(questID, skipFormatting)
-    return QuestUtil.GetQuestClassificationDetails(questID, skipFormatting or true);
-end
-
--- returns { text=..., atlas=..., size=...}
-function LocalQuestInfo:GetQuestClassificationInfo(classificationID)
-    local info = QuestUtil.GetQuestClassificationInfo(classificationID);
-    -- Add text + atlas for 'BonusObjective'. Leave 'Threat' and 'WorldQuest', since their type is dynamic and handled separately.
-    local classificationInfoTableMore = {
-        [Enum.QuestClassification.BonusObjective] =	{ text = MAP_LEGEND_BONUSOBJECTIVE, atlas = "questbonusobjective", size = 16 },
-    };
-    return info or classificationInfoTableMore[classificationID];
 end
 
 --@do-not-package@
