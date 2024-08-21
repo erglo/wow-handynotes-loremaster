@@ -179,8 +179,8 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     -- Test
     questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(pin.questID);
     questInfo.wasEarnedByMe = questInfo.isCompleted and not questInfo.isAccountCompleted;
-    --> TODO: fix the following
-    -- print("questInfo.isStory:", questInfo.isStory)
+    --> TODO: add the following (see Core.lua)
+    -- .isObsolete
 
     return questInfo;
 end
