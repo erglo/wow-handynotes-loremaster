@@ -164,6 +164,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isActive = C_TaskQuest.IsActive(pin.questID);
     questInfo.isBonusObjective = pin.isBonusObjective or (classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(pin.questID));
     questInfo.isCampaign = pin.isCampaign or (pin.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(pin.questID);
+    questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(pin.questID);
     -- questInfo.isImportant = classificationID and classificationID == Enum.QuestClassification.Important or C_QuestLog.IsImportantQuest(questInfo.questID);
     questInfo.isLegendary = pin.isLegendary or (classificationID and classificationID == Enum.QuestClassification.Legendary or C_QuestLog.IsLegendaryQuest(pin.questID));
     -- questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
@@ -195,6 +196,7 @@ local function AddMoreQuestInfo(questInfo)
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isBonusObjective = classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
+    questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(questInfo.questID);
     questInfo.isImportant = classificationID and classificationID == Enum.QuestClassification.Important or C_QuestLog.IsImportantQuest(questInfo.questID);
     questInfo.isLegendary = classificationID and classificationID == Enum.QuestClassification.Legendary or C_QuestLog.IsLegendaryQuest(questInfo.questID);
     questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
@@ -293,7 +295,6 @@ C_QuestLog.IsOnQuest(questID)  --> boolean
 C_QuestLog.IsPushableQuest(questID)  --> boolean - Returns true if the quest can be shared with other players.
 C_QuestLog.IsQuestFromContentPush(questID)  --> boolean
 C_QuestLog.IsQuestBounty(questID)  --> boolean
-C_QuestLog.IsQuestCalling(questID)  --> boolean
 C_QuestLog.IsQuestDisabledForSession(questID)  --> boolean - Meaning??
 C_QuestLog.QuestIgnoresAccountCompletedFiltering(questID)  --> boolean
 C_QuestLog.IsQuestInvasion(questID)  --> boolean
@@ -440,6 +441,47 @@ Fields =
     { Name = "floorLocation", Type = "QuestLineFloorLocation", Nilable = false },
 },
 
+Name = "QuestRepeatability",
+Type = "Enumeration",
+NumValues = 5,
+MinValue = 0,
+MaxValue = 4,
+Fields =
+{
+    { Name = "None", Type = "QuestRepeatability", EnumValue = 0 },
+    { Name = "Daily", Type = "QuestRepeatability", EnumValue = 1 },
+    { Name = "Weekly", Type = "QuestRepeatability", EnumValue = 2 },
+    { Name = "Turnin", Type = "QuestRepeatability", EnumValue = 3 },
+    { Name = "World", Type = "QuestRepeatability", EnumValue = 4 },
+},
+
+Name = "QuestTagType",
+Type = "Enumeration",
+NumValues = 19,
+MinValue = 0,
+MaxValue = 18,
+Fields =
+{
+    { Name = "Tag", Type = "QuestTagType", EnumValue = 0 },
+    { Name = "Profession", Type = "QuestTagType", EnumValue = 1 },
+    { Name = "Normal", Type = "QuestTagType", EnumValue = 2 },
+    { Name = "PvP", Type = "QuestTagType", EnumValue = 3 },
+    { Name = "PetBattle", Type = "QuestTagType", EnumValue = 4 },
+    { Name = "Bounty", Type = "QuestTagType", EnumValue = 5 },
+    { Name = "Dungeon", Type = "QuestTagType", EnumValue = 6 },
+    { Name = "Invasion", Type = "QuestTagType", EnumValue = 7 },
+    { Name = "Raid", Type = "QuestTagType", EnumValue = 8 },
+    { Name = "Contribution", Type = "QuestTagType", EnumValue = 9 },
+    { Name = "RatedReward", Type = "QuestTagType", EnumValue = 10 },
+    { Name = "InvasionWrapper", Type = "QuestTagType", EnumValue = 11 },
+    { Name = "FactionAssault", Type = "QuestTagType", EnumValue = 12 },
+    { Name = "Islands", Type = "QuestTagType", EnumValue = 13 },
+    { Name = "Threat", Type = "QuestTagType", EnumValue = 14 },
+    { Name = "CovenantCalling", Type = "QuestTagType", EnumValue = 15 },
+    { Name = "DragonRiderRacing", Type = "QuestTagType", EnumValue = 16 },
+    { Name = "Capstone", Type = "QuestTagType", EnumValue = 17 },
+    { Name = "WorldBoss", Type = "QuestTagType", EnumValue = 18 },
+},
 ]]
 --------------------------------------------------------------------------------
 --@end-do-not-package@

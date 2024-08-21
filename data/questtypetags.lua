@@ -65,9 +65,10 @@ LocalQuestTag.Artifact = 107
 LocalQuestTag.WorldQuest = 109
 LocalQuestTag.BurningLegionWorldQuest = 145
 LocalQuestTag.BurningLegionInvasionWorldQuest = 146
-LocalQuestTag.Profession = 267
--- LocalQuestTag.Threat = 268
 LocalQuestTag.WarModePvP = 255
+LocalQuestTag.Profession = 267
+LocalQuestTag.Threat = 268
+LocalQuestTag.CovenantCalling = 271
 LocalQuestTag.Important = 282
 
 
@@ -83,8 +84,9 @@ LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Class] = "questlog-questtypeicon
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Escort] = "nameplates-InterruptShield"
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Profession] = "Profession"
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.WorldQuest] = "worldquest-tracker-questmarker"
--- LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Threat] = "worldquest-icon-nzoth"   -- "Ping_Map_Threat"
+LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.Threat] = "worldquest-icon-nzoth"   -- "Ping_Map_Threat"
 LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.WarModePvP] = "questlog-questtypeicon-pvp"
+LocalQuestTagUtil.QUEST_TAG_ATLAS[LocalQuestTag.CovenantCalling] = "Quest-DailyCampaign-Available"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["CAMPAIGN"] = "Quest-Campaign-Available"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_CAMPAIGN"] = "Quest-Campaign-TurnIn"
 LocalQuestTagUtil.QUEST_TAG_ATLAS["COMPLETED_DAILY_CAMPAIGN"] = "Quest-DailyCampaign-TurnIn"
@@ -106,7 +108,7 @@ local classificationIgnoreTable = {
 	-- Enum.QuestClassification.Important,
 	-- Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
-	-- Enum.QuestClassification.Calling,
+	Enum.QuestClassification.Calling,
 	-- Enum.QuestClassification.Meta,
 	-- Enum.QuestClassification.Recurring,
 	-- Enum.QuestClassification.Questline,
@@ -175,7 +177,9 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             info["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height);
             info["tagName"] = FormatTagName(tagName, questInfo);
         end
-        tinsert(tagInfoList, info);
+        if (questInfo.questTagInfo.tagID ~= LocalQuestTag.CovenantCalling) then -- handled below  --> TODO - priorities (tagInfo vs. manual vs. classification)
+            tinsert(tagInfoList, info);
+        end
     end
     -- Neglected or unsupported tags prior to Dragonflight (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
     local isRecurring = classificationID and classificationID == Enum.QuestClassification.Recurring;
@@ -225,12 +229,22 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
         });
     end
     if questInfo.isCampaign then
-        -- Is supported by classification, but icon is awful. We are going to replace it.
+        -- Is supported by classification, but icon is awful.
         local atlas = questInfo.isReadyForTurnIn and "Quest-Campaign-TurnIn" or "Quest-Campaign-Available"
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
             ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CAMPAIGN, questInfo),
             ["tagID"] = "C",
+            ["ranking"] = 3,
+        });
+    end
+    if questInfo.isCalling then
+        -- Is supported by classification, but icon is awful.
+        local atlas = questInfo.isReadyForTurnIn and "Quest-DailyCampaign-TurnIn" or "Quest-DailyCampaign-Available";
+        tinsert(tagInfoList, {
+            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+            ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CALLING, questInfo),
+            ["tagID"] = "CC",
             ["ranking"] = 3,
         });
     end
@@ -411,7 +425,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
         tagData[MAP_LEGEND_CAMPAIGN] = atlasMarkup
     end
     if questInfo.isBonusObjective then
-        local atlasMarkup = CreateAtlasMarkup("questbonusobjective", width, height)
+        local atlasMarkup = CreateAtlasMarkup("QuestBonusObjective", width, height)
         tagData[MAP_LEGEND_BONUSOBJECTIVE] = atlasMarkup
     end
     -- if questInfo.isDaily then
@@ -497,9 +511,6 @@ Enum.QuestTagType
     "quest-recurring-turnin" or ("quest-recurring-trivial" or "quest-recurring-available")
     "quest-wrapper-turnin" or ("quest-wrapper-trivial" or "quest-wrapper-available")
 
-    "Callings-Turnin" or "Callings-Available"  --> 26, 33
-
-
     "questlog-questtypeicon-account"  --> 18 pt
     "questlog-questtypeicon-alliance"  --> 18 pt
     "questlog-questtypeicon-class"  --> 18 pt
@@ -530,47 +541,6 @@ Enum.QuestTagType
     "questlog-storylineicon"  --> 22 pt
     "questlog-questtypeicon-Delves"  --> 18 pt
 
-    Name = "QuestRepeatability",
-    Type = "Enumeration",
-    NumValues = 5,
-    MinValue = 0,
-    MaxValue = 4,
-    Fields =
-    {
-        { Name = "None", Type = "QuestRepeatability", EnumValue = 0 },
-        { Name = "Daily", Type = "QuestRepeatability", EnumValue = 1 },
-        { Name = "Weekly", Type = "QuestRepeatability", EnumValue = 2 },
-        { Name = "Turnin", Type = "QuestRepeatability", EnumValue = 3 },
-        { Name = "World", Type = "QuestRepeatability", EnumValue = 4 },
-    },
-
-    Name = "QuestTagType",
-    Type = "Enumeration",
-    NumValues = 19,
-    MinValue = 0,
-    MaxValue = 18,
-    Fields =
-    {
-        { Name = "Tag", Type = "QuestTagType", EnumValue = 0 },
-        { Name = "Profession", Type = "QuestTagType", EnumValue = 1 },
-        { Name = "Normal", Type = "QuestTagType", EnumValue = 2 },
-        { Name = "PvP", Type = "QuestTagType", EnumValue = 3 },
-        { Name = "PetBattle", Type = "QuestTagType", EnumValue = 4 },
-        { Name = "Bounty", Type = "QuestTagType", EnumValue = 5 },
-        { Name = "Dungeon", Type = "QuestTagType", EnumValue = 6 },
-        { Name = "Invasion", Type = "QuestTagType", EnumValue = 7 },
-        { Name = "Raid", Type = "QuestTagType", EnumValue = 8 },
-        { Name = "Contribution", Type = "QuestTagType", EnumValue = 9 },
-        { Name = "RatedReward", Type = "QuestTagType", EnumValue = 10 },
-        { Name = "InvasionWrapper", Type = "QuestTagType", EnumValue = 11 },
-        { Name = "FactionAssault", Type = "QuestTagType", EnumValue = 12 },
-        { Name = "Islands", Type = "QuestTagType", EnumValue = 13 },
-        { Name = "Threat", Type = "QuestTagType", EnumValue = 14 },
-        { Name = "CovenantCalling", Type = "QuestTagType", EnumValue = 15 },
-        { Name = "DragonRiderRacing", Type = "QuestTagType", EnumValue = 16 },
-        { Name = "Capstone", Type = "QuestTagType", EnumValue = 17 },
-        { Name = "WorldBoss", Type = "QuestTagType", EnumValue = 18 },
-    },
 ]]
 --------------------------------------------------------------------------------
 --@end-do-not-package@
