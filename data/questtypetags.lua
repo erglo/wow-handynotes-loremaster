@@ -178,8 +178,9 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
         tinsert(tagInfoList, info);
     end
     -- Neglected or unsupported tags prior to Dragonflight (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
-    if questInfo.isDaily then
-        local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.DAILY
+    local isRecurring = classificationID and classificationID == Enum.QuestClassification.Recurring;
+    if (questInfo.isDaily and not isRecurring) then
+        local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.DAILY;
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
             ["tagName"] = DAILY,
@@ -187,7 +188,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             ["ranking"] = 3,
         });
     end
-    if questInfo.isWeekly then
+    if (questInfo.isWeekly and not isRecurring) then
         local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.WEEKLY
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
