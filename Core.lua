@@ -230,7 +230,7 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID)
     if (#tagInfoList > 0) then
         for _, tagInfo in ipairs(tagInfoList) do
-            local text = string.format("%s %s", tagInfo.atlasMarkup, tagInfo.tagName)
+            local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
             lineIndex = debug.tooltip:AddLine(text, tostring(tagInfo.tagID))
             -- if tagInfo.alpha then
             if pin.questInfo.isTrivial then     --> TODO - Add to settings
@@ -1788,10 +1788,10 @@ local function StorylineQuestPin_Refresh(pin)
         if not ns.settings.showPluginName then
             LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
         end
-        LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
         if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
+            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
+            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
         end
     end
 
@@ -1846,6 +1846,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
     end
     -- Always update the following info for active quests
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
@@ -1923,10 +1924,10 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
         if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
             LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
         end
-        LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
         if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
+            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
+            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
         end
     end
 
@@ -1976,6 +1977,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
     end
     -- Always update the following info for active quests
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
@@ -2052,10 +2054,10 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
         if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
             LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
         end
-        LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
         if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "New style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID);
+            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
+            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
         end
     end
 
@@ -2911,29 +2913,11 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 
 -- QuestMapLog_ShowStoryTooltip(QuestMapFrame)
 
-    -- -- if (pin.questInfo and pin.questInfo.questType == 271) then return end  -- daily calling type
     -- for k,v in pairs(pin) do
     --     if not tContains({"function", "table"}, type(v)) then
     --         print(k, "-->", v)
     --     end
     -- end
-
-    --     inProgress
-    --     isAccountCompleted
-    --     isCampaign
-    --     isCombatAllyQuest
-    --     isDaily
-    --     isHidden
-    --     isImportant
-    --     isLegendary
-    --     isLocalStory
-    --     isMeta
-    --     isQuestStart
-    --     mapID
-    --     pinTemplate
-    --     questIcon
-    --     questID
-    --     questName
 
 ]]
 

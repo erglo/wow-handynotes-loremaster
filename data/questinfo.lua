@@ -155,6 +155,7 @@ end
 --
 function LocalQuestInfo:GetQuestInfoForPin(pin)
     local questInfo = {};
+    questInfo.questID = pin.questID;
     local classificationID = pin.questClassification or LocalQuestInfo:GetQuestClassificationID(pin.questID);
     local tagInfo = self:GetQuestTagInfo(pin.questID);
     questInfo.isDaily = pin.isDaily or LocalQuestFilter:IsDaily(pin.questID);
