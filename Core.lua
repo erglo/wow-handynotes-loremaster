@@ -849,7 +849,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, questID)
     local tagInfoList, questInfo = LocalQuestTagUtil:GetQuestTagInfoList(questID)
     if (#tagInfoList == 0) then return; end
 
-    local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
+    local LineColor = NORMAL_FONT_COLOR
 
     for _, tagInfo in ipairs(tagInfoList) do
         local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
@@ -1718,7 +1718,7 @@ local function StorylineQuestPin_Refresh(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
     end
     -- Always update this
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
@@ -1846,7 +1846,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               
     end
     -- Always update the following info for active quests
     pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
@@ -1904,7 +1904,7 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
     -- Add quest title + adjust tooltip width to the GameTooltip
-    local TitleColor = HIGHLIGHT_FONT_COLOR
+    local TitleColor = pin.questInfo.isTrivial and QUEST_ACTIVE_TRIVIAL_GRAY or NORMAL_FONT_COLOR
     local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(PrimaryTooltip, TitleColor, pin.questInfo.questName)
     PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
 
@@ -1977,7 +1977,7 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     if not isSameAsPreviousPin then
         -- Only update (once) when hovering a different quest pin
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
     end
     -- Always update the following info for active quests
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
