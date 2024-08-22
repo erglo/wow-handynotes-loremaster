@@ -260,7 +260,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             ["ranking"] = 3,
         });
     end
-    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) then
+    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) and ns.settings.showTagQuestline then
         local questlineClassificationID = Enum.QuestClassification.Questline;
         local questlineClassificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questlineClassificationID);
         tinsert(tagInfoList, {

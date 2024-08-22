@@ -82,6 +82,7 @@ ns.pluginInfo.defaultOptions = {
         ["continentIconScale"] = 1.5,
         ["continentIconAlpha"] = 0.75,
         ["hideZoneStoryInCompletedZones"] = false,
+        ["showTagQuestline"] = false,
 	},
 }
 ns.pluginInfo.needWorldMapRefresh = {
@@ -242,6 +243,14 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 arg ="showTagTransparency",
                                 width = 1.2,
                                 order = 35,
+                            },
+                            quest_tag_questline = {
+                                type = "toggle",
+                                name = "Show Questline Tag",
+                                desc = "Display a quest tag line for quests with a storyline.",
+                                arg ="showTagQuestline",
+                                width = 1.2,
+                                order = 36,
                             },
                         },
                     },  --> general_details

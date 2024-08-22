@@ -6,11 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+* Quest Type Tags: added optional transparency for trivial quest types.
+* Quest Type Tags: added support for Covenant Calling quests.
+* Quest Type Tags: added some custom tag for account-wide completed quests.
+
 ### Changed
 
+* Quest Type Tags: updated the internal quest type tagging system.
 * Tooltip: added timer to quest offer tooltips for auto-updating the tooltip content.
 * Tooltip: updated tooltip anchors.
-* Tooltip: the tooltip no longer changes "hook" into the game's tooltip, but below it instead.
+* Tooltip: the tooltip no longer changes the game's tooltip by "hooking" into it, instead it appears below the quest icon tooltip.
 * Updated TOC file version to `WoW 11.0.2`.
 
 ### Fixed
