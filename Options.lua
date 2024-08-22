@@ -223,7 +223,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 desc = "Show additional details for Threat Objectives in a separate tooltip below the quest tooltip.",
                                 arg ="trackThreatObjectives",
                                 width = 1.2,
-                                order = 35,
+                                order = 31,
                             },
                             track_bonusquests = {
                                 type = "toggle",
@@ -231,12 +231,20 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 desc = "Show additional details for Bonus Objectives in a separate tooltip below the quest tooltip.",
                                 arg ="trackBonusObjectives",
                                 width = 1.2,
-                                order = 36,
+                                order = 32,
                             },
                             --> TODO - Track active quests / ready-for-turnin quests
                             --> TODO - Add reminder for tracking trivial quests in World Map filter.
+                            quest_tag_alpha = {
+                                type = "toggle",
+                                name = "Quest Tag Transparency",
+                                desc = "Display quest tag lines of lower level quests semi-transparent.",
+                                arg ="showTagTransparency",
+                                width = 1.2,
+                                order = 35,
+                            },
                         },
-                    },
+                    },  --> general_details
                     zs_group = {
                         type = "group",
                         name = ZONE,
@@ -300,7 +308,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 order = 6,
                             },
                         },
-                    },
+                    },  --> zs_group
                     ql_group = {
                         type = "group",
                         name = QUEST_CLASSIFICATION_QUESTLINE,
@@ -392,7 +400,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 order = 30,
                             },
                         },
-                    },
+                    },  --> ql_group
                     cp_group = {
                         type = "group",
                         name = TRACKER_HEADER_CAMPAIGN_QUESTS,
@@ -447,7 +455,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 order = 5,
                             },
                         },
-                    },
+                    },  --> cp_group
                 }
             },  --> tooltip_details_zone
             continent_settings = {

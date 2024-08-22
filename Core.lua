@@ -854,7 +854,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, questID)
     for _, tagInfo in ipairs(tagInfoList) do
         local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
         local lineIndex = LibQTipUtil:AddColoredLine(tooltip, LineColor, text)
-        if questInfo.isTrivial then                                             --> TODO - Add to settings, eg. alpha
+        if (questInfo.isTrivial and ns.settings.showTagTransparency) then
             local r, g, b = LineColor:GetRGB()
             tooltip:SetCellTextColor(lineIndex, 1, r, g, b, 0.5)
         end
