@@ -53,6 +53,8 @@ L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
 -- Upvalues + Wrapper
 local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS
 local QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestTagAtlas
+local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest;
+local QuestUtils_IsQuestWorldQuest = QuestUtils_IsQuestWorldQuest;
 
 -- Quest tag IDs, additional to `Enum.QuestTag` and `Enum.QuestTagType`
 --> REF.: [Enum.QuestTag](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua)
@@ -127,6 +129,16 @@ local function FormatTagName(tagName, questInfo)
     return tagName;
 end
 
+local function ShouldIgnoreQuestTypeTag(questInfo)
+    if not questInfo.questTagInfo then return true; end
+
+    local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
+    local shouldIgnoreShownTag = questInfo.isOnQuest and isKnownQuestTypeTag;
+    local ignoreCovenantCallingTag = (questInfo.questTagInfo.tagID == LocalQuestTag.CovenantCalling);  -- handled below manually
+
+    return shouldIgnoreShownTag or ignoreCovenantCallingTag;
+end
+
 LocalQuestTagUtil.defaultIconWidth = 20;
 LocalQuestTagUtil.defaultIconHeight = 20;
 
@@ -137,7 +149,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
     local height = self.defaultIconHeight;
     local tagInfoList = {};  --> {{atlasMarkup=..., tagName=..., tagID=...}, ...}
 
-    -- Note: Blizzard seems to currently prioritize the classification details over tag infos. We do so as well.
+    -- Supported classification details from the game
     local classificationID, classificationText, classificationAtlas, clSize = LocalQuestInfo:GetQuestClassificationDetails(questID);
     if (classificationID and not tContains(classificationIgnoreTable, classificationID)) then
         local atlas = (classificationID == Enum.QuestClassification.Recurring and questInfo.isReadyForTurnIn) and "quest-recurring-turnin" or classificationAtlas;
@@ -148,7 +160,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             ["ranking"] = 1,  -- manually ranking the quest type
         });
     end
-    -- Quest (type) tags
+    -- Supported quest (type) tags from the game
     if questInfo.questTagInfo then
         local info = {};
         info["tagID"] = questInfo.questTagInfo.tagID;
@@ -177,7 +189,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             info["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height);
             info["tagName"] = FormatTagName(tagName, questInfo);
         end
-        if (questInfo.questTagInfo.tagID ~= LocalQuestTag.CovenantCalling) then -- handled below  --> TODO - priorities (tagInfo vs. manual vs. classification)
+        if not ShouldIgnoreQuestTypeTag(questInfo) then                         --> TODO - priorities (tagInfo vs. manual vs. classification)
             tinsert(tagInfoList, info);
         end
     end
