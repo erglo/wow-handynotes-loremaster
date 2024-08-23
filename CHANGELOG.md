@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Settings: added an legacy style icon to point to new features.
 * Quest Type Tags: combined trivial quest tag with primary quest type tag, unless there is no primary type.
 * Quest Type Tags: timed recurring quest types no longer show a "Daily" or "Weekly" tag.
 * Quest Type Tags: updated the internal quest type tagging system.

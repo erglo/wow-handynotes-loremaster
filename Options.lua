@@ -238,7 +238,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             --> TODO - Add reminder for tracking trivial quests in World Map filter.
                             quest_tag_alpha = {
                                 type = "toggle",
-                                name = "Quest Tag Transparency",
+                                name = LocalOptionUtils:WrapTextInNewFeatureIcon("Quest Tag Transparency"),
                                 desc = "Display quest tag lines of lower level quests semi-transparent.",
                                 arg ="showTagTransparency",
                                 width = 1.2,
@@ -246,7 +246,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             quest_tag_questline = {
                                 type = "toggle",
-                                name = "Show Storyline Tag",
+                                name = LocalOptionUtils:WrapTextInNewFeatureIcon("Show Storyline Tag"),
                                 desc = "Display a quest tag line for quests with a storyline.",
                                 arg ="showTagQuestline",
                                 width = 1.2,
@@ -664,6 +664,11 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
 end
 
 ----- Utility functions ----------
+
+-- Returns the given string with the new feature (yellow exclamation mark) before given text.
+function LocalOptionUtils:WrapTextInNewFeatureIcon(text)
+	return "|TInterface\\OptionsFrame\\UI-OptionsFrame-NewFeatureIcon:0:0:-1:0|t"..text
+end
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
