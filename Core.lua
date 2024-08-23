@@ -1438,11 +1438,11 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
         for i, chapterID in ipairs(campaignInfo.chapterIDs) do
             local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(chapterID)
             local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
-            local currentChapterID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
+            local currentQuestlineID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
             if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
             if chapterInfo then
                 local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
-                local isActive = (chapterID == currentChapterID)
+                local isActive = (chapterID == campaignInfo.currentChapterID) or (chapterID == currentQuestlineID)
                 if (chapterIsComplete and isActive) then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(chapterName))
                 elseif chapterIsComplete then
