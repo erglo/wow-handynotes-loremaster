@@ -260,7 +260,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID)
             ["ranking"] = 3,
         });
     end
-    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) and ns.settings.showTagQuestline then
+    if (questInfo.hasQuestLineInfo and ns.settings.showTagQuestline) then
         local questlineClassificationID = Enum.QuestClassification.Questline;
         local questlineClassificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questlineClassificationID);
         tinsert(tagInfoList, {
@@ -422,7 +422,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
         tagData[MAP_LEGEND_LEGENDARY] = atlasMarkup
     end
     -- Custom tags
-    if (questInfo.isQuestlineQuest or questInfo.hasQuestLineInfo) then
+    if questInfo.hasQuestLineInfo then
         local atlasMarkup = CreateAtlasMarkup("questlog-storylineicon", width, height)
         tagData[L.CATEGORY_NAME_QUESTLINE] = atlasMarkup
     end
