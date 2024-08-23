@@ -136,7 +136,7 @@ LocalQuestFilter.obsoleteQuests = {
     72943,  -- Dragonflight, "United Again"
     77488,  -- Dragonflight, Ohn'ahra, "Azerothian Archives - Excavation Sites"
     79992, 79994, 79995, 79996, 79997,  -- Dragonflight, "Azerothian Archives"
-    78717, 78718, 78719, 7872, 78721, 78722, 79105, 79106, 80321,  -- The War Within (pre-patch), "Visions of Azeroth"
+    -- 78717, 78718, 78719, 7872, 78721, 78722, 79105, 79106, 80321,  -- The War Within (pre-patch), "Visions of Azeroth"
     72719, 72724, 72725, 72726, 72727, 72810, -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
     81466,  -- Dragonflight, Thaldraszus, "Dragon Isles Emissary"
     83360, 83363,  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
