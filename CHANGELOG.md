@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+* Notifications: sometimes campaign chapter IDs and storyline IDs are not identical which led to not counting saved active lore quests correctly or not being recognized at all.
+* Tooltip: sometimes campaign chapter IDs and storyline IDs are not identical which led to not indicating to the current campaign chapter correctly.
 * Tooltip: fixed UI scaling of the questline tooltip.
 
 ## [0.8.0-beta+110000] - 2024-08-03

@@ -2234,8 +2234,9 @@ end
 ---@return number|nil campaignID
 --
 local function PrintQuestAddedMessage(questInfo)
+    local questLineID, campaignID, currentChapterID
     if questInfo.isCampaign then
-        local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+        campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
         local activeMapInfo = LocalUtils:GetActiveMapInfo()
         if campaignInfo then
@@ -2249,13 +2250,16 @@ local function PrintQuestAddedMessage(questInfo)
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
-            return campaignInfo.currentChapterID, campaignInfo.campaignID  --> questLineID, campaignID
+            if not questInfo.hasQuestLineInfo then
+                return campaignInfo.currentChapterID, campaignInfo.campaignID  --> questLineID, campaignID
+            end
+            currentChapterID = campaignInfo.currentChapterID
         end
     end
     if questInfo.hasQuestLineInfo then
         local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, questInfo.playerMapID)
         if questLineInfo then
-            if ns.settings.showQuestlineQuestProgressMessage then
+            if (ns.settings.showQuestlineQuestProgressMessage and not questInfo.isCampaign) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the %s questline.",
@@ -2263,15 +2267,22 @@ local function PrintQuestAddedMessage(questInfo)
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
-            return questLineInfo.questLineID
+            if not questInfo.isCampaign then
+                return questLineInfo.questLineID
+            end
+            questLineID = questLineInfo.questLineID
         end
     end
+
+    -- Note: Sometimes campaign chapter IDs and questline IDs ar *not* identical; prefer questline ID if available.
+    return questLineID or currentChapterID, campaignID
 end
 
 -- Save the questline of an active quest, if available.
 function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    local questInfo = LocalQuestInfo:GetQuestInfo(questID)
     debug:print(LocalQuestFilter, "Quest accepted:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
@@ -2282,7 +2293,7 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
         local questLineID, campaignID = PrintQuestAddedMessage(questInfo)
         DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
     end
-    -- if questInfo.isStory then
+    -- if questInfo.isStory then                                                --> TODO - Add this
     --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
     --     ns:cprint(nameTemplate:format(ORANGE("This quest is part of a story.")))
     -- end
