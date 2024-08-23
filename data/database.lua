@@ -100,4 +100,20 @@ function DBUtil:RemoveActiveLoreQuest(questID)
     return questLineID, campaignID
 end
 
+-- Count the currently saved active questlines.
+function DBUtil:CountActiveQuestlineQuests(questLineID)
+    if not self:HasCategoryTableAnyEntries("activeLoreQuests") then return 0 end
+
+    local activeQuests = self:GetInitDbCategory("activeLoreQuests")
+    local count = 0
+    for questIDstring, data in pairs(activeQuests) do
+        local activeQuestLineID = data[1]
+        if (questLineID == activeQuestLineID) then
+            count = count + 1
+        end
+    end
+    -- debug:print(DBUtil, format("Found %d active |4questline:questlines;.", count))
+    return count
+end
+
 --------------------------------------------------------------------------------

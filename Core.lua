@@ -1325,7 +1325,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
-    local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
+    local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
     if (numActiveQuestLines > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(SPEC_ACTIVE..HEADER_COLON..L.TEXT_DELIMITER..tostring(numActiveQuestLines)))
     end
@@ -2149,31 +2149,26 @@ function LoremasterPlugin:OnHandyNotesStateChanged()
 end
 
 function LoremasterPlugin:RegisterHooks()
-    debug:print(HookUtils, "Hooking active quests...")
+    -- Hooking active/ongoing quests
     hooksecurefunc(QuestPinMixin, "OnMouseEnter", Hook_ActiveQuestPin_OnEnter)
     hooksecurefunc(QuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     -- hooksecurefunc(QuestPinMixin, "OnClick", Hook_QuestPin_OnClick)
 
-    -- Use for testing only!
-    -- hooksecurefunc(LegendHighlightablePoiPinMixin, "OnLegendPinMouseEnter", TestPin_OnEnter)  --> ALL pin templates
-
-    debug:print(HookUtils, "Hooking storyline quests...")
-    -- Note: "StorylineQuestPinMixin" has been removed in 11.0.0 by Blizzard.
+    -- Hooking storyline quests
+    --> Note: "StorylineQuestPinMixin" has been removed in 11.0.0 from the game.
     hooksecurefunc(QuestOfferPinMixin, "OnMouseEnter", Hook_StorylineQuestPin_OnEnter)
     hooksecurefunc(QuestOfferPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
     hooksecurefunc(QuestOfferPinMixin, "OnClick", Hook_QuestPin_OnClick)
 
-    -- Additional hooks
-    debug:print(HookUtils, "Hooking threat-, bonus-, and world quests...")
+    -- Hooking threat-, bonus-, and world quests
     hooksecurefunc(ThreatObjectivePinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)  -- Hook_StorylineQuestPin_OnEnter)
     hooksecurefunc(ThreatObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- hooksecurefunc(ThreatObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+
     hooksecurefunc(BonusObjectivePinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)
     hooksecurefunc(BonusObjectivePinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- hooksecurefunc(BonusObjectivePinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
+
     hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseEnter", Hook_WorldQuestsPin_OnEnter)  -- Hook_StorylineQuestPin_OnEnter)
     hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseLeave", Hook_QuestPin_OnLeave)
-    -- hooksecurefunc(WorldMap_WorldQuestPinMixin, "OnMouseClickAction", Hook_QuestPin_OnClick)
 
     -- HandyNotes Hooks
     --> Callback types: <https://www.wowace.com/projects/ace3/pages/ace-db-3-0-tutorial#title-5>
@@ -2184,7 +2179,7 @@ function LoremasterPlugin:RegisterHooks()
     hooksecurefunc(HandyNotes, "OnEnable", self.OnHandyNotesStateChanged)
     hooksecurefunc(HandyNotes, "OnDisable", self.OnHandyNotesStateChanged)
 
-    -- Keep track of World Map size changes, ie. to adjust icon scale, etc.
+    -- Keep track of World Map size changes, ie. to adjust icon scale, tooltips position, etc.
     hooksecurefunc(WorldMapFrame, "OnFrameSizeChanged", Hook_WorldMap_OnFrameSizeChanged)
 end
 
@@ -2232,21 +2227,6 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
     end
 end
 
-function LocalUtils:CountActiveQuestlineQuests(questLineID)
-    if not DBUtil:HasCategoryTableAnyEntries("activeLoreQuests") then return 0 end
-
-    local activeQuests = DBUtil:GetInitDbCategory("activeLoreQuests")
-    local count = 0
-    for questIDstring, data in pairs(activeQuests) do
-        local activeQuestLineID = data[1]
-        if (questLineID == activeQuestLineID) then
-            count = count + 1
-        end
-    end
-    debug:print(DBUtil, format("Found %d active |4questline:questlines;.", count))
-    return count
-end
-
 -- Inform user about adding a lore quest with a chat message
 ---@param questInfo table
 ---@return number|nil questLineID
@@ -2261,7 +2241,7 @@ local function PrintQuestAddedMessage(questInfo)
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, activeMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
+                local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
@@ -2276,7 +2256,7 @@ local function PrintQuestAddedMessage(questInfo)
         if questLineInfo then
             if ns.settings.showQuestlineQuestProgressMessage then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = LocalUtils:CountActiveQuestlineQuests(questLineInfo.questLineID)
+                local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the %s questline.",
                             L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
@@ -2921,10 +2901,8 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 
 ]]
 
--- function Test_GetAllQuestTags(questID, mapID)
---     local questInfo = LocalQuestUtils:GetQuestInfo(questID, "pin", mapID)
---     return LocalQuestTagUtil:GetAllQuestTags(questInfo, 16)
--- end
+    -- Use for testing only!  --> Hooks nearly ALL world map pin templates
+    -- hooksecurefunc(LegendHighlightablePoiPinMixin, "OnLegendPinMouseEnter", TestPin_OnEnter)
 
 -- local quest = QuestCache:Get(53955);
 -- -- isLegendary

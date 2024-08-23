@@ -7,3 +7,4 @@ Add meta achievements to data (really required?). @data +achievement
 Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
 Show active QLs in world map button @worldMapButton +questLines +map +button
+Update `debug:print` @Workspace
