@@ -77,23 +77,6 @@ LocalQuestFilter.weeklyQuests = {
     57301,  -- Shadowlands, Maldraxxus, "Callous Concoctions"
 };
 
-function LocalQuestFilter:SetRecurringQuestCompleted(recurringTypeName, questID)
-    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
-    DBUtil:GetInitDbCategory(catName_recurringQuest, ns.charDB)
-
-    if not tContains(ns.charDB[catName_recurringQuest], questID) then
-        tinsert(ns.charDB[catName_recurringQuest], questID)
-    --     debug:print(DBUtil, questID, recurringTypeName, "quest has been saved.")
-    -- else
-    --     debug:print(DBUtil, questID, "Already saved.")
-    end
-end
-
-function LocalQuestFilter:IsCompletedRecurringQuest(recurringTypeName, questID)
-    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
-    return ns.charDB[catName_recurringQuest] and tContains(ns.charDB[catName_recurringQuest], questID)
-end
-
 function LocalQuestFilter:ShouldSaveRecurringQuest(questInfo)
     return (
         ns.settings.saveRecurringQuests and
@@ -304,14 +287,14 @@ function LocalQuestFilter:IsDaily(questID, baseQuestInfo)
     local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
     local isDailyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Daily;
 
-    return isDailyQuest or tContains(self.dailyQuests, questID) or self:IsCompletedRecurringQuest("Daily", questID);
+    return isDailyQuest or tContains(self.dailyQuests, questID) or DBUtil:IsCompletedRecurringQuest("Daily", questID);
 end
 
 function LocalQuestFilter:IsWeekly(questID, baseQuestInfo)
     local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
     local isWeeklyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Weekly;
 
-    return isWeeklyQuest or tContains(self.weeklyQuests, questID) or self:IsCompletedRecurringQuest("Weekly", questID);
+    return isWeeklyQuest or tContains(self.weeklyQuests, questID) or DBUtil:IsCompletedRecurringQuest("Weekly", questID);
 end
 
 function LocalQuestFilter:IsStory(questID, baseQuestInfo)

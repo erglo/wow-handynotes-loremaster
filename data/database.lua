@@ -116,4 +116,23 @@ function DBUtil:CountActiveQuestlineQuests(questLineID)
     return count
 end
 
+----- Recurring Quests -----
+
+function DBUtil:SetRecurringQuestCompleted(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    self:GetInitDbCategory(catName_recurringQuest, ns.charDB)
+
+    if not tContains(ns.charDB[catName_recurringQuest], questID) then
+        tinsert(ns.charDB[catName_recurringQuest], questID)
+    --     debug:print(self, questID, recurringTypeName, "quest has been saved.")
+    -- else
+    --     debug:print(self, questID, "Already saved.")
+    end
+end
+
+function DBUtil:IsCompletedRecurringQuest(recurringTypeName, questID)
+    local catName_recurringQuest = "completed"..recurringTypeName.."Quests"
+    return ns.charDB[catName_recurringQuest] and tContains(ns.charDB[catName_recurringQuest], questID)
+end
+
 --------------------------------------------------------------------------------

@@ -974,7 +974,8 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = LocalQuestFilter:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = self:IsQuestFlaggedCompleted(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),  -- self:IsQuestFlaggedCompleted(questID),
+            isAccountCompleted = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
@@ -1002,10 +1003,10 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         if ns.settings.saveRecurringQuests then
             -- Enhance completion flagging for recurring quests
             if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then
-                questInfo.isFlaggedCompleted = LocalQuestFilter:IsCompletedRecurringQuest("Daily", questID)
+                questInfo.isFlaggedCompleted = DBUtil:IsCompletedRecurringQuest("Daily", questID)
             end
             if (questInfo.isWeekly and not questInfo.isFlaggedCompleted) then
-                questInfo.isFlaggedCompleted = LocalQuestFilter:IsCompletedRecurringQuest("Weekly", questID)
+                questInfo.isFlaggedCompleted = DBUtil:IsCompletedRecurringQuest("Weekly", questID)
             end
         end
 
@@ -1224,7 +1225,7 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
         local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if not (questInfo.isDaily or questInfo.isWeekly) then
-                if questInfo.isFlaggedCompleted then
+                if questInfo.isFlaggedCompleted then                            --> TODO - Include ".isAccountCompleted" + add to settings
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
                 end
             else
@@ -2297,7 +2298,7 @@ function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
 
     if LocalQuestFilter:ShouldSaveRecurringQuest(questInfo) then
         local recurringTypeName = questInfo.isWeekly and "Weekly" or "Daily"
-        LocalQuestFilter:SetRecurringQuestCompleted(recurringTypeName, questID)
+        DBUtil:SetRecurringQuestCompleted(recurringTypeName, questID)
     end
 
     if DBUtil:IsQuestActiveLoreQuest(questID) then
