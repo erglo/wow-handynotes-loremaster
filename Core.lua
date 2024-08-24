@@ -1585,11 +1585,9 @@ local function ShowAllTooltips()
     -- Too far on top, content tooltip is overlapping with the GameTooltip
     if (PrimaryTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
         GameTooltip:ClearAllPoints()
-        if CampaignTooltip then
-            GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
-        elseif (((PrimaryTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale) > screenWidth) then
+        if (((PrimaryTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale) > screenWidth) then
             -- Too far in upper right corner
-            GameTooltip:SetPoint("TOPRIGHT", PrimaryTooltip, "BOTTOMRIGHT")
+            GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "BOTTOMLEFT")
         else
 	        GameTooltip:SetPoint("BOTTOMLEFT", PrimaryTooltip, "BOTTOMRIGHT")
         end
@@ -1618,6 +1616,11 @@ local function ShowAllTooltips()
             local questLineTooltip = QuestLineTooltip or PrimaryTooltip
             CampaignTooltip:ClearAllPoints()
             CampaignTooltip:SetPoint("BOTTOMRIGHT", questLineTooltip, "BOTTOMLEFT")
+            GameTooltip:ClearAllPoints()
+            GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
+        else
+            GameTooltip:ClearAllPoints()
+            GameTooltip:SetPoint("BOTTOMLEFT", CampaignTooltip, "TOPLEFT")
         end
         CampaignTooltip:SetClampedToScreen(true)
         CampaignTooltip:Show()
