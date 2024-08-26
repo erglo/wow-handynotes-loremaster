@@ -142,8 +142,8 @@ end
 LocalQuestTagUtil.defaultIconWidth = 20;
 LocalQuestTagUtil.defaultIconHeight = 20;
 
-function LocalQuestTagUtil:GetQuestTagInfoList(questID)
-    local questInfo = LocalQuestInfo:GetQuestInfo(questID);
+function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
+    local questInfo = baseQuestInfo or LocalQuestInfo:GetQuestInfo(questID);
     -- local classificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questInfo.questClassification);
     local width = self.defaultIconWidth;
     local height = self.defaultIconHeight;

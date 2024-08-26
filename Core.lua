@@ -226,7 +226,7 @@ function debug:CreateDebugQuestInfoTooltip(pin)
         end
     end
     debug.tooltip:AddLine('New:')  --> blank line
-    local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID)
+    local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID, pin.questInfo)
     if (#tagInfoList > 0) then
         for _, tagInfo in ipairs(tagInfoList) do
             local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
@@ -853,8 +853,8 @@ local classificationIgnoreTable = {
 	Enum.QuestClassification.Campaign,
 }
 
-function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, questID)
-    local tagInfoList, questInfo = LocalQuestTagUtil:GetQuestTagInfoList(questID)
+function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, baseQuestInfo)
+    local tagInfoList, questInfo = LocalQuestTagUtil:GetQuestTagInfoList(baseQuestInfo.questID, baseQuestInfo)
     if (#tagInfoList == 0) then return end
 
     local LineColor = NORMAL_FONT_COLOR
@@ -1578,11 +1578,14 @@ local function ShowAllTooltips()
 end
 
 local function ShouldShowQuestType(pin)
+    -- These are types which are not displayed as tags by Blizzard
     local hasHiddenQuestType = tContains({
-        pin.questInfo.questClassification ~= Enum.QuestClassification.Normal,
+        -- pin.questInfo.questClassification ~= Enum.QuestClassification.Normal,
         pin.questInfo.isAccountQuest,
+        pin.questInfo.isBonusObjective,
         pin.questInfo.isDaily,
         pin.questInfo.isStory,
+        pin.questInfo.isRepeatable,
         pin.questInfo.isTrivial,
         pin.questInfo.isWeekly,
         pin.questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
@@ -1592,7 +1595,7 @@ local function ShouldShowQuestType(pin)
     -- pin.questInfo.isImportant, 
     -- pin.questInfo.isLegendary,
     -- pin.questInfo.isSequenced,
-    local hasTagsToShow = hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo) or pin.questInfo.isBonusObjective
+    local hasTagsToShow = hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo)
 
     return ns.settings.showQuestType and hasTagsToShow
 end
@@ -1692,14 +1695,6 @@ local function CreateCustomTooltips(pin)
     -- worldmap pin, so we do this here manually w/o destroying the tooltip.
     Hook_QuestPin_OnLeave()
 
-    -- Dev info
-    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
-        debug:CreateDebugQuestInfoTooltip(pin)  --> LibQTip type tooltip
-        SetDebugTooltipAnchorPoint(pin, debug.tooltip, GetAppropriateTooltip())
-        debug.tooltip:Show()
-        return
-    end
-
     -- Prepare tooltip name suffixes
     local suffixMapByPinTemplate = {
         [LocalUtils.QuestPinTemplate] = "Active",
@@ -1762,7 +1757,7 @@ local function AddTooltipContent(contentTooltip, pin)
         if not ns.settings.showPluginName or (LocalUtils:IsPinActiveQuest(pin) and ShouldShowReadyForTurnInMessage(pin)) then
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
-        LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questID)
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questInfo)
         if debug.isActive then
             LibQTipUtil:AddDisabledLine(contentTooltip, "Older style tags")
             LocalQuestUtils:AddQuestTagLinesToTooltip(contentTooltip, pin.questInfo)
@@ -1826,6 +1821,15 @@ local function WorldMapPin_RefreshAllData(pin)
     -- Extend quest meta data
     UpdateWorldMapPinQuestInfo(pin)
 
+    -- Dev info
+    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
+        Hook_QuestPin_OnLeave()
+        debug:CreateDebugQuestInfoTooltip(pin)  --> LibQTip type tooltip
+        SetDebugTooltipAnchorPoint(pin, debug.tooltip, GetAppropriateTooltip())
+        debug.tooltip:Show()
+        return
+    end
+
     -- Ignore basic quests w/o any lore and skip custom tooltip creation.
     if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then
         return
@@ -1852,7 +1856,7 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     -- Add ticker to quest offers to update content
     --> REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
     assert(ticker == nil)
-	ticker = C_Timer.NewTicker(0.5, function() WorldMapPin_RefreshAllData(pin) end)
+	ticker = C_Timer.NewTicker(0.3, function() WorldMapPin_RefreshAllData(pin) end)
 end
 
 ----------
@@ -2667,11 +2671,6 @@ C_Minimap.IsTrackingHiddenQuests()
 -- 		end
 -- 	end
 -- 	return n
--- end
-
--- if not isSameAsPreviousPin then
-    -- Hook_QuestPin_OnLeave(true)
-    -- C_Timer.After(0.2, function() Hook_StorylineQuestPin_OnEnter(pin) end)
 -- end
 
 -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
