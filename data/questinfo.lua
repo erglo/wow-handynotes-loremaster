@@ -166,9 +166,9 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isBonusObjective = pin.isBonusObjective or (classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(pin.questID));
     questInfo.isCampaign = pin.isCampaign or (pin.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(pin.questID);
     questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(pin.questID);
-    -- questInfo.isImportant = classificationID and classificationID == Enum.QuestClassification.Important or C_QuestLog.IsImportantQuest(questInfo.questID);
-    questInfo.isLegendary = pin.isLegendary or (classificationID and classificationID == Enum.QuestClassification.Legendary or C_QuestLog.IsLegendaryQuest(pin.questID));
-    -- questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
+    questInfo.isImportant = pin.isImportant or (classificationID and classificationID == Enum.QuestClassification.Important) or C_QuestLog.IsImportantQuest(questInfo.questID);
+    questInfo.isLegendary = pin.isLegendary or (classificationID and classificationID == Enum.QuestClassification.Legendary) or C_QuestLog.IsLegendaryQuest(pin.questID);
+    questInfo.isOnQuest = pin.inProgress or C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(pin.questID));
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID);
     questInfo.isStory = pin.isLocalStory or LocalQuestFilter:IsStory(pin.questID);
@@ -176,13 +176,12 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isTrivial = pin.isHidden or C_QuestLog.IsQuestTrivial(pin.questID);
     -- questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = self:GetQuestFactionGroup(pin.questID);
+    questInfo.questName = questInfo.questName or QuestUtils_GetQuestName(questInfo.questID);
     questInfo.questTagInfo = tagInfo;
     questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(pin.questID);
     -- Test
-    questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(pin.questID);
-    questInfo.wasEarnedByMe = questInfo.isCompleted and not questInfo.isAccountCompleted;
-    --> TODO: add the following (see Core.lua)
-    -- .isObsolete
+    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
+    questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
 
     return questInfo;
 end
@@ -198,26 +197,27 @@ local function AddMoreQuestInfo(questInfo)
     questInfo.isBonusObjective = classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID);
     questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
-    questInfo.isImportant = classificationID and classificationID == Enum.QuestClassification.Important or C_QuestLog.IsImportantQuest(questInfo.questID);
-    questInfo.isLegendary = classificationID and classificationID == Enum.QuestClassification.Legendary or C_QuestLog.IsLegendaryQuest(questInfo.questID);
+    questInfo.isImportant = (classificationID and classificationID == Enum.QuestClassification.Important) or C_QuestLog.IsImportantQuest(questInfo.questID);
+    questInfo.isLegendary = (classificationID and classificationID == Enum.QuestClassification.Legendary) or C_QuestLog.IsLegendaryQuest(questInfo.questID);
     questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.hasQuestLineInfo = classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isStory = questInfo.isStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = classificationID and classificationID == Enum.QuestClassification.Threat or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = questInfo.isHidden or C_QuestLog.IsQuestTrivial(questInfo.questID);
-    questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
+    -- questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = LocalQuestInfo:GetQuestFactionGroup(questInfo.questID);
     questInfo.questName = questInfo.title or QuestUtils_GetQuestName(questInfo.questID);
     questInfo.questTagInfo = questInfo.tagInfo or tagInfo;
+    -- Internal legacy
+    questInfo.questType = C_QuestLog.GetQuestType(questInfo.questID);
     -- Test
-    questInfo.isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
+    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
     questInfo.isAccountCompleted = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
     questInfo.wasEarnedByMe = questInfo.isCompleted and not questInfo.isAccountCompleted;
-    --> TODO: fix the following
-    -- print("questInfo.isStory:", questInfo.isStory)
-    -- print("questInfo.isDaily:", questInfo.isDaily)
-    -- print("questInfo.isWeekly:", questInfo.isWeekly)
+    questInfo.isBreadcrumbQuest = IsBreadcrumbQuest(questInfo.questID);
+    questInfo.isSequenced = IsQuestSequenced(questInfo.questID);
+    -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
     -- isMeta
 end
 

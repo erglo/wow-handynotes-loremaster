@@ -221,7 +221,7 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     if tagData then
         for tagLabel, tagAtlasMarkup in pairs(tagData) do
             local text = string.format("%s %s", tagAtlasMarkup, tagLabel)
-            local tagID = pin.questInfo.questTagInfo and pin.questInfo.questTagInfo.tagID or (pin.questInfo.classificationID or (pin.questType and pin.questType or "??"))
+            local tagID = pin.questInfo.questTagInfo and pin.questInfo.questTagInfo.tagID or (pin.questInfo.questClassification or (pin.questType and pin.questType or "??"))
             lineIndex = debug.tooltip:AddLine(text, tostring(tagID))
         end
     end
@@ -791,7 +791,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         -- debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
         questTitle = RETRIEVING_DATA
         if debug.isActive then
-            questTitle = format("> isDisabled: %s, questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.isDisabledForSession), tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
+            questTitle = format("> questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
         end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
@@ -978,7 +978,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
             isImportant = C_QuestLog.IsImportantQuest(questID),
-            isInvasion = C_QuestLog.IsQuestInvasion(questID),
+            -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isObsolete = LocalQuestFilter:IsObsolete(questID),
             -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
@@ -996,12 +996,12 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questName = questName,
             questType = C_QuestLog.GetQuestType(questID),  --> Enum.QuestTag
             questTagInfo = LocalQuestInfo:GetQuestTagInfo(questID),  --> QuestTagInfo table
-            classificationID = C_QuestInfoSystem.GetQuestClassification(questID),
+            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),
             isFailed = C_QuestLog.IsFailed(questID),
         }
         if ns.settings.saveRecurringQuests then
             -- Enhance completion flagging for recurring quests
-            if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then
+            if (questInfo.isDaily and not questInfo.isFlaggedCompleted) then    --> TODO - Check if need include account
                 questInfo.isFlaggedCompleted = DBUtil:IsCompletedRecurringQuest("Daily", questID)
             end
             if (questInfo.isWeekly and not questInfo.isFlaggedCompleted) then
@@ -1020,7 +1020,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isBounty = C_QuestLog.IsQuestBounty(questID),
             isCalling = C_QuestLog.IsQuestCalling(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isInvasion = C_QuestLog.IsQuestInvasion(questID),
+            -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isReplayedRecently = C_QuestLog.IsQuestReplayedRecently(questID),
@@ -1043,13 +1043,13 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questTagInfo = LocalQuestInfo:GetQuestTagInfo(questID),  --> QuestTagInfo table, Enum.QuestTag
             questType = C_QuestLog.GetQuestType(questID),
             isBonusObjective = QuestUtils_IsQuestBonusObjective(questID),
-            isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
-            isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
+            -- isDungeonQuest = QuestUtils_IsQuestDungeonQuest(questID),
+            -- isWorldQuest = QuestUtils_IsQuestWorldQuest(questID),
             isThreat = C_QuestLog.IsThreatQuest(questID),
-            classificationID = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
+            questClassification = C_QuestInfoSystem.GetQuestClassification(questID),  --> Enum.QuestClassification
             isFailed = C_QuestLog.IsFailed(questID),
             -- Keep for further testing
-            questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
+            -- questDifficulty = C_PlayerInfo.GetContentDifficultyQuestForPlayer(questID),  --> Enum.RelativeContentDifficulty
             questExpansionID = GetQuestExpansion(questID),
             isBreadcrumbQuest = IsBreadcrumbQuest(questID),
             isSequenced = IsQuestSequenced(questID),
@@ -1057,13 +1057,13 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
 
         questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pinMapID)
         questInfo.hasQuestLineInfo = LocalQuestLineUtils:HasQuestLineInfo(questID, pinMapID)
-        questInfo.hasHiddenQuestType = tContains({questInfo.isTrivial, questInfo.isCampaign, questInfo.isStory,
-                                                  questInfo.isDaily, questInfo.isWeekly, questInfo.isLegendary,
-                                                  -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
-                                                  questInfo.isImportant, questInfo.isAccountQuest,
-                                                  questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
-                                                  questInfo.classificationID ~= Enum.QuestClassification.Normal,
-                                                  }, true)
+        -- questInfo.hasHiddenQuestType = tContains({questInfo.isTrivial, questInfo.isCampaign, questInfo.isStory,
+        --                                           questInfo.isDaily, questInfo.isWeekly, questInfo.isLegendary,
+        --                                           -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
+        --                                           questInfo.isImportant, questInfo.isAccountQuest,
+        --                                           questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
+        --                                           questInfo.questClassification ~= Enum.QuestClassification.Normal,
+        --                                           }, true)
 
         return questInfo
     end
@@ -1286,10 +1286,6 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
 end
 
-local numRebuildTooltip = 0
-local wrapLine = false
-local lineLimit = 48
-
 LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, campaignChapterID)
     local questLineInfo;
     if campaignChapterID then
@@ -1336,7 +1332,6 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
 
     -- Questline quests
     if GetCollapseTypeModifier(filteredQuestInfos.isComplete, "collapseType_questline") then
-        -- numRebuildTooltip = 0
         for i, questInfo in ipairs(filteredQuestInfos.quests) do
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = LocalQuestUtils:FormatQuestName(questInfo)
@@ -1574,7 +1569,21 @@ local function ShowAllTooltips()
 end
 
 local function ShouldShowQuestType(pin)
-    local hasTagsToShow = pin.questInfo.hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo) or pin.questInfo.isBonusObjective
+    local hasHiddenQuestType = tContains({
+        pin.questInfo.questClassification ~= Enum.QuestClassification.Normal,
+        pin.questInfo.isAccountQuest,
+        pin.questInfo.isDaily,
+        pin.questInfo.isStory,
+        pin.questInfo.isTrivial,
+        pin.questInfo.isWeekly,
+        pin.questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
+    }, true)
+    -- pin.questInfo.isBreadcrumbQuest,
+    -- pin.questInfo.isCampaign,
+    -- pin.questInfo.isImportant, 
+    -- pin.questInfo.isLegendary,
+    -- pin.questInfo.isSequenced,
+    local hasTagsToShow = hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo) or pin.questInfo.isBonusObjective
 
     return ns.settings.showQuestType and hasTagsToShow
 end
@@ -1794,8 +1803,8 @@ local function UpdateWorldMapPinQuestInfo(pin)
     if not (isSameAsPreviousPin and isSameArea) then
         -- Only update (once) when hovering a different quest pin
         pin.mapID = pin:GetMap():GetMapID()
-        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
+        -- pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+        pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
     end
     -- Update this every time
     pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)

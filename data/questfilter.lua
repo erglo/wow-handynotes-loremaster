@@ -255,7 +255,7 @@ end
 ---@return boolean
 --
 function LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo)
-    if questInfo.isObsolete then
+    if self:IsObsolete(questInfo.questID) then
         -- debug:print(self, "Skipping OBSOLETE quest:", questInfo.questID)
         return false
     end
