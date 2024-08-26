@@ -1,7 +1,7 @@
-(A) Fix world quest questline active counter @tooltip +questLines
-(C) Fix word wrap in @tooltip
+(A) Add option to hide tooltip `GameTooltip:NumLines() == 1` @settings +tooltip
 (B) Add world map button @worldMapButton +map +button
 (B) Everything outside `C_Map.GetMapWorldSize(uiMapID)` doesn't need the ZoneStoryTooltip. @tooltip +map +pin +zoneStory
+(C) Fix word wrap in @tooltip
 (C) Check if possible, auto-scroll tooltip to quest @tooltip +map +pin
 Add meta achievements to data (really required?). @data +achievement
 Add right-click menu to continent pin @clickHandler +map +pin
