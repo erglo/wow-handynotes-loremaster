@@ -1607,13 +1607,23 @@ function LocalUtils:HasBasicTooltipContent(pin)
     return ShouldShowQuestType(pin) or ShouldShowReadyForTurnInMessage(pin)
 end
 
--- local candidateMapPinTemplates = {
---     -- LocalUtils.QuestOfferPinTemplate,       --> handled in Hook_StorylineQuestPin_OnEnter()
---     LocalUtils.BonusObjectivePinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
---     LocalUtils.ThreatObjectivePinTemplate,  --> handled in Hook_WorldQuestsPin_OnEnter()
---     LocalUtils.WorldQuestPinTemplate,       --> handled in Hook_WorldQuestsPin_OnEnter()
---     -- LocalUtils.QuestPinTemplate,         --> handled in Hook_ActiveQuestPin_OnEnter()
--- }
+function LocalUtils:IsPinTaskQuest(pin)
+    local taskMapPinTemplates = {
+        LocalUtils.BonusObjectivePinTemplate,
+        LocalUtils.ThreatObjectivePinTemplate,
+        LocalUtils.WorldQuestPinTemplate,
+    }
+
+    return tContains(taskMapPinTemplates, pin.pinTemplate)
+end
+
+function LocalUtils:IsPinQuestOffer(pin)
+    return pin.pinTemplate == LocalUtils.QuestOfferPinTemplate
+end
+
+function LocalUtils:IsPinActiveQuest(pin)
+    return pin.pinTemplate == LocalUtils.QuestPinTemplate
+end
 
 local function GetWorldQuestQualityColor(questTagInfo)
     if not questTagInfo then return NORMAL_FONT_COLOR; end
@@ -1707,14 +1717,11 @@ local function CreateCustomTooltips(pin)
 end
 
 local function AddTooltipContent(contentTooltip, pin)
-    local isQuestOffer = pin.pinTemplate == LocalUtils.QuestOfferPinTemplate
-    local isActiveQuest = pin.pinTemplate == LocalUtils.QuestPinTemplate
-    -- local isTaskQuest = tContains(candidateMapPinTemplates, pin.pinTemplate)
 
     debug:AddDebugLineToLibQTooltip(contentTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
     -- Add quest title + adjust tooltip width to the GameTooltip
-    local TitleColor = (isActiveQuest and pin.questInfo.isTrivial) and QUEST_ACTIVE_TRIVIAL_GRAY or GetWorldQuestQualityColor(pin.questInfo.questTagInfo)
+    local TitleColor = LocalUtils:IsPinTaskQuest(pin) and GetWorldQuestQualityColor(pin.questInfo.questTagInfo) or NORMAL_FONT_COLOR
     local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(contentTooltip, TitleColor, '')
     --> REF.: qTip:SetCell(lineNum, colNum, value[, font][, justification][, colSpan][, provider][, leftPadding][, rightPadding][, maxWidth][, minWidth][, ...])
     contentTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
@@ -1725,7 +1732,7 @@ local function AddTooltipContent(contentTooltip, pin)
     end
 
     -- Turn-in message
-    if (isActiveQuest and ShouldShowReadyForTurnInMessage(pin)) then
+    if (LocalUtils:IsPinActiveQuest(pin) and ShouldShowReadyForTurnInMessage(pin)) then
         if not ns.settings.showPluginName then
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
@@ -1734,7 +1741,7 @@ local function AddTooltipContent(contentTooltip, pin)
 
     -- Quest type tags
     if ShouldShowQuestType(pin) then
-        if not ns.settings.showPluginName or (isActiveQuest and ShouldShowReadyForTurnInMessage(pin)) then
+        if not ns.settings.showPluginName or (LocalUtils:IsPinActiveQuest(pin) and ShouldShowReadyForTurnInMessage(pin)) then
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questID)
@@ -1767,7 +1774,7 @@ local function AddTooltipContent(contentTooltip, pin)
     end
 
     -- Waypoint hint - not needed for active quests or world quests
-    if (isQuestOffer and LocalUtils:HasBasicTooltipContent(pin) and C_Map.CanSetUserWaypointOnMap(pin.mapID) ) then
+    if (LocalUtils:IsPinQuestOffer(pin) and LocalUtils:HasBasicTooltipContent(pin) and C_Map.CanSetUserWaypointOnMap(pin.mapID) ) then
         LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         LibQTipUtil:AddInstructionLine(contentTooltip, L.HINT_SET_WAYPOINT)
     end
@@ -2507,33 +2514,40 @@ end
 
 -- POIButtonUtil.Style
 
-local testCurrentPin = nil
+-- local testCurrentPin = nil
+-- local candidateMapPinTemplates = {
+--     -- LocalUtils.QuestOfferPinTemplate,       --> handled in Hook_StorylineQuestPin_OnEnter()
+--     LocalUtils.BonusObjectivePinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
+--     LocalUtils.ThreatObjectivePinTemplate,  --> handled in Hook_WorldQuestsPin_OnEnter()
+--     LocalUtils.WorldQuestPinTemplate,       --> handled in Hook_WorldQuestsPin_OnEnter()
+--     -- LocalUtils.QuestPinTemplate,         --> handled in Hook_ActiveQuestPin_OnEnter()
+-- }
 
-local function TestPin_OnEnter(pin)
-    if not pin then return end
-    if (pin == testCurrentPin) then return end
+-- local function TestPin_OnEnter(pin)
+--     if not pin then return end
+--     if (pin == testCurrentPin) then return end
 
-    testCurrentPin = pin
+--     testCurrentPin = pin
 
-    print("--> TestPin:", YELLOW(pin.pinTemplate), "-->", pin.questID and pin.questID, pin.isCampaign, pin.isLocalStory)
-    -- if tContains(candidateMapPinTemplates, pin.pinTemplate) then
-    --     -- for k,v in pairs(pin) do
-    --     --     if not tContains({"table", "function"}, type(v)) then
-    --     --         print(k, "-->", v)
-    --     --     end
-    --     -- end
-    --     print("questID/questName:", pin.questID, pin.questName)
-    --     print("pin.isCampaign:/isLocalStory", pin.isCampaign, pin.isLocalStory)
-    --     print("pin.inProgress:", pin.inProgress)
-    --     print("pin.isDaily:", pin.isDaily)
-    --     print("pin.isImportant/isLegendary/isMeta:", pin.isImportant, pin.isLegendary, pin.isMeta)
-    --     print("pin.pinLevel/questSortType:", pin.pinLevel, pin.questSortType)
-    -- end
+--     print("--> TestPin:", YELLOW(pin.pinTemplate), "-->", pin.questID and pin.questID, pin.isCampaign, pin.isLocalStory)
+--     -- if tContains(candidateMapPinTemplates, pin.pinTemplate) then
+--     --     -- for k,v in pairs(pin) do
+--     --     --     if not tContains({"table", "function"}, type(v)) then
+--     --     --         print(k, "-->", v)
+--     --     --     end
+--     --     -- end
+--     --     print("questID/questName:", pin.questID, pin.questName)
+--     --     print("pin.isCampaign:/isLocalStory", pin.isCampaign, pin.isLocalStory)
+--     --     print("pin.inProgress:", pin.inProgress)
+--     --     print("pin.isDaily:", pin.isDaily)
+--     --     print("pin.isImportant/isLegendary/isMeta:", pin.isImportant, pin.isLegendary, pin.isMeta)
+--     --     print("pin.pinLevel/questSortType:", pin.pinLevel, pin.questSortType)
+--     -- end
 
-    local qtype = C_QuestLog.GetQuestType(pin.questID)  --> Enum.QuestTag
-    local questTagInfo = C_QuestLog.GetQuestTagInfo(pin.questID)  --> QuestTagInfo table
-    print("qtype, questTagInfo:", qtype, questTagInfo and questTagInfo.tagID, questTagInfo and questTagInfo.tagName, questTagInfo and questTagInfo.worldQuestType)
-end
+--     local qtype = C_QuestLog.GetQuestType(pin.questID)  --> Enum.QuestTag
+--     local questTagInfo = C_QuestLog.GetQuestTagInfo(pin.questID)  --> QuestTagInfo table
+--     print("qtype, questTagInfo:", qtype, questTagInfo and questTagInfo.tagID, questTagInfo and questTagInfo.tagName, questTagInfo and questTagInfo.worldQuestType)
+-- end
 
 --------------------------------------------------------------------------------
 --[[ Tests
