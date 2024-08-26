@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Tooltip: completely rebuild the `tooltip hooking and anchoring system`.
 * Updated TOC file version to `WoW 11.0.2`.
 
+### Removed
+
+* Settings: this options has been removed. The storyline tooltip can no longer be selected as shown separately since it is now already separated from the game's default tooltip.
+
 ### Fixed
 
 * Notifications: sometimes campaign chapter IDs and storyline IDs are not identical which led to not counting saved active lore quests correctly or not being recognized at all.
