@@ -49,7 +49,7 @@ if not HandyNotes then
 end
 
 local LibQTip = LibStub('LibQTip-1.0')
-local PrimaryTooltip, ZoneStoryTooltip, QuestLineTooltip, CampaignTooltip
+local ContentTooltip, ZoneStoryTooltip, CampaignTooltip
 
 local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
@@ -383,7 +383,7 @@ function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
         local categoryName = ns.settings.showCategoryNames and name or ''
         lineText = pluginName .. delimiter .. categoryName
     end
-    if ( tooltip == PrimaryTooltip and StringIsEmpty(lineText) ) then
+    if ( tooltip == ContentTooltip and StringIsEmpty(lineText) ) then
         -- Need an empty line in this case
         lineText = " "
     end
@@ -548,7 +548,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     -- Plugin / category name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
-        local categoryNameOnly = tooltip == PrimaryTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin))
+        local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin))
         LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_ZONE_STORY, categoryNameOnly)
 
         debug:AddDebugLineToLibQTooltip(tooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
@@ -847,7 +847,7 @@ local classificationIgnoreTable = {
 
 function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, questID)
     local tagInfoList, questInfo = LocalQuestTagUtil:GetQuestTagInfoList(questID)
-    if (#tagInfoList == 0) then return; end
+    if (#tagInfoList == 0) then return end
 
     local LineColor = NORMAL_FONT_COLOR
 
@@ -1315,7 +1315,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
 
     -- Plugin / category name
-    local categoryNameOnly = tooltip == PrimaryTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or LocalUtils:ShouldShowZoneStoryDetails(pin))  -- or LocalUtils:ShouldShowCampaignDetails(pin))
+    local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
     LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_QUESTLINE, categoryNameOnly)
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
@@ -1422,7 +1422,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
     end
 
     -- Plugin / category name
-    local categoryNameOnly = tooltip == PrimaryTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or LocalUtils:ShouldShowZoneStoryDetails(pin) or LocalUtils:ShouldShowQuestLineDetails(pin))
+    local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or LocalUtils:ShouldShowZoneStoryDetails(pin) or LocalUtils:ShouldShowQuestLineDetails(pin))
     LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_CAMPAIGN, categoryNameOnly)
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
@@ -1510,115 +1510,57 @@ local function SetZoneStoryTooltipAnchorPoint()
 end
 
 -- Positions and displays all tooltips.
--- Note: Left and bottom side of the screen are beeing handled automatically by
--- the system by clamping the tooltips to the screen. We need to take care of
--- the top and right side of the screen.
--- Anchoring scenarios:
---  1. PrimaryTooltip (copy of GameTooltip only) alone:
---     1.a. With no plugin content the PrimaryTooltip mimics the default
---          behaviour and position of the GameTooltip.
---     1.b. With basic plugin content (eg. quest type tags) or more the
---          PrimaryTooltipanchors close to the right side of the quest pin, 
---          which is needed eventually for scrolling.
---  2. PrimaryTooltip + QuestLineTooltip (separately):
---     2.a. PrimaryTooltip is on top of the QuestLineTooltip.
---     2.b. Is PrimaryTooltip too close to the top screen it anchors to the
---          upper right side of the QuestLineTooltip.
---     2.c. Is PrimaryTooltip too close to the upper right corner of the
---          screen it anchors to the left side of the QuestLineTooltip.
---  3. PrimaryTooltip + CampaignTooltip (separately):
---     3.a. CampaignTooltip is on the right side of the PrimaryTooltip.
---     3.b. Is CampaignTooltip too close to the right side of the screen it
---          anchors to the left side of the PrimaryTooltip.
---  4. PrimaryTooltip + QuestLineTooltip + CampaignTooltip (separately):
---     4.a. QuestLineTooltip functions as the primary tooltip. CampaignTooltip
---          will behave therefore as described in (3.).
---     4.b. In the situation of scenario (2.b. + 2.c.) the CampaignTooltip
---          anchors to the PrimaryTooltip.
---  5. ZoneStoryTooltip is either in its own tooltip or part of PrimaryTooltip.
---      5.a. In fullscreen map ZoneStoryTooltip anchors to the opposite side
---           of the sreen where the mouse cursor is.
---      5.b. In windowed QuestLog view ZoneStoryTooltip anchors to the right
---           side of the map's border.
+--> Note: Left and bottom side of the screen are handled automatically by the
+-- system by clamping the tooltips to the screen. We need to take care of the
+-- top and right side of the screen.
 -- 
 local function ShowAllTooltips()
     local uiScale = UIParent:GetEffectiveScale()
     local screenHeight = GetScreenHeight() * uiScale
     local screenWidth = GetScreenWidth() * uiScale
 
-    local primaryHeight = PrimaryTooltip:GetHeight() * uiScale
+    local primaryHeight = ContentTooltip:GetHeight() * uiScale
     local scrollStep = ns.settings.scrollStep
     -- Note: screen sizes need to be here, not reliable at start-up
 
-    if QuestLineTooltip then
-        local questLineTop = QuestLineTooltip:GetTop() * uiScale
-        local questLineHeight = QuestLineTooltip:GetHeight() * uiScale
-        -- Too long for screen height
-        if (questLineHeight > screenHeight) then
-            QuestLineTooltip:UpdateScrolling()
-            QuestLineTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
-        end
-        -- Too near or over top side of the screen
-        if (questLineTop + primaryHeight > screenHeight) then
-            PrimaryTooltip:ClearAllPoints()
-            PrimaryTooltip:SetPoint("TOPLEFT", QuestLineTooltip, "TOPRIGHT")
-            if CampaignTooltip then
-                CampaignTooltip:ClearAllPoints()
-                CampaignTooltip:SetPoint("TOPLEFT", PrimaryTooltip, "BOTTOMLEFT")
-            end
-            -- To far in the upper right corner
-            local primaryWidth = PrimaryTooltip:GetWidth() * uiScale
-            local questLineRight = QuestLineTooltip:GetRight() * uiScale
-            if (questLineRight + primaryWidth > screenWidth) then
-                PrimaryTooltip:ClearAllPoints()
-                PrimaryTooltip:SetPoint("TOPRIGHT", QuestLineTooltip, "TOPLEFT")
-                if CampaignTooltip then
-                    CampaignTooltip:ClearAllPoints()
-                    CampaignTooltip:SetPoint("TOPRIGHT", PrimaryTooltip, "BOTTOMRIGHT")
-                end
-            end
-        end
-        QuestLineTooltip:SetClampedToScreen(true)
-        QuestLineTooltip:Show()
-    end
-
     -- Too far on top, content tooltip is overlapping with the GameTooltip
-    if (PrimaryTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
+    -- if ( (ContentTooltip:GetTop() + GameTooltip:GetHeight()) * uiScale ) > screenHeight then
+    if (ContentTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
         GameTooltip:ClearAllPoints()
-        if (((PrimaryTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale) > screenWidth) then
+        if (((ContentTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale ) > screenWidth) then
             -- Too far in upper right corner
-            GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "BOTTOMLEFT")
-        else
-	        GameTooltip:SetPoint("BOTTOMLEFT", PrimaryTooltip, "BOTTOMRIGHT")
+            GameTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "BOTTOMLEFT")
+        elseif not CampaignTooltip then
+            GameTooltip:SetPoint("BOTTOMLEFT", ContentTooltip, "BOTTOMRIGHT")
         end
     end
-
-    if not QuestLineTooltip and (primaryHeight > screenHeight) then
-        PrimaryTooltip:UpdateScrolling()
-        PrimaryTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
+    if (primaryHeight > screenHeight) then
+        ContentTooltip:UpdateScrolling()
+        ContentTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
     end
-    PrimaryTooltip:SetClampedToScreen(true)
-    PrimaryTooltip:Show()
+    ContentTooltip:SetClampedToScreen(true)
+    ContentTooltip:Show()
 
     if ZoneStoryTooltip then
-        local contentTooltip = QuestLineTooltip or PrimaryTooltip
-        if ns.isWorldMapMaximized and (ZoneStoryTooltip:GetRight() * uiScale > contentTooltip:GetLeft() * uiScale) then
+        if ns.isWorldMapMaximized and (ZoneStoryTooltip:GetRight() * uiScale > ContentTooltip:GetLeft() * uiScale) then
             ZoneStoryTooltip:ClearAllPoints()
             ZoneStoryTooltip:SetPoint("TOPRIGHT", WorldMapFrame.ScrollContainer, "TOPRIGHT", 0, -38)
         end
+        ZoneStoryTooltip:SetClampedToScreen(true)
         ZoneStoryTooltip:Show()
     end
 
     if CampaignTooltip then
-        -- If a quest is too far on the right side of the map the CampaignTooltip will
-        -- be shown on the left side of the primary tooltip.
-        if ( CampaignTooltip:GetRight() * uiScale > screenWidth ) then
-            local questLineTooltip = QuestLineTooltip or PrimaryTooltip
+        -- If too far on the right side of the map the CampaignTooltip will be
+        -- shown on the left side of the content tooltip.
+        if (CampaignTooltip:GetRight() * uiScale > screenWidth) then
             CampaignTooltip:ClearAllPoints()
-            CampaignTooltip:SetPoint("BOTTOMRIGHT", questLineTooltip, "BOTTOMLEFT")
+            CampaignTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "BOTTOMLEFT")
+            -- Show default tooltip on top
             GameTooltip:ClearAllPoints()
             GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
         else
+            GameTooltip:SetAnchorType("ANCHOR_NONE")  --> needed for active quest tooltips
             GameTooltip:ClearAllPoints()
             GameTooltip:SetPoint("BOTTOMLEFT", CampaignTooltip, "TOPLEFT")
         end
@@ -1661,6 +1603,21 @@ function LocalUtils:HasBasicTooltipContent(pin)
     return ShouldShowQuestType(pin) or ShouldShowReadyForTurnInMessage(pin)
 end
 
+-- local candidateMapPinTemplates = {
+--     -- LocalUtils.QuestOfferPinTemplate,       --> handled in Hook_StorylineQuestPin_OnEnter()
+--     LocalUtils.BonusObjectivePinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
+--     LocalUtils.ThreatObjectivePinTemplate,  --> handled in Hook_WorldQuestsPin_OnEnter()
+--     LocalUtils.WorldQuestPinTemplate,       --> handled in Hook_WorldQuestsPin_OnEnter()
+--     -- LocalUtils.QuestPinTemplate,         --> handled in Hook_ActiveQuestPin_OnEnter()
+-- }
+
+local function GetWorldQuestQualityColor(questTagInfo)
+    if not questTagInfo then return NORMAL_FONT_COLOR; end
+
+    local quality = questTagInfo.quality or Enum.WorldQuestQuality.Common
+    return WORLD_QUEST_QUALITY_COLORS[quality].color
+end
+
 --------------------------------------------------------------------------------
 ----- Hooking Functions --------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -1674,14 +1631,11 @@ local function Hook_QuestPin_OnLeave(preservePin)
     end
 
     currentPin = preservePin and currentPin or nil
+
     -- Release tooltip(s)
-    if PrimaryTooltip then
-        LibQTip:Release(PrimaryTooltip)
-        PrimaryTooltip = nil
-    end
-    if QuestLineTooltip then
-        LibQTip:Release(QuestLineTooltip)
-        QuestLineTooltip = nil
+    if ContentTooltip then
+        LibQTip:Release(ContentTooltip)
+        ContentTooltip = nil
     end
     if ZoneStoryTooltip then
         LibQTip:Release(ZoneStoryTooltip)
@@ -1697,41 +1651,11 @@ local function Hook_QuestPin_OnLeave(preservePin)
     end
 end
 
-----------
-
-local function IsRelevantQuest(questInfo)
-    return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
-            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective)
-end
-
-local candidateMapPinTemplates = {
-    LocalUtils.QuestOfferPinTemplate,       --> handled in Hook_StorylineQuestPin_OnEnter()
-    LocalUtils.BonusObjectivePinTemplate,   --> handled in Hook_WorldQuestsPin_OnEnter()
-    LocalUtils.ThreatObjectivePinTemplate,  --> handled in Hook_WorldQuestsPin_OnEnter()
-    LocalUtils.WorldQuestPinTemplate,       --> handled in Hook_WorldQuestsPin_OnEnter()
-    -- LocalUtils.QuestPinTemplate,         --> handled in Hook_ActiveQuestPin_OnEnter()
-}
-
-local function StorylineQuestPin_Refresh(pin)
-
-    currentPin = pin
-
-    -- Extend quest meta data
-    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
-    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not isSameAsPreviousPin then
-        -- Only update (once) when hovering a different quest pin
-        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
-    end
-    -- Always update this
-    pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
-
-    -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
-
-    -- Create custom tooltip(s) ------------------------------------------------
-
+-- Create the 3 content tooltips and reposition the GameTooltip.
+---@param pin table
+---@return LibQTip.Tooltip|nil contentTooltip
+--
+local function CreateCustomTooltips(pin)
     -- Note: Timed pins have a timer for reloading and updating the tooltip
     -- content. The LibQTip tooltip needs to be released before a new one can
     -- be created. By default this only happens when the mouse leaves the
@@ -1747,58 +1671,79 @@ local function StorylineQuestPin_Refresh(pin)
         return
     end
 
-    -- Pin tooltip
-    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimary", 1, "LEFT")
-    PrimaryTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
+    -- Prepare tooltip name suffixes
+    local suffixMapByPinTemplate = {
+        [LocalUtils.QuestPinTemplate] = "Active",
+        [LocalUtils.QuestOfferPinTemplate] = "Offer",
+        [LocalUtils.WorldQuestPinTemplate] = "WQ",
+        [LocalUtils.ThreatObjectivePinTemplate] = "WQ",
+        [LocalUtils.BonusObjectivePinTemplate] = "WQ",
+    }
+    local suffix = suffixMapByPinTemplate[pin.pinTemplate]
 
-    -- Game tooltip: reposition the default tooltip
-    GameTooltip:ClearAllPoints();
-	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
+    -- Primary tooltip (quest tags + questlines)
+    ContentTooltip = LibQTip:Acquire(AddonID.."LibQTooltipContent"..suffix, 1, "LEFT")
+    ContentTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
 
-    -- Custom content tooltips
-    if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
-        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestline", 1, "LEFT")
-        QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-        PrimaryTooltip:ClearAllPoints()
-        PrimaryTooltip:SetPoint("BOTTOMLEFT", QuestLineTooltip, "TOPLEFT")
-    end
-    if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
-        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory", 1, "LEFT")
+    -- Game tooltip: reposition the World Map pin's default tooltip
+    GameTooltip:ClearAllPoints()
+    GameTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "TOPRIGHT")
+    -- -- print("GameTooltip2:", GameTooltip:GetAnchorType(), GameTooltip:NumLines())
+
+    -- Zone story tooltip
+    if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin)) then
+        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStory"..suffix, 1, "LEFT")
         SetZoneStoryTooltipAnchorPoint()
     end
-    if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
-        local questLineTooltip = QuestLineTooltip or PrimaryTooltip
-        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaign", 1, "LEFT")
-        CampaignTooltip:SetPoint("BOTTOMLEFT", questLineTooltip, "BOTTOMRIGHT")
+
+    -- Campaign tooltip
+    if (ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin)) then
+        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaign"..suffix, 1, "LEFT")
+        CampaignTooltip:SetPoint("BOTTOMLEFT", ContentTooltip, "BOTTOMRIGHT")
     end
 
-    ----- Content -----
+    return ContentTooltip
+end
 
-    local contentTooltip = QuestLineTooltip or PrimaryTooltip
+local function AddTooltipContent(contentTooltip, pin)
+    local isQuestOffer = pin.pinTemplate == LocalUtils.QuestOfferPinTemplate
+    local isActiveQuest = pin.pinTemplate == LocalUtils.QuestPinTemplate
+    -- local isTaskQuest = tContains(candidateMapPinTemplates, pin.pinTemplate)
 
-    debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+    debug:AddDebugLineToLibQTooltip(contentTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
     -- Add quest title + adjust tooltip width to the GameTooltip
-    local TitleColor = NORMAL_FONT_COLOR
-    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(PrimaryTooltip, TitleColor, pin.questInfo.questName)
-    PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
+    local TitleColor = (isActiveQuest and pin.questInfo.isTrivial) and QUEST_ACTIVE_TRIVIAL_GRAY or GetWorldQuestQualityColor(pin.questInfo.questTagInfo)
+    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(contentTooltip, TitleColor, pin.questInfo.questName)
+    contentTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
+    -- contentTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetMinimumWidth())
 
     -- Plugin name
     if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
-        LibQTipUtil:AddPluginNameLine(PrimaryTooltip)
+        LibQTipUtil:AddPluginNameLine(contentTooltip)
     end
 
-    if ShouldShowQuestType(pin) then
+    -- Turn-in message
+    if (isActiveQuest and ShouldShowReadyForTurnInMessage(pin)) then
         if not ns.settings.showPluginName then
-            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
+            LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
-        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
+        LibQTipUtil:AddInstructionLine(contentTooltip, QUEST_WATCH_QUEST_READY)
+    end
+
+    -- Quest type tags
+    if ShouldShowQuestType(pin) then
+        if not ns.settings.showPluginName or (isActiveQuest and ShouldShowReadyForTurnInMessage(pin)) then
+            LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
+        end
+        LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questID)
         if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
+            LibQTipUtil:AddDisabledLine(contentTooltip, "Older style tags")
+            LocalQuestUtils:AddQuestTagLinesToTooltip(contentTooltip, pin.questInfo)
         end
     end
 
+    -- Zone story
     if LocalUtils:ShouldShowZoneStoryDetails(pin) then
         local zsTooltip = ZoneStoryTooltip or contentTooltip
         pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
@@ -1808,32 +1753,79 @@ local function StorylineQuestPin_Refresh(pin)
             ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
         end
     end
+
+    -- Questline
     if LocalUtils:ShouldShowQuestLineDetails(pin) then
         LocalQuestLineUtils:AddQuestLineDetailsToTooltip(contentTooltip, pin)
     end
+
+    -- Campaign
     if LocalUtils:ShouldShowCampaignDetails(pin) then
         local cpTooltip = CampaignTooltip or contentTooltip
         CampaignUtils:AddCampaignDetailsTooltip(cpTooltip, pin, contentTooltip)
     end
 
-    -- Waypoint hint
-    if (LocalUtils:HasBasicTooltipContent(pin) and C_Map.CanSetUserWaypointOnMap(pin.mapID) ) then
+    -- Waypoint hint - not needed for active quests or world quests
+    if (isQuestOffer and LocalUtils:HasBasicTooltipContent(pin) and C_Map.CanSetUserWaypointOnMap(pin.mapID) ) then
         LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         LibQTipUtil:AddInstructionLine(contentTooltip, L.HINT_SET_WAYPOINT)
     end
+end
+----------
+
+local function IsRelevantQuest(questInfo)
+    return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
+            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective)
+end
+
+-- Extend and update quest meta data
+local function UpdateWorldMapPinQuestInfo(pin)
+    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
+    if not isSameAsPreviousPin then
+        -- Only update (once) when hovering a different quest pin
+        pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
+        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
+    end
+    -- Update this every time
+    pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
+    if (pin.pinTemplate == LocalUtils.QuestPinTemplate) then
+        pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
+    end
+end
+
+local function WorldMapPin_RefreshAllData(pin)
+    -- Extend quest meta data
+    UpdateWorldMapPinQuestInfo(pin)
+
+    -- Ignore basic quests w/o any lore and skip custom tooltip creation.
+    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then
+        return
+    end
+
+    -- Add content
+    local contentTooltip = CreateCustomTooltips(pin)
+    if not contentTooltip then
+        return
+    end
+    AddTooltipContent(contentTooltip, pin)
 
     ShowAllTooltips()
 end
 
+----------
+
 local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
-    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
+    if (pin.pinTemplate ~= LocalUtils.QuestOfferPinTemplate) then return end
 
-    StorylineQuestPin_Refresh(pin)
+    currentPin = pin
+    WorldMapPin_RefreshAllData(pin)
 
-    -- REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
+    -- Add ticker to quest offers to update content
+    --> REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
     assert(ticker == nil)
-	ticker = C_Timer.NewTicker(0.5, function() StorylineQuestPin_Refresh(pin) end)
+	ticker = C_Timer.NewTicker(0.5, function() WorldMapPin_RefreshAllData(pin) end)
 end
 
 ----------
@@ -1843,248 +1835,19 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then return end
 
     currentPin = pin
-
-    -- Extend quest meta data
-    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
-    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not isSameAsPreviousPin then
-        -- Only update (once) when hovering a different quest pin
-        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               
-    end
-    -- Always update the following info for active quests
-    pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
-    pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
-
-    -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
-
-    -- Create custom tooltip(s) ------------------------------------------------
-
-    -- Note: Active quests have a timer for reloading and updating the tooltip
-    -- content. The LibQTip tooltip needs to be released before a new one can
-    -- be created. By default this only happens when the mouse leaves the
-    -- worldmap pin, so we do this here manually w/o destroying the tooltip.
-    local preservePin = true
-    Hook_QuestPin_OnLeave(preservePin)
-
-    -- Dev info
-    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
-        debug:CreateDebugQuestInfoTooltip(pin)  --> LibQTip type tooltip
-        SetDebugTooltipAnchorPoint(pin, debug.tooltip, GetAppropriateTooltip())
-        debug.tooltip:Show()
-        return
-    end
-
-    -- Pin tooltip
-    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimaryActive", 1, "LEFT")
-    PrimaryTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-
-    -- Game tooltip: reposition the default tooltip
-    GameTooltip:ClearAllPoints()
-    GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
-
-    -- Content tooltips
-    if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
-        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestlineActive", 1, "LEFT")
-        QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-        PrimaryTooltip:ClearAllPoints()
-        PrimaryTooltip:SetPoint("BOTTOMLEFT", QuestLineTooltip, "TOPLEFT")
-    end
-    if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
-        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStoryActive", 1, "LEFT")
-        SetZoneStoryTooltipAnchorPoint()
-    end
-    if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
-        local questLineTooltip = QuestLineTooltip or PrimaryTooltip
-        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaignActive", 1, "LEFT")
-        CampaignTooltip:SetPoint("BOTTOMLEFT", questLineTooltip, "BOTTOMRIGHT")
-    end
-
-    ----- Content -----
-
-    local contentTooltip = QuestLineTooltip or PrimaryTooltip
-
-    debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
-
-    -- Add quest title + adjust tooltip width to the GameTooltip
-    local TitleColor = pin.questInfo.isTrivial and QUEST_ACTIVE_TRIVIAL_GRAY or NORMAL_FONT_COLOR
-    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(PrimaryTooltip, TitleColor, pin.questInfo.questName)
-    PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
-
-    -- Plugin name
-    if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
-        LibQTipUtil:AddPluginNameLine(PrimaryTooltip)
-    end
-
-    if ShouldShowReadyForTurnInMessage(pin) then
-        if not ns.settings.showPluginName then
-            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
-        end
-        LibQTipUtil:AddInstructionLine(PrimaryTooltip, QUEST_WATCH_QUEST_READY)
-    end
-
-    if ShouldShowQuestType(pin) then
-        if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
-            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
-        end
-        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
-        if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
-        end
-    end
-
-    if LocalUtils:ShouldShowZoneStoryDetails(pin) then
-        local zsTooltip = ZoneStoryTooltip or contentTooltip
-        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
-        ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
-        if pin.achievementID2 then
-            pin.achievementID = pin.achievementID2
-            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
-        end
-    end
-    if LocalUtils:ShouldShowQuestLineDetails(pin) then
-        LocalQuestLineUtils:AddQuestLineDetailsToTooltip(contentTooltip, pin)
-    end
-    if LocalUtils:ShouldShowCampaignDetails(pin) then
-        local cpTooltip = CampaignTooltip or contentTooltip
-        CampaignUtils:AddCampaignDetailsTooltip(cpTooltip, pin, contentTooltip)
-    end
-
-    -- Waypoint hint - not needed for active quests
-
-    ShowAllTooltips()
+    WorldMapPin_RefreshAllData(pin)
 end
 
 ----------
 
-local function GetWorldQuestQualityColor(questTagInfo)
-    if not questTagInfo then return NORMAL_FONT_COLOR; end
-
-    local quality = questTagInfo.quality or Enum.WorldQuestQuality.Common
-    return WORLD_QUEST_QUALITY_COLORS[quality].color
-end
-
 local function Hook_WorldQuestsPin_OnEnter(pin)
+    if not pin.questID then return end
     if (not ns.settings.trackWorldQuests and pin.pinTemplate == LocalUtils.WorldQuestPinTemplate) then return end
     if (not ns.settings.trackThreatObjectives and pin.pinTemplate == LocalUtils.ThreatObjectivePinTemplate) then return end
     if (not ns.settings.trackBonusObjectives and pin.pinTemplate == LocalUtils.BonusObjectivePinTemplate) then return end
-    if not pin.questID then return end
-    if not tContains(candidateMapPinTemplates, pin.pinTemplate) then return end
 
     currentPin = pin
-
-    -- Extend quest meta data
-    pin.mapID = pin.mapID or pin:GetMap():GetMapID()
-    local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not isSameAsPreviousPin then
-        -- Only update (once) when hovering a different quest pin
-        pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
-        -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
-    end
-    -- Always update the following info for active quests
-    pin.questInfo.hasZoneStoryInfo = ZoneStoryUtils:HasZoneStoryInfo(pin.mapID)
-
-    -- Ignore basic quests w/o any lore and skip custom tooltip creation.
-    if (not IsRelevantQuest(pin.questInfo) and not LocalUtils:HasBasicTooltipContent(pin)) then return end
-
-    -- Create custom tooltip(s) ------------------------------------------------
-
-    -- Note: World Quest quest pins have a timer for reloading and updating the
-    -- tooltip content. The LibQTip tooltip needs to be released before a
-    -- new one can be created. By default this only happens when the mouse
-    -- leaves the World Map pin, so we do this here manually w/o destroying the tooltip.
-    local preservePin = true
-    Hook_QuestPin_OnLeave(preservePin)
-
-    -- Dev info
-    if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
-        debug:CreateDebugQuestInfoTooltip(pin)  --> LibQTip type tooltip
-        SetDebugTooltipAnchorPoint(pin, debug.tooltip, GetAppropriateTooltip())
-        debug.tooltip:Show()
-        return
-    end
-
-    -- Pin tooltip
-    PrimaryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipPrimaryWQ", 1, "LEFT")
-    PrimaryTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-
-    -- Game tooltip: reposition the default tooltip
-    GameTooltip:ClearAllPoints();
-	GameTooltip:SetPoint("BOTTOMRIGHT", PrimaryTooltip, "TOPRIGHT")
-
-    -- Content tooltips
-    if ( ns.settings.showQuestLineSeparately and LocalUtils:ShouldShowQuestLineDetails(pin) ) then
-        QuestLineTooltip = LibQTip:Acquire(AddonID.."LibQTooltipQuestlineWQ", 1, "LEFT")
-        QuestLineTooltip:SetPoint("RIGHT", pin, "LEFT", 14, 0)
-        PrimaryTooltip:ClearAllPoints()
-        PrimaryTooltip:SetPoint("BOTTOMLEFT", QuestLineTooltip, "TOPLEFT")
-    end
-    if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin) ) then
-        ZoneStoryTooltip = LibQTip:Acquire(AddonID.."LibQTooltipZoneStoryWQ", 1, "LEFT")
-        SetZoneStoryTooltipAnchorPoint()
-    end
-    if ( ns.settings.showCampaignSeparately and LocalUtils:ShouldShowCampaignDetails(pin) ) then
-        local questLineTooltip = QuestLineTooltip or PrimaryTooltip
-        CampaignTooltip = LibQTip:Acquire(AddonID.."LibQTooltipCampaignWQ", 1, "LEFT")
-        CampaignTooltip:SetPoint("BOTTOMLEFT", questLineTooltip, "BOTTOMRIGHT")
-    end
-
-    ----- Content -----
-
-    local contentTooltip = QuestLineTooltip or PrimaryTooltip
-
-    debug:AddDebugLineToLibQTooltip(PrimaryTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
-
-    -- Add quest title + adjust tooltip width to the GameTooltip
-    local TitleColor = GetWorldQuestQualityColor(pin.questInfo.questTagInfo)
-    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(PrimaryTooltip, TitleColor, '')  -- pin.questInfo.questName)
-    PrimaryTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
-
-    -- Plugin name
-    if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
-        LibQTipUtil:AddPluginNameLine(PrimaryTooltip)
-    end
-
-    if ShouldShowReadyForTurnInMessage(pin) then
-        if not ns.settings.showPluginName then
-            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
-        end
-        LibQTipUtil:AddInstructionLine(PrimaryTooltip, QUEST_WATCH_QUEST_READY)
-    end
-
-    if ShouldShowQuestType(pin) then
-        if ( not ns.settings.showPluginName or ShouldShowReadyForTurnInMessage(pin) ) then
-            LibQTipUtil:AddBlankLineToTooltip(PrimaryTooltip)
-        end
-        LocalQuestUtils:AddQuestTagLinesToTooltip_New(PrimaryTooltip, pin.questID)
-        if debug.isActive then
-            LibQTipUtil:AddDisabledLine(PrimaryTooltip, "Older style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip(PrimaryTooltip, pin.questInfo)
-        end
-    end
-
-    if LocalUtils:ShouldShowZoneStoryDetails(pin) then
-        local zsTooltip = ZoneStoryTooltip or contentTooltip
-        pin.achievementID, pin.achievementID2, pin.storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
-        ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
-        if pin.achievementID2 then
-            pin.achievementID = pin.achievementID2
-            ZoneStoryUtils:AddZoneStoryDetailsToTooltip(zsTooltip, pin)
-        end
-    end
-    if LocalUtils:ShouldShowQuestLineDetails(pin) then
-        LocalQuestLineUtils:AddQuestLineDetailsToTooltip(contentTooltip, pin)
-    end
-    if LocalUtils:ShouldShowCampaignDetails(pin) then
-        local cpTooltip = CampaignTooltip or contentTooltip
-        CampaignUtils:AddCampaignDetailsTooltip(cpTooltip, pin, contentTooltip)
-    end
-
-    -- Waypoint hint - not needed for world quests
-
-    ShowAllTooltips()
+    WorldMapPin_RefreshAllData(pin)
 end
 
 -----
