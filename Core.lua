@@ -160,7 +160,6 @@ L.SLASHCMD_USAGE = "Usage:"
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 local UNKNOWN = UNKNOWN
 
-local currentPin  -- Currently hovered worldmap pin
 local nodes = {}
 ns.nodes = nodes
 
@@ -1629,13 +1628,11 @@ end
 
 local ticker = nil
 
-local function Hook_QuestPin_OnLeave(preservePin)
+local function Hook_QuestPin_OnLeave()
     if ticker then
         ticker:Cancel()
 	    ticker = nil
     end
-
-    currentPin = preservePin and currentPin or nil
 
     -- Release tooltip(s)
     if ContentTooltip then
@@ -1665,8 +1662,7 @@ local function CreateCustomTooltips(pin)
     -- content. The LibQTip tooltip needs to be released before a new one can
     -- be created. By default this only happens when the mouse leaves the
     -- worldmap pin, so we do this here manually w/o destroying the tooltip.
-    local preservePin = true
-    Hook_QuestPin_OnLeave(preservePin)
+    Hook_QuestPin_OnLeave()
 
     -- Dev info
     if (debug.isActive and IsShiftKeyDown() and IsControlKeyDown()) then
@@ -1799,8 +1795,6 @@ local function UpdateWorldMapPinQuestInfo(pin)
     if (pin.pinTemplate == LocalUtils.QuestPinTemplate) then
         pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     end
-
-    currentPin = pin
 end
 
 local function WorldMapPin_RefreshAllData(pin)
