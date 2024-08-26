@@ -160,7 +160,7 @@ L.SLASHCMD_USAGE = "Usage:"
 local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
 local UNKNOWN = UNKNOWN
 
-local currentPin;  -- Currently hovered worldmap pin
+local currentPin  -- Currently hovered worldmap pin
 local nodes = {}
 ns.nodes = nodes
 
@@ -394,7 +394,7 @@ end
 -- Adds a custom line with an indention before a GRAY text to a `LibQTip.Tooltip`.
 function LibQTipUtil:AddDescriptionLine(tooltip, text, leftPadding, justify, maxWidth)
     local lineIndex = LibQTipUtil:AddDisabledLine(tooltip, '')
-    -- REF.: qTip:SetCell(lineNum, colNum, value[, font][, justification][, colSpan][, provider][, leftPadding][, rightPadding][, maxWidth][, minWidth][, ...])
+    --> REF.: qTip:SetCell(lineNum, colNum, value[, font][, justification][, colSpan][, provider][, leftPadding][, rightPadding][, maxWidth][, minWidth][, ...])
     tooltip:SetCell(lineIndex, 1, text, nil, justify or "LEFT", nil, nil, leftPadding or 20, nil, maxWidth or 400)
 end
 
@@ -1528,7 +1528,7 @@ local function ShowAllTooltips()
         GameTooltip:ClearAllPoints()
         if CampaignTooltip then
             -- Show game tooltip on top of campaign tooltip
-            GameTooltip:SetAnchorType("ANCHOR_NONE")  --> needed for active quest tooltips
+            GameTooltip:SetAnchorType("ANCHOR_NONE")  --> needed for active quest tooltips, those are anchored to the cursor
             GameTooltip:SetPoint("BOTTOMLEFT", CampaignTooltip, "TOPLEFT")
         else
             -- Show game tooltip on the right side of content tooltip
@@ -1719,9 +1719,9 @@ local function AddTooltipContent(contentTooltip, pin)
 
     -- Add quest title + adjust tooltip width to the GameTooltip
     local TitleColor = (isActiveQuest and pin.questInfo.isTrivial) and QUEST_ACTIVE_TRIVIAL_GRAY or GetWorldQuestQualityColor(pin.questInfo.questTagInfo)
-    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(contentTooltip, TitleColor, pin.questInfo.questName)
+    local lineIndex, columnIndex = LibQTipUtil:SetColoredTitle(contentTooltip, TitleColor, '')
+    --> REF.: qTip:SetCell(lineNum, colNum, value[, font][, justification][, colSpan][, provider][, leftPadding][, rightPadding][, maxWidth][, minWidth][, ...])
     contentTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
-    -- contentTooltip:SetCell(lineIndex, 1, pin.questInfo.questName, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetMinimumWidth())
 
     -- Plugin name
     if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
@@ -1786,9 +1786,11 @@ end
 -- Extend and update quest meta data
 local function UpdateWorldMapPinQuestInfo(pin)
     local isSameAsPreviousPin = pin.questInfo and pin.questInfo.questID == pin.questID
-    if not isSameAsPreviousPin then
+    local isSameArea = pin.mapID and pin.mapID == ns.activeZoneMapInfo.mapID
+
+    if not (isSameAsPreviousPin and isSameArea) then
         -- Only update (once) when hovering a different quest pin
-        pin.mapID = pin.mapID or pin:GetMap():GetMapID()
+        pin.mapID = pin:GetMap():GetMapID()
         pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
         -- pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
     end
@@ -1797,6 +1799,8 @@ local function UpdateWorldMapPinQuestInfo(pin)
     if (pin.pinTemplate == LocalUtils.QuestPinTemplate) then
         pin.questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(pin.questID)
     end
+
+    currentPin = pin
 end
 
 local function WorldMapPin_RefreshAllData(pin)
@@ -1824,7 +1828,6 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if (pin.pinTemplate ~= LocalUtils.QuestOfferPinTemplate) then return end
 
-    currentPin = pin
     WorldMapPin_RefreshAllData(pin)
 
     -- Add ticker to quest offers to update content
@@ -1839,7 +1842,6 @@ local function Hook_ActiveQuestPin_OnEnter(pin)
     if not pin.questID then return end
     if (pin.pinTemplate ~= LocalUtils.QuestPinTemplate) then return end
 
-    currentPin = pin
     WorldMapPin_RefreshAllData(pin)
 end
 
@@ -1851,7 +1853,6 @@ local function Hook_WorldQuestsPin_OnEnter(pin)
     if (not ns.settings.trackThreatObjectives and pin.pinTemplate == LocalUtils.ThreatObjectivePinTemplate) then return end
     if (not ns.settings.trackBonusObjectives and pin.pinTemplate == LocalUtils.BonusObjectivePinTemplate) then return end
 
-    currentPin = pin
     WorldMapPin_RefreshAllData(pin)
 end
 
