@@ -1523,17 +1523,25 @@ local function ShowAllTooltips()
     local scrollStep = ns.settings.scrollStep
     -- Note: screen sizes need to be here, not reliable at start-up
 
-    -- Too far on top, content tooltip is overlapping with the GameTooltip
-    -- if ( (ContentTooltip:GetTop() + GameTooltip:GetHeight()) * uiScale ) > screenHeight then
+    -- Too far on top, content tooltip is overlapping with the game tooltip
     if (ContentTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
         GameTooltip:ClearAllPoints()
-        if (((ContentTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale ) > screenWidth) then
-            -- Too far in upper right corner
-            GameTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "BOTTOMLEFT")
-        elseif not CampaignTooltip then
+        if CampaignTooltip then
+            -- Show game tooltip on top of campaign tooltip
+            GameTooltip:SetAnchorType("ANCHOR_NONE")  --> needed for active quest tooltips
+            GameTooltip:SetPoint("BOTTOMLEFT", CampaignTooltip, "TOPLEFT")
+        else
+            -- Show game tooltip on the right side of content tooltip
             GameTooltip:SetPoint("BOTTOMLEFT", ContentTooltip, "BOTTOMRIGHT")
         end
+        -- Too far to the right, show the game tooltip on the left side of the content tooltip
+        if (((ContentTooltip:GetRight() + GameTooltip:GetWidth()) * uiScale ) > screenWidth) then
+            GameTooltip:ClearAllPoints()
+            GameTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "BOTTOMLEFT")
+        end
     end
+
+    -- Too long for screen height
     if (primaryHeight > screenHeight) then
         ContentTooltip:UpdateScrolling()
         ContentTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
@@ -1551,18 +1559,15 @@ local function ShowAllTooltips()
     end
 
     if CampaignTooltip then
-        -- If too far on the right side of the map the CampaignTooltip will be
-        -- shown on the left side of the content tooltip.
         if (CampaignTooltip:GetRight() * uiScale > screenWidth) then
+            -- Too far to the right, show campaign tooltip on the left side of the content tooltip
             CampaignTooltip:ClearAllPoints()
             CampaignTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "BOTTOMLEFT")
-            -- Show default tooltip on top
-            GameTooltip:ClearAllPoints()
-            GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
-        else
-            GameTooltip:SetAnchorType("ANCHOR_NONE")  --> needed for active quest tooltips
-            GameTooltip:ClearAllPoints()
-            GameTooltip:SetPoint("BOTTOMLEFT", CampaignTooltip, "TOPLEFT")
+            if (ContentTooltip:GetTop() * uiScale) > (GameTooltip:GetBottom() * uiScale) then
+                -- Too far in the upper right corner, show game tooltip on top the campaign tooltip
+                GameTooltip:ClearAllPoints()
+                GameTooltip:SetPoint("BOTTOMRIGHT", CampaignTooltip, "TOPRIGHT")
+            end
         end
         CampaignTooltip:SetClampedToScreen(true)
         CampaignTooltip:Show()
