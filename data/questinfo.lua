@@ -99,14 +99,14 @@ function LocalQuestInfo:GetQuestClassificationInfo(classificationID)
     return info or classificationInfoTableMore[classificationID];
 end
 
------ Handler -----
-
 -- Return the factionGroupID for the given quest.
 function LocalQuestInfo:GetQuestFactionGroup(questID)
     local questFactionGroup = GetQuestFactionGroup(questID);
 
     return questFactionGroup or QuestFactionGroupID.Neutral;
 end
+
+----- Handler -----
 
 -- Check if given quest is part of a questline.
 function LocalQuestInfo:HasQuestLineInfo(questID, uiMapID)                      --> TODO - Refine
@@ -275,6 +275,10 @@ function LocalQuestInfo:GetGameQuestInfo(questID)
     return questInfo;
 end
 
+-- Retrieve custom quest info on top of the game's native data for given quest.
+---@param questID number
+---@return QuestInfo|table questInfo
+-- 
 function LocalQuestInfo:GetCustomQuestInfo(questID)
     local questInfo = self:GetGameQuestInfo(questID);
     AddMoreQuestInfo(questInfo);

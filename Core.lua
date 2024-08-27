@@ -1242,8 +1242,8 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineID)
     filteredQuestInfos.numCompleted = 0
     filteredQuestInfos.numRepeatable = 0
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
-        local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
-        -- local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
+        -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
+        local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if not (questInfo.isDaily or questInfo.isWeekly) then
                 if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo) then
