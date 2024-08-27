@@ -11,13 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * The War Within: added `Loremaster of Khaz Algar` data.
 * Quest Type Tags: added optional transparency for trivial quest types.
 * Quest Type Tags: added support for Covenant Calling quests.
-* Quest Type Tags: added some custom tags for eg. account-wide completed quests.
+* Quest Type Tags: added `custom optional tags` for storyline and account-wide completed quests.
 
 ### Changed
 
 * Data: updated World Map pin hovering update behavior.
 * Quest Type Tags: combined trivial quest tag with primary quest type tag, unless there is no primary type.
-* Quest Type Tags: timed recurring quest types no longer show a "Daily" or "Weekly" tag.
+* Quest Type Tags: combined timed recurring quest types with daily and weekly tags, since the duration is already shown.
 * Quest Type Tags: updated the internal `quest type tagging system`.
 * Tooltip: updated colors for active quest title and tag line text to match the default tooltip.
 * Tooltip: added `timer to quest offer tooltips` for auto-updating the tooltip content.
