@@ -1233,17 +1233,17 @@ function LocalQuestLineUtils:AddQuestLineQuestToMap(mapID, questLineID, questID)
     end
 end
 
-function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+function LocalQuestLineUtils:FilterQuestLineQuests(questLineID)
     local filteredQuestInfos = {}
     filteredQuestInfos.quests = {}
-    filteredQuestInfos.unfilteredQuests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
+    filteredQuestInfos.unfilteredQuests = LocalQuestCache:GetQuestLineQuests(questLineID)
     filteredQuestInfos.numTotalUnfiltered = #filteredQuestInfos.unfilteredQuests
     filteredQuestInfos.numTotal = 0
     filteredQuestInfos.numCompleted = 0
     filteredQuestInfos.numRepeatable = 0
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
-        -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
-        local questInfo = LocalQuestInfo:GetQuestInfo(questID)
+        local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
+        -- local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if not (questInfo.isDaily or questInfo.isWeekly) then
                 if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo) then
@@ -1302,7 +1302,7 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     debug:print(self, "Searching QL for pin", pin.questID, pin.mapID)
     local questLineInfo = self:GetCachedQuestLineInfo(pin.questID, pin.mapID)
     if questLineInfo then
-        debug:print(self, format("%d Found QL %d", pin.questID, pin.questLineID or questLineInfo.questLineID))
+        debug:print(self, format("%d Found QL %d", pin.questID, questLineInfo.questLineID))
         return questLineInfo
     end
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
@@ -1329,7 +1329,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     pin.questInfo.currentQuestLineName = questLineInfo.questLineName
     -- Note: This is used to identify the currently active zone story.
 
-    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo.questLineID)
 
     -- Plugin / category name
     local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
@@ -1819,7 +1819,7 @@ local function UpdateWorldMapPinQuestInfo(pin)
     local isSameArea = pin.mapID and pin.mapID == ns.activeZoneMapInfo.mapID
 
     if not (isSameAsPreviousPin and isSameArea) then
-        -- Only update (once) when hovering a different quest pin
+        -- Only refresh quest data once when hovering a different quest pin or changing the area
         pin.mapID = pin:GetMap():GetMapID()
         -- pin.questInfo = LocalQuestUtils:GetQuestInfo(pin.questID, "pin", pin.mapID)
         pin.questInfo = LocalQuestInfo:GetQuestInfoForPin(pin)               --> TODO - Finish and switch to new questInfo
@@ -2090,8 +2090,8 @@ end
 -- Save the questline of an active quest, if available.
 function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest accepted:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
@@ -2111,8 +2111,8 @@ end
 -- Save daily and weekly quests as completed, if they are lore relevant.
 function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest turned in:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
@@ -2132,8 +2132,8 @@ end
 -- Note: This event fires before and sometimes after you turn-in a quest or when you abort a quest.
 function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questID, wasReplayQuest = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest removed:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> wasReplayQuest:", wasReplayQuest)
 

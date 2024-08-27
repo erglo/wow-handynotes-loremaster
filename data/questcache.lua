@@ -45,9 +45,7 @@ ns.QuestCacheUtil = LocalQuestCache;
 
 function LocalQuestCache:Get(questID)
     local questInfo = QuestCache:Get(questID);  --> WoW global
-    if questInfo then
-        questInfo.isGameData = true;
-    end
+
     return questInfo;
 end
 

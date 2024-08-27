@@ -45,6 +45,7 @@ local C_QuestInfoSystem = C_QuestInfoSystem;
 local C_CampaignInfo = C_CampaignInfo;
 
 local QuestFactionGroupID = ns.QuestFactionGroupID;  --> <Data.lua>
+local LocalQuestCache = ns.QuestCacheUtil; --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter;  --> <data\questfilter.lua>
 
 --------------------------------------------------------------------------------
@@ -154,30 +155,33 @@ end
 ---@return table questInfo
 --
 function LocalQuestInfo:GetQuestInfoForPin(pin)
-    local questInfo = {};
+    -- local questInfo = {};
+    local questInfo = self:GetGameQuestInfo(pin.questID);
     questInfo.questID = pin.questID;
     questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
     questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);  --> don't move from this position (!), might be overwritten by `:IsDaily` or `:IsWeekly`!
 
     local classificationID = pin.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
     local tagInfo = self:GetQuestTagInfo(questInfo.questID);
-    questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
+    --> Note: `pin.questLineID` is not (!) reliable.
+    -- questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
+    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
     questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isBonusObjective = pin.isBonusObjective or (classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID));
     questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(questInfo.questID);
     questInfo.isCampaign = pin.isCampaign or (pin.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
-    questInfo.isDaily = pin.isDaily or LocalQuestFilter:IsDaily(questInfo.questID);
+    questInfo.isDaily = pin.isDaily or LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
     questInfo.isFailed = C_QuestLog.IsFailed(questInfo.questID);                      --> TODO - Check if these quests would be even visible on the map
     questInfo.isImportant = pin.isImportant or (classificationID and classificationID == Enum.QuestClassification.Important) or C_QuestLog.IsImportantQuest(questInfo.questID);
     questInfo.isLegendary = pin.isLegendary or (classificationID and classificationID == Enum.QuestClassification.Legendary) or C_QuestLog.IsLegendaryQuest(questInfo.questID);
     questInfo.isOnQuest = pin.inProgress or C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
-    questInfo.isStory = pin.isLocalStory or LocalQuestFilter:IsStory(questInfo.questID);
+    questInfo.isStory = pin.isLocalStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = (classificationID and classificationID == Enum.QuestClassification.Threat) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = pin.isHidden or C_QuestLog.IsQuestTrivial(questInfo.questID);
-    questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID);
+    questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
     questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = self:GetQuestFactionGroup(questInfo.questID);
     questInfo.questName = questInfo.questName or QuestUtils_GetQuestName(questInfo.questID);
@@ -195,15 +199,15 @@ local function AddMoreQuestInfo(questInfo)
     questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
     questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
     questInfo.isFailed = C_QuestLog.IsFailed(questInfo.questID);
-    questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
+    questInfo.isAccountQuest = (tagInfo and tagInfo.tagID == Enum.QuestTag.Account) or C_QuestLog.IsAccountQuest(questInfo.questID);
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
-    questInfo.isBonusObjective = classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID);
+    questInfo.isBonusObjective = (classificationID and classificationID == Enum.QuestClassification.BonusObjective) or QuestUtils_IsQuestBonusObjective(questInfo.questID);
     questInfo.isCalling = (classificationID and classificationID == Enum.QuestClassification.Calling) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.CovenantCalling) or C_QuestLog.IsQuestCalling(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
     questInfo.isImportant = (classificationID and classificationID == Enum.QuestClassification.Important) or C_QuestLog.IsImportantQuest(questInfo.questID);
     questInfo.isLegendary = (classificationID and classificationID == Enum.QuestClassification.Legendary) or C_QuestLog.IsLegendaryQuest(questInfo.questID);
     questInfo.isOnQuest = C_QuestLog.IsOnQuest(questInfo.questID);
-    questInfo.hasQuestLineInfo = classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
+    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline) or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isStory = questInfo.isStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = classificationID and classificationID == Enum.QuestClassification.Threat or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
@@ -223,9 +227,9 @@ local function AddMoreQuestInfo(questInfo)
     -- isMeta
 end
 
--- Retrieve native quest info for given quest.
+-- Retrieve game native quest info for given quest.
 ---@param questID number
----@return QuestInfo? questInfo
+---@return QuestInfo|table questInfo
 -- 
 -- `QuestInfo` structure (name/type): <br>
 -- * `campaignID` --> `number?`  <br>
@@ -259,13 +263,20 @@ end
 -- REF.: [QuestLogDocumentation.lua](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua) <br>
 -- REF.: [QuestMixin](https://www.townlong-yak.com/framexml/live/Blizzard_ObjectAPI/Quest.lua)
 -- 
-function LocalQuestInfo:GetQuestInfo(questID)
-    local questInfo = QuestCache:Get(questID);  --> QuestMixin
+function LocalQuestInfo:GetGameQuestInfo(questID)
+    local questInfo = LocalQuestCache:Get(questID);
     if not questInfo then
         questInfo = C_QuestLog.GetInfo(questID);
     end
-    if not questInfo then return; end
+    if not questInfo then
+        questInfo = { ["questID"] = questID };
+    end
 
+    return questInfo;
+end
+
+function LocalQuestInfo:GetCustomQuestInfo(questID)
+    local questInfo = self:GetGameQuestInfo(questID);
     AddMoreQuestInfo(questInfo);
 
     return questInfo;

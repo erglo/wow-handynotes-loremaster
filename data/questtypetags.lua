@@ -143,8 +143,7 @@ LocalQuestTagUtil.defaultIconWidth = 20;
 LocalQuestTagUtil.defaultIconHeight = 20;
 
 function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
-    local questInfo = baseQuestInfo or LocalQuestInfo:GetQuestInfo(questID);
-    -- local classificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questInfo.questClassification);
+    local questInfo = baseQuestInfo or LocalQuestInfo:GetCustomQuestInfo(questID);
     local width = self.defaultIconWidth;
     local height = self.defaultIconHeight;
     local tagInfoList = {};  --> {{atlasMarkup=..., tagName=..., tagID=...}, ...}
@@ -344,7 +343,7 @@ end
 --       [QuestUtils.lua](https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua)
 --
 function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
-    local questInfo = LocalQuestInfo:GetQuestInfo(questID)
+    local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
     local width, height = iconWidth, iconHeight or iconWidth
     local tagData = {}
     -- Neglected tags (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
