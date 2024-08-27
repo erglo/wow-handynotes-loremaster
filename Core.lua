@@ -2090,8 +2090,8 @@ end
 -- Save the questline of an active quest, if available.
 function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest accepted:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
@@ -2111,8 +2111,8 @@ end
 -- Save daily and weekly quests as completed, if they are lore relevant.
 function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest turned in:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
@@ -2132,8 +2132,8 @@ end
 -- Note: This event fires before and sometimes after you turn-in a quest or when you abort a quest.
 function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questID, wasReplayQuest = ...
-    local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
-    -- local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
+    local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest removed:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> wasReplayQuest:", wasReplayQuest)
 

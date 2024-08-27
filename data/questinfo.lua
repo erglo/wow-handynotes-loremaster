@@ -163,7 +163,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
 
     local classificationID = pin.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
     local tagInfo = self:GetQuestTagInfo(questInfo.questID);
-    --> Note: `pin.questLineID` is not (!) reliable.
+    --> Note: Don't use `pin.questLineID`, yet. Currently NOT reliable! (11.0.2)
     -- questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
     questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
     questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
@@ -287,16 +287,13 @@ end
 ---@return table questInfo
 --
 function LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
-    local questInfo = QuestCache:Get(questID);
-    if not questInfo then
-        questInfo = C_QuestLog.GetInfo(questID) or {};
-    end
+    local questInfo = self:GetGameQuestInfo(questID);
     -- Enrich details
-    questInfo.questID = questInfo.questID or questID;
+    questInfo.questID = questID;
     questInfo.questName = questInfo.title or QuestUtils_GetQuestName(questInfo.questID);
 
     local classificationID = questInfo.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
-    questInfo.hasQuestLineInfo = classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
+    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline) or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
     questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
     questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
