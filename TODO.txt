@@ -8,3 +8,13 @@ Add right-click menu to continent pin @clickHandler +map +pin
 Track minimap pins @hooks +minimap +pin
 Show active QLs in world map button @worldMapButton +questLines +map +button
 Update `debug:print` @Workspace
+
+Add tag icon for breadcrumb quests @data +questTag
+Add tag icon for sequenced quests @data +questTag
+Add tag icon for bounty quests @data +questTag
+Add tag icon for `.isRepeatable` quests @data +questTag
+Add `suggestedGroup` --> `number` to group tag @data +questTag
+Show difficultyLevel/level to quests @data +questTag
+Show expansion level to quests @data +questTag
+Add isInternalOnly to quest filter @data +questFilter
+Try using `.achievementID` from quest info @data +questInfo +achievement

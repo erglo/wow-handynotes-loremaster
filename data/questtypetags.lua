@@ -132,11 +132,11 @@ end
 local function ShouldIgnoreQuestTypeTag(questInfo)
     if not questInfo.questTagInfo then return true; end
 
-    local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
-    local shouldIgnoreShownTag = questInfo.isOnQuest and isKnownQuestTypeTag;
-    local ignoreCovenantCallingTag = (questInfo.questTagInfo.tagID == LocalQuestTag.CovenantCalling);  -- handled below manually
+    local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID);
+    local shouldIgnoreShownTag = (questInfo.isOnQuest or questInfo.questTagInfo and questInfo.questTagInfo.worldQuestType) and isKnownQuestTypeTag;
+    -- local ignoreCovenantCallingTag = (questInfo.questTagInfo.tagID == LocalQuestTag.CovenantCalling);  -- handled manually below
 
-    return shouldIgnoreShownTag or ignoreCovenantCallingTag;
+    return shouldIgnoreShownTag; -- or ignoreCovenantCallingTag;
 end
 
 LocalQuestTagUtil.defaultIconWidth = 20;
@@ -190,6 +190,8 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         end
         if not ShouldIgnoreQuestTypeTag(questInfo) then                         --> TODO - priorities (tagInfo vs. manual vs. classification)
             tinsert(tagInfoList, info);
+        elseif questInfo.hasTrivialTag then
+            questInfo.hasTrivialTag = nil;
         end
     end
     -- Neglected or unsupported tags prior to Dragonflight (tags unsupported through `questTagInfo`, but still in `QUEST_TAG_ATLAS`)
@@ -259,16 +261,16 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
             ["ranking"] = 3,
         });
     end
-    if questInfo.isCalling then
-        -- Is supported by classification, but icon is awful.
-        local atlas = questInfo.isReadyForTurnIn and "Quest-DailyCampaign-TurnIn" or "Quest-DailyCampaign-Available";
-        tinsert(tagInfoList, {
-            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
-            ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CALLING, questInfo),
-            ["tagID"] = "CC",
-            ["ranking"] = 3,
-        });
-    end
+    -- if questInfo.isCalling then
+    --     -- Is supported by classification, but icon is awful.
+    --     local atlas = questInfo.isReadyForTurnIn and "Quest-DailyCampaign-TurnIn" or "Quest-DailyCampaign-Available";
+    --     tinsert(tagInfoList, {
+    --         ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+    --         ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CALLING, questInfo),
+    --         ["tagID"] = "CC",
+    --         ["ranking"] = 3,
+    --     });
+    -- end
     if (questInfo.hasQuestLineInfo and ns.settings.showTagQuestline) then
         local questlineClassificationID = Enum.QuestClassification.Questline;
         local questlineClassificationInfo = LocalQuestInfo:GetQuestClassificationInfo(questlineClassificationID);
@@ -319,7 +321,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
 
     if (not questInfo.questTagInfo or questInfo.questTagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
         -- Add *faction group icon only* when no questTagInfo provided or not an account-wide quest
-        local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE;
+        local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE;
         local factionTagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE";
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height),
@@ -373,8 +375,9 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
     if (questInfo.questClassification and not tContains(classificationIgnoreTable, questInfo.questClassification)) then  --> Enum.QuestClassification
         local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
         -- Note: Blizzard seems to currently prioritize the classification details over tag infos.
-        local atlasMarkup = CreateAtlasMarkup(classificationAtlas, width, height)
-        tagData[classificationText] = atlasMarkup
+        local fallbackAtlas, fallbackText = "common-icon-forwardarrow-disable", UNKNOWN
+        local atlasMarkup = CreateAtlasMarkup(classificationAtlas or fallbackAtlas, width, height)
+        tagData[classificationText or fallbackText] = atlasMarkup
     end
     -- Quest (type) tags
     if questInfo.questTagInfo then
@@ -473,8 +476,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
 end
 
 function LocalQuestTagUtil:AddTrivialQuestTagInfo(questInfo, tagInfoList)
-    -- if (#tagInfoListCopy == 0 and questInfo.isTrivial and not questInfo.hasTrivialTag) then
-    if (#tagInfoList <= 1 and questInfo.isTrivial and not questInfo.hasTrivialTag) then
+    if (#tagInfoList < 2 and (questInfo.isTrivial and not questInfo.hasTrivialTag)) then
         -- Add a standalone "trivial" tag
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup("TrivialQuests", 20, 20),
@@ -483,7 +485,6 @@ function LocalQuestTagUtil:AddTrivialQuestTagInfo(questInfo, tagInfoList)
             ["ranking"] = 0,
             ["alpha"] = 0.5,
         });
-        -- questInfo.hasTrivialTag = true;
     end
 end
 

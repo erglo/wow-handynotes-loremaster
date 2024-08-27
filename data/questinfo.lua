@@ -129,7 +129,7 @@ end
 -- * `.isHidden`
 -- * `.isImportant`
 -- * `.isLegendary`
--- * `.isLocalStory`
+-- * `.isLocalStory` --> "QuestLineInfo"
 -- * `.isMeta`
 -- * `.isQuestStart` --> `true`
 -- * `.mapID`
@@ -165,7 +165,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     local tagInfo = self:GetQuestTagInfo(questInfo.questID);
     --> Note: Don't use `pin.questLineID`, yet. Currently NOT reliable! (11.0.2)
     -- questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
-    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
+    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline) or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isAccountQuest = tagInfo and tagInfo.tagID == Enum.QuestTag.Account or C_QuestLog.IsAccountQuest(questInfo.questID);
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isBonusObjective = pin.isBonusObjective or (classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID));
@@ -178,9 +178,9 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isOnQuest = pin.inProgress or C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questInfo.questID);
     questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
-    questInfo.isStory = pin.isLocalStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
+    questInfo.isStory = questInfo.isStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = (classificationID and classificationID == Enum.QuestClassification.Threat) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
-    questInfo.isTrivial = pin.isHidden or C_QuestLog.IsQuestTrivial(questInfo.questID);
+    questInfo.isTrivial = pin.isHidden or questInfo.isHidden or C_QuestLog.IsQuestTrivial(questInfo.questID);
     questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
     questInfo.isWorldQuest = questInfo.isTask or (classificationID and classificationID == Enum.QuestClassification.WorldQuest) or (tagInfo and tagInfo.worldQuestType ~= nil) or QuestUtils_IsQuestWorldQuest(questInfo.questID);
     questInfo.questFactionGroup = self:GetQuestFactionGroup(questInfo.questID);
