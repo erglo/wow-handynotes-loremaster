@@ -285,16 +285,32 @@ end
 
 function LocalQuestFilter:IsDaily(questID, baseQuestInfo)
     local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
-    local isDailyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Daily;
+    local isFrequencyDaily = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Daily;
+    local isSavedCompletedDailyQuest = DBUtil:IsCompletedRecurringQuest("Daily", questID);
 
-    return isDailyQuest or tContains(self.dailyQuests, questID) or DBUtil:IsCompletedRecurringQuest("Daily", questID);
+    if (isSavedCompletedDailyQuest and ns.settings.saveRecurringQuests) then
+        -- Enhance completion flagging for recurring quests
+        if not questInfo.isFlaggedCompleted then
+            questInfo.isFlaggedCompleted = isSavedCompletedDailyQuest;
+        end
+    end
+
+    return isFrequencyDaily or tContains(self.dailyQuests, questID) or isSavedCompletedDailyQuest;
 end
 
 function LocalQuestFilter:IsWeekly(questID, baseQuestInfo)
     local questInfo = baseQuestInfo or LocalQuestCache:Get(questID);
-    local isWeeklyQuest = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Weekly;
+    local isFrequencyWeekly = (questInfo and questInfo.frequency) and questInfo.frequency == Enum.QuestFrequency.Weekly;
+    local isSavedCompletedWeeklyQuest = DBUtil:IsCompletedRecurringQuest("Weekly", questID);
 
-    return isWeeklyQuest or tContains(self.weeklyQuests, questID) or DBUtil:IsCompletedRecurringQuest("Weekly", questID);
+    if (isSavedCompletedWeeklyQuest and ns.settings.saveRecurringQuests) then
+        -- Enhance completion flagging for recurring quests
+        if not questInfo.isFlaggedCompleted then
+            questInfo.isFlaggedCompleted = isSavedCompletedWeeklyQuest;
+        end
+    end
+
+    return isFrequencyWeekly or tContains(self.weeklyQuests, questID) or isSavedCompletedWeeklyQuest;
 end
 
 function LocalQuestFilter:IsStory(questID, baseQuestInfo)

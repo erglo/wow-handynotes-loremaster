@@ -447,8 +447,20 @@ end
 --     return achievementInfo.earnedBy == playerName
 -- end
 
-function LocalQuestUtils:IsQuestCompletedByAnyone(questID)
-    return C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID)
+-- Check if your current char or someone of your War Band has completed the given quest.
+---@param questInfo QuestInfo|table
+---@param questID number|nil
+---@return boolean isCompleted
+--
+function LocalQuestUtils:IsQuestCompletedByAnyone(questInfo, questID)
+    if questID then
+        return C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID)
+    end
+    if questInfo then
+        return questInfo.isFlaggedCompleted or questInfo.isAccountCompleted
+    end
+
+    return false
 end
 
 function ZoneStoryUtils:GetAchievementInfo(achievementID)
@@ -748,7 +760,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
             end
         end
         if questInfo.isStory then
-            if (ns.settings.highlightStoryQuests and not LocalQuestUtils:IsQuestCompletedByAnyone(questInfo.questID)) then
+            if (ns.settings.highlightStoryQuests and not LocalQuestUtils:IsQuestCompletedByAnyone(questInfo)) then
                 questTitle = ORANGE(questTitle)
             end
             if ns.settings.showQuestTypeAsText then
@@ -982,7 +994,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = LocalQuestFilter:IsDaily(questID),
             isDisabledForSession = C_QuestLog.IsQuestDisabledForSession(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),  -- self:IsQuestCompletedByAnyone(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),  -- self:IsQuestCompletedByAnyone(questInfo),
             isAccountCompleted = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID),
             isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
@@ -1038,7 +1050,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
             isComplete = C_QuestLog.IsComplete(questID),
             isDaily = LocalQuestFilter:IsDaily(questID),
-            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),  -- self:IsQuestCompletedByAnyone(questID),
+            isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID),  -- self:IsQuestCompletedByAnyone(questInfo),
             isImportant = C_QuestLog.IsImportantQuest(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isOnQuest = C_QuestLog.IsOnQuest(questID),
@@ -1083,7 +1095,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             questID = questID,
             questName = questName,
             questLevel = C_QuestLog.GetQuestDifficultyLevel(questID),
-            isFlaggedCompleted = self:IsQuestCompletedByAnyone(questID),
+            isFlaggedCompleted = self:IsQuestCompletedByAnyone(nil, questID),
             isDaily = LocalQuestFilter:IsDaily(questID),
             isWeekly = LocalQuestFilter:IsWeekly(questID),
             isCampaign = C_CampaignInfo.IsCampaignQuest(questID),
@@ -1234,7 +1246,7 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
         local questInfo = LocalQuestInfo:GetQuestInfo(questID)
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if not (questInfo.isDaily or questInfo.isWeekly) then
-                if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo.questID) then
+                if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo) then
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
                 end
             else
@@ -1346,9 +1358,10 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = LocalQuestUtils:FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
-                if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo.questID) and isActiveQuest then
+                local completedByAnyone = LocalQuestUtils:IsQuestCompletedByAnyone(questInfo)
+                if completedByAnyone and isActiveQuest then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
-                elseif LocalQuestUtils:IsQuestCompletedByAnyone(questInfo.questID) then
+                elseif completedByAnyone then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
                 elseif isActiveQuest then
                     LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
@@ -1988,7 +2001,7 @@ end
 ---@param campaignID number|nil
 --
 local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
-    local isQuestCompleted = LocalQuestUtils:IsQuestCompletedByAnyone(questID)
+    local isQuestCompleted = LocalQuestUtils:IsQuestCompletedByAnyone(nil, questID)
     local numThreshold = not isQuestCompleted and 1 or 0
     local activeMapInfo = LocalUtils:GetActiveMapInfo()
     if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
@@ -2523,7 +2536,7 @@ function Temp_ConvertActiveQuestlineQuests()
     local count = 0
     for i, activeQuestLineInfo in ipairs(activeQuestlinesDB) do
         local campaignID = activeQuestLineInfo.isCampaign and C_CampaignInfo.GetCampaignID(activeQuestLineInfo.questID)
-        local isQuestCompleted = LocalQuestUtils:IsQuestCompletedByAnyone(activeQuestLineInfo.questID)
+        local isQuestCompleted = LocalQuestUtils:IsQuestCompletedByAnyone(nil, activeQuestLineInfo.questID)
         local success = not isQuestCompleted and DBUtil:AddActiveLoreQuest(activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID)
         if success then
             count = count + 1

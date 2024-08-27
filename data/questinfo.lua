@@ -156,6 +156,9 @@ end
 function LocalQuestInfo:GetQuestInfoForPin(pin)
     local questInfo = {};
     questInfo.questID = pin.questID;
+    questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
+    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);  --> don't move from this position (!), might be overwritten by `:IsDaily` or `:IsWeekly`!
+
     local classificationID = pin.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
     local tagInfo = self:GetQuestTagInfo(questInfo.questID);
     questInfo.hasQuestLineInfo = (pin.questLineID ~= nil) or (classificationID and classificationID == Enum.QuestClassification.Questline or LocalQuestInfo:HasQuestLineInfo(questInfo.questID));
@@ -179,14 +182,14 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.questFactionGroup = self:GetQuestFactionGroup(questInfo.questID);
     questInfo.questName = questInfo.questName or QuestUtils_GetQuestName(questInfo.questID);
     questInfo.questTagInfo = tagInfo;
-    -- Test
-    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
-    questInfo.isAccountCompleted = pin.isAccountCompleted or C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
 
     return questInfo;
 end
 
 local function AddMoreQuestInfo(questInfo)
+    questInfo.isAccountCompleted = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
+    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);  --> don't move from this position (!), might be overwritten by `:IsDaily` or `:IsWeekly`!
+
     local classificationID = questInfo.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
     local tagInfo = LocalQuestInfo:GetQuestTagInfo(questInfo.questID);
     questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
@@ -212,8 +215,6 @@ local function AddMoreQuestInfo(questInfo)
     -- Internal legacy
     questInfo.questType = C_QuestLog.GetQuestType(questInfo.questID);
     -- Test
-    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
-    questInfo.isAccountCompleted = C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID);
     questInfo.wasEarnedByMe = questInfo.isCompleted and not questInfo.isAccountCompleted;
     questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
     questInfo.isBreadcrumbQuest = IsBreadcrumbQuest(questInfo.questID);
