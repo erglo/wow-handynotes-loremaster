@@ -213,6 +213,16 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
             ["ranking"] = 3,
         });
     end
+    -- if (questInfo.isRepeatable and not isRecurring and not (questInfo.isDaily or questInfo.isWeekly) and not questInfo.isWorldQuest) then
+    if (questInfo.isRepeatable and not isRecurring and not questInfo.isWorldQuest) then
+        local atlas = questInfo.isReadyForTurnIn and "RecurringActiveQuestIcon" or "RecurringAvailableQuestIcon"
+        tinsert(tagInfoList, {  -- "quest-recurring-turnin" or "quest-recurring-available"
+            ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
+            ["tagName"] = MAP_LEGEND_REPEATABLE ,
+            ["tagID"] = "R",
+            ["ranking"] = 3,
+        });
+    end
     if questInfo.isFailed then
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS.FAILED, width, height),

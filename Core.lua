@@ -831,9 +831,9 @@ end
 LocalQuestUtils.GetQuestName = function(self, questID)
     -- REF.: <https://www.townlong-yak.com/framexml/live/QuestUtils.lua>
     -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua>
-	if not HaveQuestData(questID) then
-		C_QuestLog.RequestLoadQuestByID(questID)
-	end
+	-- if not HaveQuestData(questID) then
+	-- 	C_QuestLog.RequestLoadQuestByID(questID)
+	-- end
 
     return QuestUtils_GetQuestName(questID)   -- QuestCache:Get(questID).title
 end
@@ -990,7 +990,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
             -- isInvasion = C_QuestLog.IsQuestInvasion(questID),
             isLegendary = C_QuestLog.IsLegendaryQuest(questID),
             isObsolete = LocalQuestFilter:IsObsolete(questID),
-            -- isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
+            isRepeatable = C_QuestLog.IsRepeatableQuest(questID),
             -- isReplayable = C_QuestLog.IsQuestReplayable(questID),
             isSequenced = IsQuestSequenced(questID),
             isStory = LocalQuestFilter:IsStory(questID),
@@ -2713,26 +2713,7 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
     -- Use for testing only!  --> Hooks nearly ALL world map pin templates
     -- hooksecurefunc(LegendHighlightablePoiPinMixin, "OnLegendPinMouseEnter", TestPin_OnEnter)
 
--- local quest = QuestCache:Get(53955);
--- -- isLegendary
--- -- isRepeatable
--- -- questID
--- -- requiredMoney
--- -- title
--- -- CheckRefresh()
--- -- GetCampaignID()
--- -- GetID()
--- -- GetQuestLogIndex()
--- -- GetSortType()
--- -- IsCalling()
--- -- IsCampaign()
--- -- IsComplete()
--- -- IsDisabledForSession()
--- -- IsImportant()
--- -- IsLegendary()
--- -- IsMeta()
--- -- IsOnMap()
--- -- IsRepeatableQuest()
+
 -- for k,v in pairs(quest) do
 --     if not tContains({"function", "table"}, type(v)) then
 --         print(k, "-->", v)

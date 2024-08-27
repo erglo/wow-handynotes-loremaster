@@ -80,7 +80,7 @@ LocalQuestFilter.weeklyQuests = {
 function LocalQuestFilter:ShouldSaveRecurringQuest(questInfo)
     return (
         ns.settings.saveRecurringQuests and
-        (questInfo.isWeekly or questInfo.isDaily) and
+        (questInfo.isWeekly or questInfo.isDaily or questInfo.isRepeatable) and
         (questInfo.isStory or questInfo.isCampaign or questInfo.hasQuestLineInfo)
     )
 end
