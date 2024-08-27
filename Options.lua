@@ -213,7 +213,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Track World Quests",
                                 desc = "Show additional details for World Quests in a separate tooltip below the quest tooltip.",
-                                arg ="trackWorldQuests",
+                                arg = "trackWorldQuests",
                                 width = 1.2,
                                 order = 30,
                             },
@@ -221,7 +221,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Track Threat Objectives",
                                 desc = "Show additional details for Threat Objectives in a separate tooltip below the quest tooltip.",
-                                arg ="trackThreatObjectives",
+                                arg = "trackThreatObjectives",
                                 width = 1.2,
                                 order = 31,
                             },
@@ -229,7 +229,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Track Bonus Objectives",
                                 desc = "Show additional details for Bonus Objectives in a separate tooltip below the quest tooltip.",
-                                arg ="trackBonusObjectives",
+                                arg = "trackBonusObjectives",
                                 width = 1.2,
                                 order = 32,
                             },
@@ -237,17 +237,17 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             --> TODO - Add reminder for tracking trivial quests in World Map filter.
                             quest_tag_alpha = {
                                 type = "toggle",
-                                name = LocalOptionUtils:WrapTextInNewFeatureIcon("Quest Tag Transparency"),
+                                name = "Quest Tag Transparency",
                                 desc = "Display quest tag lines of lower level quests semi-transparent.",
-                                arg ="showTagTransparency",
+                                arg = "showTagTransparency",
                                 width = 1.2,
                                 order = 35,
                             },
                             quest_tag_questline = {
                                 type = "toggle",
-                                name = LocalOptionUtils:WrapTextInNewFeatureIcon("Show Storyline Tag"),
+                                name = "Show Storyline Tag",
                                 desc = "Display a quest tag line for quests with a storyline.",
-                                arg ="showTagQuestline",
+                                arg = "showTagQuestline",
                                 width = 1.2,
                                 order = 36,
                             },
@@ -310,7 +310,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 type = "toggle",
                                 name = "Hide in Completed Zones",
                                 desc = "Show zone story details only in zones with an incomplete achievement.",
-                                arg ="hideZoneStoryInCompletedZones",
+                                arg = "hideZoneStoryInCompletedZones",
                                 disabled = function() return not ns.settings["showZoneStory"] end,
                                 width = "double",
                                 order = 6,
@@ -654,11 +654,6 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
 end
 
 ----- Utility functions ----------
-
--- Returns the given string with the new feature (yellow exclamation mark) before given text.
-function LocalOptionUtils:WrapTextInNewFeatureIcon(text)
-	return "|TInterface\\OptionsFrame\\UI-OptionsFrame-NewFeatureIcon:0:0:-1:0|t"..text
-end
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
