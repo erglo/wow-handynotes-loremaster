@@ -1233,10 +1233,10 @@ function LocalQuestLineUtils:AddQuestLineQuestToMap(mapID, questLineID, questID)
     end
 end
 
-function LocalQuestLineUtils:FilterQuestLineQuests(questLineID)
+function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     local filteredQuestInfos = {}
     filteredQuestInfos.quests = {}
-    filteredQuestInfos.unfilteredQuests = LocalQuestCache:GetQuestLineQuests(questLineID)
+    filteredQuestInfos.unfilteredQuests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
     filteredQuestInfos.numTotalUnfiltered = #filteredQuestInfos.unfilteredQuests
     filteredQuestInfos.numTotal = 0
     filteredQuestInfos.numCompleted = 0
@@ -1329,7 +1329,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     pin.questInfo.currentQuestLineName = questLineInfo.questLineName
     -- Note: This is used to identify the currently active zone story.
 
-    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo.questLineID)
+    local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
 
     -- Plugin / category name
     local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
