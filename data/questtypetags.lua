@@ -129,14 +129,13 @@ local function FormatTagName(tagName, questInfo)
     return tagName;
 end
 
-local function ShouldIgnoreQuestTypeTag(questInfo)
+function LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo)
     if not questInfo.questTagInfo then return true; end
 
     local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID);
-    local shouldIgnoreShownTag = (questInfo.isOnQuest or questInfo.questTagInfo and questInfo.questTagInfo.worldQuestType) and isKnownQuestTypeTag;
-    -- local ignoreCovenantCallingTag = (questInfo.questTagInfo.tagID == LocalQuestTag.CovenantCalling);  -- handled manually below
+    local shouldIgnoreShownTag = questInfo.isOnQuest and isKnownQuestTypeTag;
 
-    return shouldIgnoreShownTag; -- or ignoreCovenantCallingTag;
+    return shouldIgnoreShownTag;
 end
 
 LocalQuestTagUtil.defaultIconWidth = 20;
@@ -188,7 +187,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
             info["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height);
             info["tagName"] = FormatTagName(tagName, questInfo);
         end
-        if not ShouldIgnoreQuestTypeTag(questInfo) then                         --> TODO - priorities (tagInfo vs. manual vs. classification)
+        if not self:ShouldIgnoreQuestTypeTag(questInfo) then                         --> TODO - priorities (tagInfo vs. manual vs. classification)
             tinsert(tagInfoList, info);
         elseif questInfo.hasTrivialTag then
             questInfo.hasTrivialTag = nil;

@@ -1809,8 +1809,9 @@ end
 ----------
 
 local function IsRelevantQuest(questInfo)
-    return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or
-            (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo)) or questInfo.isBonusObjective)
+    return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or questInfo.isBonusObjective or
+            not LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo))
+            -- (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo))
 end
 
 -- Extend and update quest meta data
