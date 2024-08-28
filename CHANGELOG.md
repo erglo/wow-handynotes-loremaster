@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+⚠️ **Note:** _This is a pre-release version and still in development._ ⚠️
+
+### Fixed
+
+* Notifications: when completing a quest from a campaign the notification message showed chapter and campaign name in the wrong order.
+
 ## [0.9.0-beta+110002] - 2024-08-28
 
 ### Added
@@ -223,6 +231,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Basic file structure for a HandyNotes plugin using Ace3.
 
 <!-- [Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development -->
+[0.9.0-beta+110002]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.8.0-beta...v0.9.0-beta
 [0.8.0-beta+110000]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.7.1-beta...v0.8.0-beta
 [0.7.1-beta+100206]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.7.0-beta...v0.7.1-beta
 [0.7.0-beta+100205]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...v0.7.0-beta

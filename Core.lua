@@ -2013,8 +2013,8 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("You've completed %s quests of the %s chapter from the %s campaign.",
                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
-                           CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
-                           QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
+                           QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName),
+                           CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name)
                 )
             -- else
             --     ns:cprintf("This quest was part of the campaign %s.", CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name))
