@@ -591,8 +591,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
     if ns.settings.showEarnedByText then
         local earnedByString = CreateEarnedByString(achievementInfo)
         if earnedByString then
-            -- LibQTipUtil:AddDescriptionLine(tooltip, BLUE(CreateEarnedByString(achievementInfo)), 0, nil, 250)
-            LibQTipUtil:AddColoredLine(tooltip, BRIGHTBLUE_FONT_COLOR, earnedByString)
+            LibQTipUtil:AddDescriptionLine(tooltip, BLUE(earnedByString), 0, nil, 250)
         end
     end
 
