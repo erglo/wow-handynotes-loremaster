@@ -61,6 +61,7 @@ LocalOptionUtils.dashLineStringFormat = "|TInterface\\Scenarios\\ScenarioIcon-Da
 LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 LocalOptionUtils.questTypeIconFormat = "|A:questlog-questtypeicon-%s:16:16:0:-1|a"
 LocalOptionUtils.suffixTextDefault = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.parensStringFormat:format(DEFAULT))
+LocalOptionUtils.newFeatureIconString = CreateAtlasMarkup("NewCharacter-Horde", 56, 29, -6)
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
@@ -169,13 +170,21 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 width = "full",
                                 order = 1,
                             },                                                  --> TODO - Show quest ID, trivial quests ???
+                            show_quest_title = {
+                                type = "toggle",
+                                name = "Show Quest Title"..LocalOptionUtils.newFeatureIconString,
+                                desc = "Show or hide the title in the Loremaster tooltip.",
+                                arg = "showQuestTitle",
+                                width = "full",
+                                order = 2,
+                            },
                             category_names = {
                                 type = "toggle",
                                 name = "Show Category Names",
                                 desc = "Each content category is indicated by its name. Deactivate to hide those names.",
                                 arg = "showCategoryNames",
                                 width = "full",
-                                order = 2,
+                                order = 3,
                             },
                             quest_type = {
                                 type = "toggle",
@@ -183,7 +192,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 desc = "Show or hide the type name and icon of a quest. Blizzard shows you this detail only after accepting a quest."..LocalOptionUtils:AppendQuestTypeExampleText(CALENDAR_TYPE_RAID, "raid"),
                                 arg = "showQuestType",
                                 width = "full",
-                                order = 3,
+                                order = 4,
                             },
                             quest_turn_in = {
                                 type = "toggle",
@@ -191,7 +200,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 desc = "Show or hide this message. This option affects active quests only.",
                                 arg = "showQuestTurnIn",
                                 width = "full",
-                                order = 4,
+                                order = 5,
                             },
                             separator_pre_advanced = {
                                 type = "description",
