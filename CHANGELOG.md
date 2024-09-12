@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+* Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
 * Notifications: when completing a quest from a campaign the notification message showed chapter and campaign name in the wrong order.
 
 ## [0.9.0-beta+110002] - 2024-08-28

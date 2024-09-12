@@ -107,7 +107,7 @@ LocalQuestTagUtil.QUEST_TAG_ATLAS["TRIVIAL"] = "TrivialQuests"
 
 -- These types are handled separately or have fallback handler.
 local classificationIgnoreTable = {
-	-- Enum.QuestClassification.Important,
+	Enum.QuestClassification.Important,
 	-- Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
 	Enum.QuestClassification.Calling,
