@@ -69,14 +69,15 @@ local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
 local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
-local QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestWorldQuest, QuestUtils_IsQuestBonusObjective
+local QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestBonusObjective
 local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest
 local QuestUtil = QuestUtil
-local GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo = GetQuestFactionGroup, GetQuestUiMapID, QuestHasPOIInfo
+local GetQuestUiMapID, QuestHasPOIInfo = GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
 local C_Map = C_Map  -- C_TaskQuest
 local C_QuestInfoSystem = C_QuestInfoSystem
+local CreateAtlasMarkup = CreateAtlasMarkup
 
 local GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR = GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR
 local BRIGHTBLUE_FONT_COLOR = BRIGHTBLUE_FONT_COLOR
@@ -874,6 +875,10 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, baseQuestInfo)
     for _, tagInfo in ipairs(tagInfoList) do
         local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
         local lineIndex = LibQTipUtil:AddColoredLine(tooltip, LineColor, text)
+        if (tooltip:GetWidth() < GameTooltip:GetWidth()) then
+            -- Don't wrap tag lines which are longer than the GameTooltip, but stretch smaller ones to fit its width.
+            tooltip:SetCell(lineIndex, 1, text, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
+        end
         if (questInfo.isTrivial and ns.settings.showTagTransparency) then
             local r, g, b = LineColor:GetRGB()
             tooltip:SetCellTextColor(lineIndex, 1, r, g, b, 0.5)
@@ -1350,7 +1355,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
     end
-    LibQTipUtil:AddNormalLine(tooltip, questLineCountLine)
+    local lineIndex = LibQTipUtil:AddNormalLine(tooltip, questLineCountLine)
+    tooltip:SetCell(lineIndex, 1, questLineCountLine, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
 
     -- Questline quests
     if GetCollapseTypeModifier(filteredQuestInfos.isComplete, "collapseType_questline") then

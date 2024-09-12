@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ⚠️ **Note:** _This is a pre-release version and still in development._ ⚠️
 
+### Changed
+
+* Tooltip: adjusted quest tooltip width - tooltips with shorter content will now be stretched to fit the game's default tooltip.
+
 ### Fixed
 
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
