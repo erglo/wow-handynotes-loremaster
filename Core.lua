@@ -804,6 +804,15 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
             end
         end
+        if questInfo.isOnQuest and not isReady then
+            if ns.settings.showQuestTypeAsText then
+                questTitle = BLUE(PARENS_TEMPLATE:format(MAP_LEGEND_INPROGRESS))..L.TEXT_DELIMITER..questTitle
+            else
+                local atlas = LocalQuestTagUtil:GetInProgressQuestTypeAtlas(questInfo)
+                iconString = CreateAtlasMarkup(atlas, 14, 16, -2)
+                questTitle = iconString..questTitle
+            end
+        end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
             questTitle = format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
@@ -1245,10 +1254,14 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     filteredQuestInfos.numTotal = 0
     filteredQuestInfos.numCompleted = 0
     filteredQuestInfos.numRepeatable = 0
+    filteredQuestInfos.numInProgress = 0
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
         -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
         local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
+            if questInfo.isOnQuest then
+                filteredQuestInfos.numInProgress = filteredQuestInfos.numInProgress + 1
+            end
             if not (questInfo.isDaily or questInfo.isWeekly) then
                 if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo) then
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
@@ -1347,9 +1360,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
-    local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
-    if (numActiveQuestLines > 0) then
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(SPEC_ACTIVE..HEADER_COLON..L.TEXT_DELIMITER..tostring(numActiveQuestLines)))
+    if (filteredQuestInfos.numInProgress > 0) then
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(SPEC_ACTIVE..HEADER_COLON..L.TEXT_DELIMITER..tostring(filteredQuestInfos.numInProgress)))
     end
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
@@ -1366,6 +1378,8 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                 local completedByAnyone = LocalQuestUtils:IsQuestCompletedByAnyone(questInfo)
                 if completedByAnyone and isActiveQuest then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
+                elseif completedByAnyone and questInfo.isOnQuest then
+                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
                 elseif completedByAnyone then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
                 elseif isActiveQuest then
@@ -2060,9 +2074,8 @@ local function PrintQuestAddedMessage(questInfo)
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, activeMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
-                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
+                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2078,9 +2091,8 @@ local function PrintQuestAddedMessage(questInfo)
         if questLineInfo then
             if (ns.settings.showQuestlineQuestProgressMessage and not questInfo.isCampaign) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
-                local numActiveQuestLines = DBUtil:CountActiveQuestlineQuests(questLineInfo.questLineID)
                 ns:cprintf("This is quest %s from the %s questline.",
-                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numActiveQuestLines + 1, filteredQuestInfos.numTotal),
+                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end

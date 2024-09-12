@@ -487,6 +487,16 @@ function LocalQuestTagUtil:AddTrivialQuestTagInfo(questInfo, tagInfoList)
     end
 end
 
+function LocalQuestTagUtil:GetInProgressQuestTypeAtlas(questInfo)
+    return (
+        questInfo.isImportant and "importantInProgressquesticon" or
+        questInfo.isLegendary and "legendaryInProgressquesticon" or
+        questInfo.isCampaign and "CampaignInProgressQuestIcon" or
+        (questInfo.isRepeatable or questInfo.isDaily or questInfo.isWeekly) and "RepeatableInProgressquesticon" or
+        "SideInProgressquesticon"
+    );
+end
+
 --@do-not-package@
 --------------------------------------------------------------------------------
 

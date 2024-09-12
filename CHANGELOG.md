@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Questlines: updated counter and visual indication of in-progress (active) quests.
 * Tooltip: adjusted quest tooltip width - tooltips with shorter content will now be stretched to fit the game's default tooltip.
 
 ### Fixed
