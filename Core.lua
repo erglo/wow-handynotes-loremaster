@@ -2484,10 +2484,8 @@ function LoremasterPlugin:OnEnter(mapID, coord)
          ZoneStoryUtils:AddZoneStoryDetailsToTooltip(self.tooltip, fakePin)
 
          -- Hint to open achievement frame
-         if not LoreUtil:IsHiddenCharSpecificAchievement(node.achievementInfo.achievementID) then
-            LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
-            LibQTipUtil:AddInstructionLine(self.tooltip, L.HINT_VIEW_ACHIEVEMENT)
-        end
+        LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
+        LibQTipUtil:AddInstructionLine(self.tooltip, L.HINT_VIEW_ACHIEVEMENT)
 
         --> TODO - Add more info to tooltip?
 
