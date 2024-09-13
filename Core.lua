@@ -80,7 +80,7 @@ local C_QuestInfoSystem = C_QuestInfoSystem
 local CreateAtlasMarkup = CreateAtlasMarkup
 
 local GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR = GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR
-local BRIGHTBLUE_FONT_COLOR = BRIGHTBLUE_FONT_COLOR
+local BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR, LIGHTYELLOW_FONT_COLOR = BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR, LIGHTYELLOW_FONT_COLOR
 
 local CATEGORY_NAME_COLOR = GRAY_FONT_COLOR
 local ZONE_STORY_HEADER_COLOR = ACHIEVEMENT_COLOR
@@ -92,7 +92,7 @@ local GRAY = function(txt) return GRAY_FONT_COLOR:WrapTextInColorCode(txt) end
 local GREEN = function(txt) return FACTION_GREEN_COLOR:WrapTextInColorCode(txt) end
 local RED = function(txt) return RED_FONT_COLOR:WrapTextInColorCode(txt) end
 local ORANGE = function(txt) return ORANGE_FONT_COLOR:WrapTextInColorCode(txt) end
-local BLUE = function(txt) return BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(txt) end  -- PURE_BLUE_COLOR, LIGHTBLUE_FONT_COLOR 
+local BLUE = function(txt) return BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(txt) end
 local HIGHLIGHT = function(txt) return HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(txt) end
 
 local function StringIsEmpty(str)
@@ -111,8 +111,9 @@ L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready.
 L.CONGRATULATIONS = SPLASH_BOOST_HEADER
 
 L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
+L.TEXT_DELIMITER_2X = L.TEXT_DELIMITER..L.TEXT_DELIMITER
 L.TEXT_OPTIONAL = string_gsub(AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL, "|cff777777", NORMAL_FONT_COLOR_CODE)
-L.GENERIC_FORMAT_FRACTION_STRING = GENERIC_FRACTION_STRING  --> "%d/%d"
+L.GENERIC_FRACTION_STRING = GENERIC_FRACTION_STRING  --> "%d/%d"
 
 L.ACHIEVEMENT_NOT_COMPLETED_BY  = string_gsub(ACHIEVEMENT_NOT_COMPLETED_BY, "HIGHLIGHT_FONT_COLOR", "BRIGHTBLUE_FONT_COLOR")
 
@@ -141,7 +142,10 @@ L.HINT_SET_WAYPOINT = "<Alt-click to create waypoint>"
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
-L.QUESTLINE_PROGRESS_FORMAT = string_gsub(QUEST_LOG_COUNT_TEMPLATE, "%%s", "|cffffffff")
+L.QUESTLINE_PROGRESS_FORMAT = QUESTS_COLON..L.TEXT_DELIMITER..HIGHLIGHT(L.GENERIC_FRACTION_STRING)
+L.QUESTLINE_WARBAND_PROGRESS_FORMAT = L.GENERIC_FRACTION_STRING.."|A:questlog-questtypeicon-account:14:14:1:0|a"
+L.QUESTLINE_NUM_INPROGRESS_FORMAT = LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode("%s").."|A:SideInProgressquesticon:14:14:1:0|a"
+L.QUESTLINE_NUM_RECURRING_FORMAT = TUTORIAL_BLUE_FONT_COLOR:WrapTextInColorCode("+%d").."|A:Recurringavailablequesticon:12:12:1:0|a"
 
 L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
 L.CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s"
@@ -1254,18 +1258,23 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     filteredQuestInfos.numTotalUnfiltered = #filteredQuestInfos.unfilteredQuests
     filteredQuestInfos.numTotal = 0
     filteredQuestInfos.numCompleted = 0
+    filteredQuestInfos.numAccountCompleted = 0
     filteredQuestInfos.numRepeatable = 0
     filteredQuestInfos.numInProgress = 0
+
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
-        -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "questline")
         local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
+
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if questInfo.isOnQuest then
                 filteredQuestInfos.numInProgress = filteredQuestInfos.numInProgress + 1
             end
             if not (questInfo.isDaily or questInfo.isWeekly) then
-                if LocalQuestUtils:IsQuestCompletedByAnyone(questInfo) then
+                if C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID) then
                     filteredQuestInfos.numCompleted = filteredQuestInfos.numCompleted + 1
+                end
+                if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questInfo.questID) then
+                    filteredQuestInfos.numAccountCompleted = filteredQuestInfos.numAccountCompleted + 1
                 end
             else
                 filteredQuestInfos.numRepeatable = filteredQuestInfos.numRepeatable + 1
@@ -1277,6 +1286,7 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     local isRepeatableQuestLine = (numQuests == 0 and filteredQuestInfos.numRepeatable > 0)
     filteredQuestInfos.numTotal = numQuests
     filteredQuestInfos.isComplete = (filteredQuestInfos.numCompleted == filteredQuestInfos.numTotal and not isRepeatableQuestLine)
+    filteredQuestInfos.isAccountComplete = (filteredQuestInfos.numAccountCompleted == filteredQuestInfos.numTotal and not isRepeatableQuestLine)
 
     return filteredQuestInfos
 end
@@ -1356,17 +1366,24 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
 
-    -- Questline header name + progress
+    -- Questline header name
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
 
+    -- Questline quests progress
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
+    if filteredQuestInfos.numAccountCompleted > 0 then
+        -- Append Warband quest progress
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER_2X..L.QUESTLINE_WARBAND_PROGRESS_FORMAT:format(filteredQuestInfos.numAccountCompleted, filteredQuestInfos.numTotal)
+    end
     if (filteredQuestInfos.numInProgress > 0) then
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(MAP_LEGEND_INPROGRESS..HEADER_COLON..L.TEXT_DELIMITER..tostring(filteredQuestInfos.numInProgress)))
+        -- Append in-progress quest type count
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..L.QUESTLINE_NUM_INPROGRESS_FORMAT:format(filteredQuestInfos.numInProgress)
     end
     if (filteredQuestInfos.numRepeatable > 0) then
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
+        -- Append recurring quest type count
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..L.QUESTLINE_NUM_RECURRING_FORMAT:format(filteredQuestInfos.numRepeatable)
     end
     local lineIndex = LibQTipUtil:AddNormalLine(tooltip, questLineCountLine)
     tooltip:SetCell(lineIndex, 1, questLineCountLine, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
@@ -1379,7 +1396,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             if not StringIsEmpty(questInfo.questName) then
                 local wasEarnedByMe = questInfo.isAccountCompleted and questInfo.isFlaggedCompleted
                 if wasEarnedByMe then
-                    LibQTipUtil:AddColoredLine(tooltip, DIM_GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
+                    LibQTipUtil:AddColoredLine(tooltip, FACTION_GREEN_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
                 elseif questInfo.isAccountCompleted and isActiveQuest then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
                 elseif questInfo.isAccountCompleted and questInfo.isOnQuest then
@@ -2037,7 +2054,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
             if questLineInfo then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("You've completed %s quests of the %s chapter from the %s campaign.",
-                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
+                           L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name)
                 )
@@ -2053,7 +2070,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
         if questLineInfo then
             local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
             ns:cprintf("You've completed %s quests of the %s questline.",
-                       L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
+                       L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + numThreshold, filteredQuestInfos.numTotal),
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
@@ -2079,7 +2096,7 @@ local function PrintQuestAddedMessage(questInfo)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
-                           L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
+                           L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2096,7 +2113,7 @@ local function PrintQuestAddedMessage(questInfo)
             if (ns.settings.showQuestlineQuestProgressMessage and not questInfo.isCampaign) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("This is quest %s from the %s questline.",
-                            L.GENERIC_FORMAT_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
+                            L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
@@ -2194,7 +2211,7 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
-            local criteriaAmount = PARENS_TEMPLATE:format(L.GENERIC_FORMAT_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+            local criteriaAmount = PARENS_TEMPLATE:format(L.GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
             -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted

@@ -10,14 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+* Tooltip: updated storyline quest counter to support Warband vs. individual progress.
 * Tooltip: updated color theme for storyline quests (`green` - Warband completed quest, `dark green` - quest completed by current char + Warband, `yellow` - current available quest, `lighter yellow` - ongoing/in-progress quest, `white` - available not yet completed quest, `orange` - story/lore quest.
-* Tooltip: updated counter and visual indication of in-progress (active) storyline quests.
+* Tooltip: updated counter and visual indication of in-progress storyline quests.
 * Tooltip: quest titles in the Loremaster tooltip can now optionally be hidden.
 * Tooltip: adjusted quest tooltip width - tooltips with shorter content will now be stretched to fit the game's default tooltip.
 
 ### Fixed
 
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
+* Notifications: quest counter for campaign and questlines didn't show correct numbers due to Warband completed quests.
 * Notifications: when completing a quest from a campaign the notification message showed chapter and campaign name in the wrong order.
 
 ## [0.9.0-beta+110002] - 2024-08-28
