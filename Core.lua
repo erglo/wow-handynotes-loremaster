@@ -80,7 +80,9 @@ local C_QuestInfoSystem = C_QuestInfoSystem
 local CreateAtlasMarkup = CreateAtlasMarkup
 
 local GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR = GREEN_FONT_COLOR, NORMAL_FONT_COLOR, HIGHLIGHT_FONT_COLOR
-local BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR, LIGHTYELLOW_FONT_COLOR = BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR, LIGHTYELLOW_FONT_COLOR
+local BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR = BRIGHTBLUE_FONT_COLOR, FACTION_GREEN_COLOR
+local LIGHTYELLOW_FONT_COLOR, NECROLORD_GREEN_COLOR = LIGHTYELLOW_FONT_COLOR, NECROLORD_GREEN_COLOR
+--> TODO - Add color names for QL quest status
 
 local CATEGORY_NAME_COLOR = GRAY_FONT_COLOR
 local ZONE_STORY_HEADER_COLOR = ACHIEVEMENT_COLOR
@@ -125,7 +127,7 @@ L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1
 L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
 L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
 L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
--- MINIMAP_TRACKING_TRIVIAL_QUESTS = "Niedrigstufige Quests";                   --> TODO - Add requirement to activate trivial quest tracking
+-- MINIMAP_TRACKING_TRIVIAL_QUESTS = "Niedrigstufige Quests";                   --> TODO - Add hint to activate trivial quest tracking
 
 L.ZONE_NAME_FORMAT = "|T137176:16:16:0:-1|t %s"  -- 136366
 L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckmark:0:0:1:0|a"
@@ -1398,7 +1400,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
                 if wasEarnedByMe then
                     LibQTipUtil:AddColoredLine(tooltip, FACTION_GREEN_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
                 elseif questInfo.isAccountCompleted and isActiveQuest then
-                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
+                    LibQTipUtil:AddColoredLine(tooltip, NECROLORD_GREEN_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
                 elseif questInfo.isAccountCompleted and questInfo.isOnQuest then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_ACCOUNT_COMPLETED:format(questTitle))
                 elseif questInfo.isAccountCompleted then
