@@ -10,7 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* Questlines: updated counter and visual indication of in-progress (active) quests.
+* Tooltip: updated color theme for storyline quests (`green` - Warband completed quest, `dark green` - quest completed by current char + Warband, `yellow` - current available quest, `lighter yellow` - ongoing/in-progress quest, `white` - available not yet completed quest, `orange` - story/lore quest.
+* Tooltip: updated counter and visual indication of in-progress (active) storyline quests.
+* Tooltip: quest titles in the Loremaster tooltip can now optionally be hidden.
 * Tooltip: adjusted quest tooltip width - tooltips with shorter content will now be stretched to fit the game's default tooltip.
 
 ### Fixed

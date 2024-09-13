@@ -150,6 +150,7 @@ L.CAMPAIGN_TYPE_FORMAT_QUEST = "This quest is part of the %s campaign."
 -- L.CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This questline is part of the %s campaign."
 
 L.CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s"
+L.CHAPTER_NAME_FORMAT_ACCOUNT_COMPLETED = "|TInterface\\Buttons\\UI-CheckBox-Check-Disabled:16:16:0:-1|t %s"
 L.CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
 L.CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s"
 
@@ -1359,9 +1360,10 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
     questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
+
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
     if (filteredQuestInfos.numInProgress > 0) then
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(SPEC_ACTIVE..HEADER_COLON..L.TEXT_DELIMITER..tostring(filteredQuestInfos.numInProgress)))
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode(PARENS_TEMPLATE:format(MAP_LEGEND_INPROGRESS..HEADER_COLON..L.TEXT_DELIMITER..tostring(filteredQuestInfos.numInProgress)))
     end
     if (filteredQuestInfos.numRepeatable > 0) then
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format("+"..tostring(filteredQuestInfos.numRepeatable)))
@@ -1375,16 +1377,18 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = LocalQuestUtils:FormatQuestName(questInfo)
             if not StringIsEmpty(questInfo.questName) then
-                local completedByAnyone = LocalQuestUtils:IsQuestCompletedByAnyone(questInfo)
-                if completedByAnyone and isActiveQuest then
+                local wasEarnedByMe = questInfo.isAccountCompleted and questInfo.isFlaggedCompleted
+                if wasEarnedByMe then
+                    LibQTipUtil:AddColoredLine(tooltip, DIM_GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
+                elseif questInfo.isAccountCompleted and isActiveQuest then
                     LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
-                elseif completedByAnyone and questInfo.isOnQuest then
-                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
-                elseif completedByAnyone then
-                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
+                elseif questInfo.isAccountCompleted and questInfo.isOnQuest then
+                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_ACCOUNT_COMPLETED:format(questTitle))
+                elseif questInfo.isAccountCompleted then
+                    LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_ACCOUNT_COMPLETED:format(questTitle))
                 elseif isActiveQuest then
                     LibQTipUtil:AddNormalLine(tooltip, L.CHAPTER_NAME_FORMAT_CURRENT:format(questTitle))
-                elseif DBUtil:IsQuestActiveLoreQuest(questInfo.questID) then
+                elseif DBUtil:IsQuestActiveLoreQuest(questInfo.questID) and questInfo.isOnQuest then
                     LibQTipUtil:AddColoredLine(tooltip, LIGHTYELLOW_FONT_COLOR, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
                 else
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(questTitle))
