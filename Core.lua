@@ -455,15 +455,27 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
 end
 
 function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
-    if pin.questInfo and (pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString) then
-        return true
-    end
     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
-        return questID == pin.questID
+        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID;
+
+        if (questID == pin.questID) then
+            return true;
+        end
+
+        local storyQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID);
+        local pinQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(pin.questID);
+        if (storyQuestLineInfo and pinQuestLineInfo and storyQuestLineInfo.questLineID == pinQuestLineInfo.questLineID) then
+            return true;
+        end
     end
 
-    return false
+    if pin.questInfo and pin.questInfo.hasQuestLineInfo then
+        if (pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString) then
+            return true;
+        end
+    end
+
+    return false;
 end
 
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_AchievementUI/Blizzard_AchievementUI.lua> (see "AchievementShield_OnEnter")
@@ -559,14 +571,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             criteriaName = criteriaInfo.criteriaString
             if debug.showChapterIDsInTooltip then
                 if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
-                    criteriaName = string.format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
+                    criteriaName = string.format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaName)
                 else
-                    criteriaName = string.format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                    criteriaName = string.format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaName)
                 end
             end
-            -- criteriaName = criteriaName..(not L:StringIsEmpty(criteriaInfo.charName) and L.TEXT_DELIMITER..BLUE(L.PARENS_TEMPLATE:format(criteriaInfo.charName)) or " (?)")
-            local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
-            -- criteriaName = isActive and criteriaName.."|A:common-icon-backarrow:0:0:2:-1|a" or criteriaName
+            local isActive = not pin.isOnContinent and self:IsZoneStoryActive(pin, criteriaInfo)
             if (criteriaInfo.completed and isActive) then
                 LibQTipUtil:AddColoredLine(tooltip, GREEN_FONT_COLOR, L.CHAPTER_NAME_FORMAT_CURRENT:format(criteriaName))
             elseif criteriaInfo.completed then
@@ -647,6 +657,7 @@ QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] = "QuestRepeatableTurnin"
 QUEST_TAG_ATLAS["DAILY_CAMPAIGN"] = "Quest-DailyCampaign-Available"
 QUEST_TAG_ATLAS["IMPORTANT"] = "questlog-questtypeicon-important"  -- "quest-important-available"
 QUEST_TAG_ATLAS[LocalUtils.QuestTag.Important] = "questlog-questtypeicon-important"
+QUEST_TAG_ATLAS[Enum.QuestTag.Legendary] = "questlog-questtypeicon-legendary"
 QUEST_TAG_ATLAS["TRIVIAL_CAMPAIGN"] = "Quest-Campaign-Available-Trivial"
 QUEST_TAG_ATLAS["TRIVIAL_IMPORTANT"] = "quest-important-available-trivial"
 QUEST_TAG_ATLAS["TRIVIAL_LEGENDARY"] = "quest-legendary-available-trivial"
@@ -2199,8 +2210,6 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
 
 -- Convert an atlas file to a texture table with coordinates suitable for
 -- HandyNotes map icons.
----@param atlasData string|table
----@return table|nil textureInfo
 --
 -- REF.: <https://github.com/Nevcairiel/HandyNotes/blob/a8e8163c1ebc6f41dd42690aa43dc6de13211c87/HandyNotes.lua#L379C35-L379C35>
 --
@@ -2208,7 +2217,7 @@ local function GetTextureInfoFromAtlas(atlasData)
     local atlasName = (type(atlasData) == "table") and atlasData[1] or atlasData
     local atlasInfo = C_Texture.GetAtlasInfo(atlasName)
     if atlasInfo then
-        local iconpath = {
+        local iconPath = {
             tCoordLeft = atlasInfo.leftTexCoord,
             tCoordRight = atlasInfo.rightTexCoord,
             tCoordTop = atlasInfo.topTexCoord,
@@ -2216,13 +2225,13 @@ local function GetTextureInfoFromAtlas(atlasData)
             icon = atlasInfo.file,
         }
         if (type(atlasData) == "table") then
-            iconpath.r = atlasData[2]
-            iconpath.g = atlasData[3]
-            iconpath.b = atlasData[4]
-            iconpath.a = atlasData[5] or 1
+            iconPath.r = atlasData[2]
+            iconPath.g = atlasData[3]
+            iconPath.b = atlasData[4]
+            iconPath.a = atlasData[5] or 1
         end
 
-        return iconpath
+        return iconPath
     end
 end
 
