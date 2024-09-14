@@ -378,8 +378,18 @@ function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
 end
 
 function ZoneStoryUtils:HasZoneStoryInfo(mapID)
-    return self.storiesOnMap[mapID] ~= nil
+    if self.storiesOnMap[mapID] then
+        return true;
+    end
+
+    return C_QuestLog.GetZoneStoryInfo(mapID) ~= nil;
 end
+
+-- function ZoneStoryUtils:HasParentZoneStoryInfo(mapID)
+--     local mapInfo = LocalMapUtils:GetMapInfo(mapID);
+
+--     return self:HasZoneStoryInfo(mapInfo.parentMapID);
+-- end
 
 -- local function WasEarnedByMe(achievementInfo)
 --     -- local isAccountWideAchievement = LoreUtil:IsAccountWideAchievement(achievementInfo.flags)
