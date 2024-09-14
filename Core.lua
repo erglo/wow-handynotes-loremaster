@@ -1616,15 +1616,18 @@ local function ShouldShowReadyForTurnInMessage(pin)
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
+    if not ns.settings.showZoneStory then return; end
+    if not ZoneStoryUtils:HasZoneStoryInfo(pin.mapID) then return; end
+
     local achievementID, achievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
-    local showInCompletedZones = not (ns.settings.hideZoneStoryInCompletedZones and LocalAchievementUtil.IsAchievementCompleted(achievementID))
-    if not showInCompletedZones then
-        return false
+    if (ns.settings.hideZoneStoryInCompletedZones and LocalAchievementUtil.IsAchievementCompleted(achievementID)) then
+        return;
     end
-    if ( not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementID) )  then
-        return false
+    if (not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementID)) then
+        return;
     end
-    return ns.settings.showZoneStory and pin.questInfo.hasZoneStoryInfo
+
+    return true;
 end
 
 function LocalUtils:ShouldShowQuestLineDetails(pin)
