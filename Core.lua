@@ -2050,13 +2050,13 @@ local function PrintQuestAddedMessage(questInfo)
     if questInfo.isCampaign then
         campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
-        local activeMapInfo = LocalUtils:GetActiveMapInfo()
         if campaignInfo then
+            local activeMapInfo = LocalUtils:GetActiveMapInfo()
             local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questInfo.questID, activeMapInfo.mapID)
             if (questLineInfo and ns.settings.showCampaignQuestProgressMessage) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("This is quest %s of the %s campaign from the chapter %s.",
-                           L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
+                           L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress, filteredQuestInfos.numTotal),
                            CAMPAIGN_HEADER_COLOR:WrapTextInColorCode(campaignInfo.name),
                            QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
@@ -2073,7 +2073,7 @@ local function PrintQuestAddedMessage(questInfo)
             if (ns.settings.showQuestlineQuestProgressMessage and not questInfo.isCampaign) then
                 local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
                 ns:cprintf("This is quest %s from the %s questline.",
-                            L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress + 1, filteredQuestInfos.numTotal),
+                            L.GENERIC_FRACTION_STRING:format(filteredQuestInfos.numCompleted + filteredQuestInfos.numInProgress, filteredQuestInfos.numTotal),
                             QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
                 )
             end
@@ -2091,7 +2091,6 @@ end
 -- Save the questline of an active quest, if available.
 function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     local questID = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest accepted:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
@@ -2732,6 +2731,17 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 --         print(k, "-->", v)
 --     end
 -- end
+
+
+-- function TestAdd(questID)
+--     local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
+--     print("Quest accepted:", questID, questInfo.questName)
+--     print("> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
+--     print("> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
+--     local questLineID, campaignID = PrintQuestAddedMessage(questInfo)
+--     print("--> QL, CP:", questLineID, campaignID)
+-- end
+-- -- TestAdd(79336)
 
 --------------------------------------------------------------------------------
 --@end-do-not-package@
