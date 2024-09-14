@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
+* Notifications: when earning an achievement criteria the counter was off by 1 since the achievement cache wasn't reset.
 * Notifications: due to faulty campaign identification, when accepting a quest the notification message did not appear.
 * Notifications: quest counter for campaign and questlines didn't show correct numbers due to Warband completed quests.
 * Notifications: when completing a quest from a campaign the notification message showed chapter and campaign name in the wrong order.

@@ -2102,16 +2102,11 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
         local questLineID, campaignID = PrintQuestAddedMessage(questInfo)
         DBUtil:AddActiveLoreQuest(questID, questLineID, campaignID)
     end
-    -- if questInfo.isStory then                                                --> TODO - Add this
-    --     local nameTemplate = "A:questlog-questtypeicon-story:16:16:0:-1|a %s"
-    --     ns:cprint(nameTemplate:format(ORANGE("This quest is part of a story.")))
-    -- end
 end
 
 -- Save daily and weekly quests as completed, if they are lore relevant.
 function LoremasterPlugin:QUEST_TURNED_IN(eventName, ...)
     local questID, xpReward, moneyReward = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest turned in:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
@@ -2132,7 +2127,6 @@ end
 -- Note: This event fires before and sometimes after you turn-in a quest or when you abort a quest.
 function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
     local questID, wasReplayQuest = ...
-    -- local questInfo = LocalQuestUtils:GetQuestInfo(questID, "event")
     local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     debug:print(LocalQuestFilter, "Quest removed:", questID, questInfo.questName)
     debug:print(LocalQuestFilter, "> wasReplayQuest:", wasReplayQuest)
@@ -2164,24 +2158,24 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
     if not ns.settings.showCriteriaEarnedMessage then return end
 
     local achievementID, description = ...
-    local playerMapID = LocalMapUtils:GetBestMapForPlayer()
-    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+    local activeMapInfo = LocalUtils:GetActiveMapInfo()
+
+    ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
+
+    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(activeMapInfo.mapID)
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
             local criteriaAmount = L.PARENS_TEMPLATE:format(L.GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..L.HEADER_COLON, achievementLink, criteriaAmount)
-            ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
-            -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
-            -- if (numLeft > 0) then
-            --     ns:cprintf(YELLOW("> %d more to go to complete this achievement."), numLeft)
-            -- end
+            -- ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
         end
     end
 end
 -- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
 -- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 1195, "Schattenmond") end
+-- Test_Criteria = function() LoremasterPlugin:CRITERIA_EARNED(nil, 20595, "Insel von Dorn") end
 
 LoremasterPlugin:RegisterEvent("QUEST_ACCEPTED")
 LoremasterPlugin:RegisterEvent("QUEST_TURNED_IN")
