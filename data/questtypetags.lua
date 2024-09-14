@@ -36,19 +36,23 @@
 
 local AddonID, ns = ...
 
-local LocalQuestTagUtil = {}
-ns.QuestTagUtil = LocalQuestTagUtil
+local L = ns.L;  --> <locales\L10nUtils.lua>
 
 local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
 local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
 
------ Constants ----------------------------------------------------------------
+local QuestNameFactionGroupTemplate = {
+    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
+    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
+    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
+};
 
---> TODO - L10n, outsource table `L`
-local L = {}
-L.CATEGORY_NAME_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
-L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string.gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
-L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
+--------------------------------------------------------------------------------
+
+local LocalQuestTagUtil = {}
+ns.QuestTagUtil = LocalQuestTagUtil
+
+----- Constants -----
 
 -- Upvalues + Wrapper
 local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS
@@ -183,7 +187,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         if (questInfo.questTagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
             local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE;
             local factionTagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE";
-            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString);
+            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(factionString);
             info["atlasMarkup"] = CreateAtlasMarkup(self.QUEST_TAG_ATLAS[factionTagID], width, height);
             info["tagName"] = FormatTagName(tagName, questInfo);
         end
@@ -199,7 +203,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.DAILY;
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
-            ["tagName"] = DAILY,
+            ["tagName"] = L.DAILY,
             ["tagID"] = "D",
             ["ranking"] = 3,
         });
@@ -208,7 +212,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or self.QUEST_TAG_ATLAS.WEEKLY
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
-            ["tagName"] = WEEKLY,
+            ["tagName"] = L.WEEKLY,
             ["tagID"] = "W",
             ["ranking"] = 3,
         });
@@ -255,7 +259,7 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         local atlas = questInfo.isReadyForTurnIn and "Quest-Campaign-TurnIn" or "Quest-Campaign-Available"
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),
-            ["tagName"] = FormatTagName(QUEST_CLASSIFICATION_CAMPAIGN, questInfo),
+            ["tagName"] = FormatTagName(L.CATEGORY_NAME_CAMPAIGN, questInfo),
             ["tagID"] = "C",
             ["ranking"] = 3,
         });
@@ -307,10 +311,9 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
         });
     end
     if questInfo.wasEarnedByMe then     --> Test
-        local TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER;
         tinsert(tagInfoList, {
             ["atlasMarkup"] = CreateAtlasMarkup("UI-Achievement-Shield-2", width, height / 1.1272),
-            ["tagName"] = QUEST_COMPLETE..HEADER_COLON..TEXT_DELIMITER..UnitName("player"),
+            ["tagName"] = QUEST_COMPLETE..L.HEADER_COLON..L.TEXT_DELIMITER..UnitName("player"),
             ["tagID"] = -1,
             ["ranking"] = 4,
         });
@@ -355,12 +358,12 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
     if questInfo.isDaily then
         local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or QUEST_TAG_ATLAS.DAILY
         local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
-        tagData[DAILY] = atlasMarkup
+        tagData[L.DAILY] = atlasMarkup
     end
     if questInfo.isWeekly then
         local atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or QUEST_TAG_ATLAS.WEEKLY
         local atlasMarkup = CreateAtlasMarkup(atlas, width, height)
-        tagData[WEEKLY] = atlasMarkup
+        tagData[L.WEEKLY] = atlasMarkup
     end
     if questInfo.isFailed then
         local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS.FAILED, width, height)
@@ -374,7 +377,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
     if (questInfo.questClassification and not tContains(classificationIgnoreTable, questInfo.questClassification)) then  --> Enum.QuestClassification
         local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
         -- Note: Blizzard seems to currently prioritize the classification details over tag infos.
-        local fallbackAtlas, fallbackText = "common-icon-forwardarrow-disable", UNKNOWN
+        local fallbackAtlas, fallbackText = "common-icon-forwardarrow-disable", L.UNKNOWN
         local atlasMarkup = CreateAtlasMarkup(classificationAtlas or fallbackAtlas, width, height)
         tagData[classificationText or fallbackText] = atlasMarkup
     end
@@ -400,7 +403,7 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
         if (questInfo.questTagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
             local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
             local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
+            local tagName = questInfo.questTagInfo.tagName..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(factionString)
             local atlasMarkup = CreateAtlasMarkup(QUEST_TAG_ATLAS[tagID], width, height)
             tagData[tagName] = atlasMarkup
         end
@@ -455,10 +458,10 @@ function LocalQuestTagUtil:GetAllQuestTags(questID, iconWidth, iconHeight)
     --     local atlas, tagName;
     --     if questInfo.isCampaign then
     --         atlas = questInfo.isReadyForTurnIn and "Quest-DailyCampaign-TurnIn" or "Quest-DailyCampaign-Available"
-    --         tagName = MAP_LEGEND_CAMPAIGN..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(DAILY)
+    --         tagName = MAP_LEGEND_CAMPAIGN..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(L.DAILY)
     --     else
     --         atlas = questInfo.isReadyForTurnIn and "QuestRepeatableTurnin" or "QuestDaily"
-    --         tagName = DAILY  -- ERR_QUEST_OBJECTIVE_COMPLETE_S:format(DAILY)
+    --         tagName = L.DAILY  -- ERR_QUEST_OBJECTIVE_COMPLETE_S:format(L.DAILY)
     --     end
     --     if atlas then
     --         local atlasMarkup = CreateAtlasMarkup(atlas, width, height)

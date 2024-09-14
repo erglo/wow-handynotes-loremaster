@@ -23,13 +23,14 @@
 ## OptionalDeps: Ace3
 ## SavedVariables: LoremasterDB
 
-# Load embedded (external) libraries
+# Load and embed remote libraries
 embeds.xml
 utils/achievements.lua
 utils/libqtip.lua
 utils/worldmap.lua
 
-# Load data handler
+# Load and include local data handler
+locales/includes.xml
 data/includes.xml
 
 # Load main files

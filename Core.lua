@@ -55,6 +55,8 @@ local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
+local L = ns.L;  --> <locales\L10nUtils.lua>
+
 local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
 
@@ -64,8 +66,8 @@ local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
 local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
 local LocalQuestTagUtil = ns.QuestTagUtil  --> <data\questtypetags.lua>
 
-local format, tostring, strlen, strtrim, string_gsub = string.format, tostring, strlen, strtrim, string.gsub
-local tContains, tInsert, tAppendAll = tContains, table.insert, tAppendAll
+local tostring, strtrim = tostring, strtrim
+local tContains, tInsert = tContains, table.insert
 
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
 local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
@@ -97,76 +99,7 @@ local ORANGE = function(txt) return ORANGE_FONT_COLOR:WrapTextInColorCode(txt) e
 local BLUE = function(txt) return BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(txt) end
 local HIGHLIGHT = function(txt) return HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(txt) end
 
-local function StringIsEmpty(str)
-	return str == nil or strlen(str) == 0
-end
-
--- local L = LibStub('AceLocale-3.0'):GetLocale(ADDON_NAME)
--- local L = LibStub("AceLocale-3.0"):GetLocale("HandyNotes", true)
-local L = {}
--- WoW global strings
-L.OPTION_STATUS_DISABLED = VIDEO_OPTIONS_DISABLED
-L.OPTION_STATUS_ENABLED = VIDEO_OPTIONS_ENABLED
-L.OPTION_STATUS_FORMAT = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
-L.OPTION_STATUS_FORMAT_READY = LFG_READY_CHECK_PLAYER_IS_READY  -- "%s is ready."
-
-L.CONGRATULATIONS = SPLASH_BOOST_HEADER
-
-L.TEXT_DELIMITER = ITEM_NAME_DESCRIPTION_DELIMITER
-L.TEXT_DELIMITER_2X = L.TEXT_DELIMITER..L.TEXT_DELIMITER
-L.TEXT_OPTIONAL = string_gsub(AUCTION_HOUSE_BUYOUT_OPTIONAL_LABEL, "|cff777777", NORMAL_FONT_COLOR_CODE)
-L.GENERIC_FRACTION_STRING = GENERIC_FRACTION_STRING  --> "%d/%d"
-
-L.ACHIEVEMENT_NOT_COMPLETED_BY  = string_gsub(ACHIEVEMENT_NOT_COMPLETED_BY, "HIGHLIGHT_FONT_COLOR", "BRIGHTBLUE_FONT_COLOR")
-
-L.CATEGORY_NAME_ZONE_STORY = ZONE  --> WoW global string
-L.CATEGORY_NAME_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
-L.CATEGORY_NAME_CAMPAIGN = QUEST_CLASSIFICATION_CAMPAIGN
-
-L.QUEST_NAME_FORMAT_ALLIANCE = "%s |A:questlog-questtypeicon-alliance:16:16:0:-1|a"
-L.QUEST_NAME_FORMAT_HORDE = "%s |A:questlog-questtypeicon-horde:16:16:0:-1|a"
-L.QUEST_NAME_FORMAT_NEUTRAL = "%s"
-L.QUEST_TYPE_NAME_FORMAT_TRIVIAL = string_gsub(TRIVIAL_QUEST_DISPLAY, "|cff000000", '')
--- MINIMAP_TRACKING_TRIVIAL_QUESTS = "Niedrigstufige Quests";                   --> TODO - Add hint to activate trivial quest tracking
-
-L.ZONE_NAME_FORMAT = "|T137176:16:16:0:-1|t %s"  -- 136366
-L.ZONE_ACHIEVEMENT_NAME_FORMAT_COMPLETE = "%s |A:achievementcompare-YellowCheckmark:0:0:1:0|a"
-L.ZONE_ACHIEVEMENT_NAME_FORMAT_INCOMPLETE = "%s"
-L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_COMPLETE = "|T%d:16:16:0:0|t %s  |A:achievementcompare-YellowCheckmark:0:0|a"
-L.ZONE_ACHIEVEMENT_ICON_NAME_FORMAT_INCOMPLETE = "|T%d:16:16:0:0|t %s"
-L.ZONE_NAME_ACCOUNT_ACHIEVEMENT_FORMAT = "%s |A:questlog-questtypeicon-account:0:0:1:0|a"
-
-L.HINT_HOLD_KEY_FORMAT = "<Hold %s to see details>"
-L.HINT_HOLD_KEY_FORMAT_HOVER = "<Hold %s and hover icon to see details>"
-L.HINT_VIEW_ACHIEVEMENT_CRITERIA = "<Shift-hover to view chapters>"
-L.HINT_VIEW_ACHIEVEMENT = "<Shift-click to view achievement>"  -- KEY_BUTTON1, KEY_BUTTON2 
-L.HINT_SET_WAYPOINT = "<Alt-click to create waypoint>"
-
-L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s"
-L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s"
-L.QUESTLINE_PROGRESS_FORMAT = QUESTS_COLON..L.TEXT_DELIMITER..HIGHLIGHT(L.GENERIC_FRACTION_STRING)
-L.QUESTLINE_WARBAND_PROGRESS_FORMAT = L.GENERIC_FRACTION_STRING.."|A:questlog-questtypeicon-account:14:14:1:0|a"
-L.QUESTLINE_NUM_INPROGRESS_FORMAT = LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode("%s").."|A:SideInProgressquesticon:14:14:1:0|a"
-L.QUESTLINE_NUM_RECURRING_FORMAT = TUTORIAL_BLUE_FONT_COLOR:WrapTextInColorCode("+%d").."|A:Recurringavailablequesticon:12:12:1:0|a"
-
-L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a"
-L.CAMPAIGN_NAME_FORMAT_INCOMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s"
-L.CAMPAIGN_PROGRESS_FORMAT = "|"..string_gsub(strtrim(CAMPAIGN_PROGRESS_CHAPTERS_TOOLTIP, "|n"), "[|]n[|]c", HEADER_COLON.." |c", 1)
-L.CAMPAIGN_TYPE_FORMAT_QUEST = "This quest is part of the %s campaign."
--- L.CAMPAIGN_TYPE_FORMAT_QUESTLINE = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a This questline is part of the %s campaign."
-
-L.CHAPTER_NAME_FORMAT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Check:16:16:0:-1|t %s"
-L.CHAPTER_NAME_FORMAT_ACCOUNT_COMPLETED = "|TInterface\\Buttons\\UI-CheckBox-Check-Disabled:16:16:0:-1|t %s"
-L.CHAPTER_NAME_FORMAT_NOT_COMPLETED = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
-L.CHAPTER_NAME_FORMAT_CURRENT = "|A:common-icon-forwardarrow:16:16:2:-1|a %s"
-
--- Custom strings
-L.SLASHCMD_USAGE = "Usage:"
-
 -- local LibDD = LibStub:GetLibrary('LibUIDropDownMenu-4.0')
-
-local CHECKMARK_ICON_STRING = "|A:achievementcompare-YellowCheckmark:0:0|a"
-local UNKNOWN = UNKNOWN
 
 local nodes = {}
 ns.nodes = nodes
@@ -237,7 +170,7 @@ function debug:CreateDebugQuestInfoTooltip(pin)
     local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID, pin.questInfo)
     if (#tagInfoList > 0) then
         for _, tagInfo in ipairs(tagInfoList) do
-            local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
+            local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or L.UNKNOWN)
             lineIndex = debug.tooltip:AddLine(text, tostring(tagInfo.tagID))
             -- if tagInfo.alpha then
             if pin.questInfo.isTrivial then     --> TODO - Add to settings
@@ -336,8 +269,9 @@ function LoremasterPlugin:ProcessSlashCommands(msg)
 
     if (input == "help") then
         -- Print usage message to chat
-        self:Print(L.SLASHCMD_USAGE, format(" '/%s <%s>'", self.slash_commands[1], YELLOW("arg")), "|",
-        format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg")))
+        self:Print(L.SLASHCMD_USAGE, string.format(" '/%s <%s>'", self.slash_commands[1], YELLOW("arg")), "|",
+                   string.format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg"))
+        )
 
         -- local arg_list = {
         --     version = "Display addon version",
@@ -386,13 +320,13 @@ function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
 
     elseif (ns.settings.showPluginName or ns.settings.showCategoryNames) then
         local pluginName = ns.settings.showPluginName and LoremasterPlugin.name or ''
-        local delimiter = (ns.settings.showPluginName and ns.settings.showCategoryNames) and "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t" or ''
+        local delimiter = (ns.settings.showPluginName and ns.settings.showCategoryNames) and L.DASH_ICON_STRING or ''
         local categoryName = ns.settings.showCategoryNames and name or ''
         lineText = pluginName .. delimiter .. categoryName
     end
-    if ( tooltip == ContentTooltip and StringIsEmpty(lineText) ) then
+    if ( tooltip == ContentTooltip and L:StringIsEmpty(lineText) ) then
         -- Need an empty line in this case
-        lineText = " "
+        lineText = L.TEXT_DELIMITER
     end
     lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
     tooltip:SetCell(lineIndex, 1, lineText, nil, "RIGHT")  -- replaces line above with the new adjustments
@@ -539,9 +473,9 @@ local function CreateEarnedByString(achievementInfo)
     if (achievementInfo.isAccountWide) then
         msg = achievementInfo.completed and ACCOUNT_WIDE_ACHIEVEMENT_COMPLETED or ACCOUNT_WIDE_ACHIEVEMENT
     end
-    if not StringIsEmpty(achievementInfo.earnedBy) then
+    if not L:StringIsEmpty(achievementInfo.earnedBy) then
         local charName = achievementInfo.wasEarnedByMe and achievementInfo.earnedBy or UnitName("player")
-        msg = not StringIsEmpty(msg) and msg.."|n" or msg
+        msg = not L:StringIsEmpty(msg) and msg..L.NEW_LINE or msg
         msg = msg..(achievementInfo.wasEarnedByMe and ACHIEVEMENT_COMPLETED_BY or L.ACHIEVEMENT_NOT_COMPLETED_BY)
         return msg:format(HIGHLIGHT(charName))
     elseif not achievementInfo.isAccountWide then
@@ -552,7 +486,7 @@ local function CreateEarnedByString(achievementInfo)
 end
 
 function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
-    debug:print(self, format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
+    debug:print(self, string.format(YELLOW("Scanning zone (%s) for stories..."), pin.mapID or "n/a"))
 
     local storyAchievementID = pin.achievementInfo and pin.achievementInfo.achievementID or pin.achievementID
     local is2nd = pin.achievementID == pin.achievementID2
@@ -570,9 +504,9 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin))
         LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_ZONE_STORY, categoryNameOnly)
 
-        debug:AddDebugLineToLibQTooltip(tooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+        debug:AddDebugLineToLibQTooltip(tooltip,  {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     end
-    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> A:%d \"%s\"", storyAchievementID, achievementInfo.name)})
     debug:AddDebugLineToLibQTooltip(tooltip, {text="account: "..tostring(achievementInfo.isAccountWide)..", completed: "..tostring(achievementInfo.completed)..", earnedBy: "..tostring(achievementInfo.wasEarnedByMe).."-"..tostring(achievementInfo.earnedBy)})
 
     -- Zone name
@@ -625,12 +559,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
             criteriaName = criteriaInfo.criteriaString
             if debug.showChapterIDsInTooltip then
                 if (not criteriaInfo.assetID) or (criteriaInfo.assetID == 0) then
-                    criteriaName = format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
+                    criteriaName = string.format("|cffcc1919%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.criteriaID, criteriaInfo.criteriaString)
                 else
-                    criteriaName = format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
+                    criteriaName = string.format("|cff808080%03d %05d|r %s", criteriaInfo.criteriaType, criteriaInfo.assetID, criteriaInfo.criteriaString)
                 end
             end
-            -- criteriaName = criteriaName..(not StringIsEmpty(criteriaInfo.charName) and L.TEXT_DELIMITER..BLUE(PARENS_TEMPLATE:format(criteriaInfo.charName)) or " (?)")
+            -- criteriaName = criteriaName..(not L:StringIsEmpty(criteriaInfo.charName) and L.TEXT_DELIMITER..BLUE(L.PARENS_TEMPLATE:format(criteriaInfo.charName)) or " (?)")
             local isActive = self:IsZoneStoryActive(pin, criteriaInfo)
             -- criteriaName = isActive and criteriaName.."|A:common-icon-backarrow:0:0:2:-1|a" or criteriaName
             if (criteriaInfo.completed and isActive) then
@@ -663,7 +597,7 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
         LibQTipUtil:AddInstructionLine(tooltip, textTemplate:format(GREEN(SHIFT_KEY)))
     end
 
-    debug:print(self, format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
+    debug:print(self, string.format("Found story with %d |4chapter:chapters;.", achievementInfo.numCriteria))
 
     return true
 end
@@ -739,10 +673,10 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     local isReady = questInfo.isReadyForTurnIn
     local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
-    if not StringIsEmpty(questInfo.questName) then
+    if not L:StringIsEmpty(questInfo.questName) then
         if ( isReady and not (questInfo.isDaily or questInfo.isWeekly) ) then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["COMPLETED"]))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(QuestTagNames["COMPLETED"]))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS["COMPLETED"], 16, 16, -2)
                 questTitle = iconString..questTitle
@@ -750,7 +684,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isDaily then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(DAILY))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(L.DAILY))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"] or QUEST_TAG_ATLAS.DAILY, 16, 16, -2)
                 questTitle = iconString..questTitle
@@ -758,7 +692,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isWeekly then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(WEEKLY))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(L.WEEKLY))..L.TEXT_DELIMITER..questTitle
             else
                 local iconTurnIn = CreateAtlasMarkup(QUEST_TAG_ATLAS["COMPLETED_REPEATABLE"], 16, 16, -1)
                 local iconAvailable = CreateAtlasMarkup(QUEST_TAG_ATLAS.WEEKLY, 16, 16)
@@ -771,7 +705,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
                 questTitle = ORANGE(questTitle)
             end
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["STORY"]))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(QuestTagNames["STORY"]))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(QUEST_TAG_ATLAS["STORY"], 16, 16)
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
@@ -779,7 +713,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isAccountCompleted then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(ACCOUNT_COMPLETED_QUEST_LABEL))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(ACCOUNT_COMPLETED_QUEST_LABEL))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup("questlog-questtypeicon-account", 16, 16, 2)
                 -- questTitle = iconString..L.TEXT_DELIMITER..questTitle
@@ -788,10 +722,10 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if (questInfo.questType ~= 0) then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName))..L.TEXT_DELIMITER..questTitle
             elseif (QUEST_TAG_ATLAS[questInfo.questType] == nil) then
                 -- This quest type is neither part of Blizzard's tag atlas variable, nor have I added it, yet.
-                questTitle = BLUE(PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName or UNKNOWN))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(questInfo.questTagInfo.tagName or L.UNKNOWN))..L.TEXT_DELIMITER..questTitle
             elseif tContains(leftSidedTags, questInfo.questType) then
                 -- -- Threat Object icons can vary, eg. N'Zoth vs. one of the Shadowlands main factions.
                 -- iconString = questInfo.questTagInfo.isThreat and QuestUtil.GetThreatPOIIcon(questInfo.questTagInfo.questID) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, -2)
@@ -805,7 +739,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isLegendary then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(QuestTagNames["LEGENDARY"]))..L.TEXT_DELIMITER..questTitle
             else
                 iconString = CreateAtlasMarkup(isReady and QUEST_TAG_ATLAS["COMPLETED_LEGENDARY"] or QUEST_TAG_ATLAS[Enum.QuestTag.Legendary], 16, 16)
                 questTitle = iconString..L.TEXT_DELIMITER..questTitle
@@ -813,7 +747,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if questInfo.isOnQuest and not isReady then
             if ns.settings.showQuestTypeAsText then
-                questTitle = BLUE(PARENS_TEMPLATE:format(MAP_LEGEND_INPROGRESS))..L.TEXT_DELIMITER..questTitle
+                questTitle = BLUE(L.PARENS_TEMPLATE:format(MAP_LEGEND_INPROGRESS))..L.TEXT_DELIMITER..questTitle
             else
                 local atlas = LocalQuestTagUtil:GetInProgressQuestTypeAtlas(questInfo)
                 iconString = CreateAtlasMarkup(atlas, 14, 16, -2)
@@ -822,17 +756,17 @@ function LocalQuestUtils:FormatQuestName(questInfo)
         end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
-            questTitle = format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+            questTitle = string.format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
         end
     else
         -- debug:print("Empty:", questInfo.questID, tostring(questTitle), tostring(questInfo.questName))
         questTitle = RETRIEVING_DATA
         if debug.isActive then
-            questTitle = format("> questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
+            questTitle = string.format("> questFactionGroup: %s, questExpansionID: %d", tostring(questInfo.questFactionGroup), questInfo.questExpansionID)
         end
         if debug.showChapterIDsInTooltip then
             local colorCodeString = questInfo.questType == 0 and GRAY_FONT_COLOR_CODE or LIGHTBLUE_FONT_COLOR_CODE
-            questTitle = format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
+            questTitle = string.format(colorCodeString.."%03d %05d|r %s", questInfo.questType, questInfo.questID, questTitle)
         end
     end
 
@@ -840,7 +774,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
 end
 
 function LocalQuestUtils:FormatAchievementQuestName(questInfo, fallbackName)
-    if not StringIsEmpty(questInfo.questName) then
+    if not L:StringIsEmpty(questInfo.questName) then
         local iconString = CreateAtlasMarkup("SmallQuestBang", 16, 16, 1, -1)
         local questTitle = iconString..QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
         if (questInfo.questType ~= 0) then
@@ -888,7 +822,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, baseQuestInfo)
     local LineColor = NORMAL_FONT_COLOR
 
     for _, tagInfo in ipairs(tagInfoList) do
-        local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or UNKNOWN)
+        local text = string.format("%s %s", tagInfo.atlasMarkup or '', tagInfo.tagName or L.UNKNOWN)
         local lineIndex = LibQTipUtil:AddColoredLine(tooltip, LineColor, text)
         if (tooltip:GetWidth() < GameTooltip:GetWidth()) then
             -- Don't wrap tag lines which are longer than the GameTooltip, but stretch smaller ones to fit its width.
@@ -914,7 +848,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
         if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
             local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
             tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-            tagName = tagName..L.TEXT_DELIMITER..PARENS_TEMPLATE:format(factionString)
+            tagName = tagName..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(factionString)
         end
         if (tagInfo.worldQuestType ~= nil) then                                 --> TODO - Add to '<utils\libqtip.lua>'
             local atlas, width, height = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, tagInfo, questInfo.isActive)
@@ -937,7 +871,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
 
     -- Custom tags
     if questInfo.isDaily then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, "DAILY", nil, LineColor)
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, L.DAILY, "DAILY", nil, LineColor)
         -- if questInfo.isCampaign then
         --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
         --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
@@ -947,7 +881,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
         -- end
     end
     if questInfo.isWeekly then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, "WEEKLY", nil, LineColor)
+        LibQTipUtil:AddQuestTagTooltipLine(tooltip, L.WEEKLY, "WEEKLY", nil, LineColor)
         -- if questInfo.isCampaign then
         --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
         --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
@@ -1148,7 +1082,7 @@ end
 --
 function LocalQuestUtils:GetCreateQuestLink(questInfo)
     local questLink = GetQuestLink(questInfo.questID)
-    if not StringIsEmpty(questLink) then return questLink end
+    if not L:StringIsEmpty(questLink) then return questLink end
 
     -- Create manually; need at least questID, questLevel, questName
     local templateString = "|cff808080|Hquest:%d:%d|h[%s]|h|r"
@@ -1181,7 +1115,7 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
         questLineInfos = C_QuestLine.GetAvailableQuestLines(mapID)
         if TableIsEmpty(questLineInfos) then return end  --> still no infos
 
-        debug:print(self, format("> Found %d questline |4info:infos; for map %d", #questLineInfos, mapID))
+        debug:print(self, string.format("> Found %d questline |4info:infos; for map %d", #questLineInfos, mapID))
     end
 
     if not isProcessedZone then
@@ -1192,12 +1126,12 @@ function LocalQuestLineUtils:GetAvailableQuestLines(mapID, prepareCache)
             self:AddSingleQuestLineToCache(questLineInfo, mapID)
             --> TODO - Add quests meta infos ???
         end
-        debug:print(self, format(YELLOW("Cached or updated %d questline |4info:infos; for map %d"), #questLineInfos, mapID))
+        debug:print(self, string.format(YELLOW("Cached or updated %d questline |4info:infos; for map %d"), #questLineInfos, mapID))
     end
 
     if not prepareCache then
         -- local questLineInfos = self.questLineInfos[mapID]
-        debug:print(self, format("> Returning %d questline |4info:infos; for map %d", #questLineInfos, mapID))
+        debug:print(self, string.format("> Returning %d questline |4info:infos; for map %d", #questLineInfos, mapID))
         return questLineInfos
     end
 end
@@ -1211,7 +1145,7 @@ function LocalQuestLineUtils:GetCachedQuestLinesForMap(mapID)
         end
     end
     if TableHasAnyEntries(questLineInfos) then
-        debug:print(self, mapID, format("> Found %d QLs for map", #questLineInfos))
+        debug:print(self, mapID, string.format("> Found %d QLs for map", #questLineInfos))
         return questLineInfos
     end
     debug:print(self, mapID, "> No QLs in cache found.")
@@ -1223,7 +1157,7 @@ function LocalQuestLineUtils:AddSingleQuestLineToCache(questLineInfo, mapID)
             questLineInfo = questLineInfo,
             mapIDs = { mapID },
         }
-        debug:print(self, format("%d Added QL and map %d to cache", questLineInfo.questLineID, mapID))
+        debug:print(self, string.format("%d Added QL and map %d to cache", questLineInfo.questLineID, mapID))
         -- Also save QL in database or update mapIDs
         -- local quests = LocalQuestCache:GetQuestLineQuests(questLineInfo.questLineID)
         -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID, quests)
@@ -1231,25 +1165,25 @@ function LocalQuestLineUtils:AddSingleQuestLineToCache(questLineInfo, mapID)
     end
     if not tContains(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID) then
         tInsert(self.questLineInfos[questLineInfo.questLineID].mapIDs, mapID)
-        debug:print(self, format("%d Updated cached QL with map %d", questLineInfo.questLineID, mapID))
+        debug:print(self, string.format("%d Updated cached QL with map %d", questLineInfo.questLineID, mapID))
         -- Also update database mapIDs
         -- DBUtil:SaveSingleQuestLine(questLineInfo, mapID)
     end
 end
 
 function LocalQuestLineUtils:AddQuestLineQuestToMap(mapID, questLineID, questID)
-    debug:print(self, format("%d Adding quest %d to map %d", questLineID, questID, mapID))
+    debug:print(self, string.format("%d Adding quest %d to map %d", questLineID, questID, mapID))
     if not self.questLineQuestsOnMap[questID] then
         self.questLineQuestsOnMap[questID] = {
             questLineID = questLineID,
             mapIDs = { mapID },
         }
-        debug:print(self, format("%d Added QL-quest %d to map %d", questLineID, questID, mapID))
+        debug:print(self, string.format("%d Added QL-quest %d to map %d", questLineID, questID, mapID))
         return
     end
     if not tContains(self.questLineQuestsOnMap[questID].mapIDs, mapID) then
         tInsert(self.questLineQuestsOnMap[questID].mapIDs, mapID)
-        debug:print(self, format("%d Updated QL-quest %d with map %d", questLineID, questID, mapID))
+        debug:print(self, string.format("%d Updated QL-quest %d with map %d", questLineID, questID, mapID))
     end
 end
 
@@ -1332,7 +1266,7 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
     debug:print(self, "Searching QL for pin", pin.questID, pin.mapID)
     local questLineInfo = self:GetCachedQuestLineInfo(pin.questID, pin.mapID)
     if questLineInfo then
-        debug:print(self, format("%d Found QL %d", pin.questID, questLineInfo.questLineID))
+        debug:print(self, string.format("%d Found QL %d", pin.questID, questLineInfo.questLineID))
         return questLineInfo
     end
     debug:print(self, RED("Nothing found for pin"), pin.questID, pin.mapID)
@@ -1365,12 +1299,12 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
     LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_QUESTLINE, categoryNameOnly)
 
-    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
-    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
 
     -- Questline header name
     local questLineNameTemplate = pin.questInfo.isCampaign and L.QUESTLINE_CHAPTER_NAME_FORMAT or L.QUESTLINE_NAME_FORMAT
-    questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..CHECKMARK_ICON_STRING or questLineNameTemplate
+    questLineNameTemplate = filteredQuestInfos.isComplete and questLineNameTemplate.."  "..L.CHECKMARK_ICON_STRING or questLineNameTemplate
     LibQTipUtil:SetColoredTitle(tooltip, QUESTLINE_HEADER_COLOR, questLineNameTemplate:format(questLineInfo.questLineName))
 
     -- Questline quests progress
@@ -1395,7 +1329,7 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
         for i, questInfo in ipairs(filteredQuestInfos.quests) do
             local isActiveQuest = (questInfo.questID == pin.questInfo.questID)  -- or questInfo.isComplete
             local questTitle = LocalQuestUtils:FormatQuestName(questInfo)
-            if not StringIsEmpty(questInfo.questName) then
+            if not L:StringIsEmpty(questInfo.questName) then
                 local wasEarnedByMe = questInfo.isAccountCompleted and questInfo.isFlaggedCompleted
                 if wasEarnedByMe then
                     LibQTipUtil:AddColoredLine(tooltip, FACTION_GREEN_COLOR, L.CHAPTER_NAME_FORMAT_COMPLETED:format(questTitle))
@@ -1484,8 +1418,8 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
     local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or LocalUtils:ShouldShowZoneStoryDetails(pin) or LocalUtils:ShouldShowQuestLineDetails(pin))
     LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_CAMPAIGN, categoryNameOnly)
 
-    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
-    debug:AddDebugLineToLibQTooltip(tooltip, {text=format("> C:%d, isWarCampaign: %d, currentChapterID: %d", campaignID, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+    debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> C:%d, isWarCampaign: %d, currentChapterID: %d", campaignID, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
 
     -- Campaign name + progress
     local campaignNameTemplate = campaignInfo.isComplete and L.CAMPAIGN_NAME_FORMAT_COMPLETE or L.CAMPAIGN_NAME_FORMAT_INCOMPLETE
@@ -1498,7 +1432,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
             local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(chapterID)
             local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
             local currentQuestlineID = pin.questInfo.hasQuestLineInfo and pin.questInfo.currentQuestLineID or campaignInfo.currentChapterID
-            if debug.showChapterIDsInTooltip then chapterName = format("|cff808080%d|r %s", chapterID, chapterName) end
+            if debug.showChapterIDsInTooltip then chapterName = string.format("|cff808080%d|r %s", chapterID, chapterName) end
             if chapterInfo then
                 local chapterIsComplete = C_QuestLine.IsComplete(chapterID)
                 local isActive = (chapterID == campaignInfo.currentChapterID) or (chapterID == currentQuestlineID)
@@ -1511,11 +1445,11 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
                 else
                     LibQTipUtil:AddHighlightLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterName))
                 end
-                if ns.settings.showCampaignChapterDescription and not StringIsEmpty(chapterInfo.description) then
+                if ns.settings.showCampaignChapterDescription and not L:StringIsEmpty(chapterInfo.description) then
                     local lineTextTemplate = "|TInterface\\GossipFrame\\GossipGossipIcon:16:16:0:0|t %s"
                     LibQTipUtil:AddDescriptionLine(tooltip, lineTextTemplate:format(chapterInfo.description))
                 end
-                if not ns.settings.showCampaignChapterDescription and debug.isActive and not StringIsEmpty(chapterInfo.description) then
+                if not ns.settings.showCampaignChapterDescription and debug.isActive and not L:StringIsEmpty(chapterInfo.description) then
                     LibQTipUtil:AddDescriptionLine(tooltip, L.CHAPTER_NAME_FORMAT_NOT_COMPLETED:format(chapterInfo.description))
                 end
             end
@@ -1526,7 +1460,7 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
     end
 
     -- Campaign description
-    if (ns.settings.showCampaignDescription or debug.isActive) and not StringIsEmpty(campaignInfo.description) then
+    if (ns.settings.showCampaignDescription or debug.isActive) and not L:StringIsEmpty(campaignInfo.description) then
         LibQTipUtil:AddBlankLineToTooltip(tooltip)
         LibQTipUtil:AddNormalLine(tooltip, QUEST_DESCRIPTION)
         LibQTipUtil:AddDescriptionLine(tooltip, campaignInfo.description)
@@ -1787,7 +1721,7 @@ end
 
 local function AddTooltipContent(contentTooltip, pin)
 
-    debug:AddDebugLineToLibQTooltip(contentTooltip,  {text=format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
+    debug:AddDebugLineToLibQTooltip(contentTooltip,  {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
 
     -- Add quest title + adjust tooltip width to the GameTooltip
     if ns.settings.showQuestTitle then
@@ -1807,7 +1741,7 @@ local function AddTooltipContent(contentTooltip, pin)
         if not ns.settings.showPluginName then
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
-        LibQTipUtil:AddInstructionLine(contentTooltip, QUEST_WATCH_QUEST_READY)
+        LibQTipUtil:AddInstructionLine(contentTooltip, L.QUEST_WATCH_QUEST_READY)
     end
 
     -- Quest type tags
@@ -2076,7 +2010,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
                        QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
-                ns:cprint(GREEN(L.CONGRATULATIONS), format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), activeMapInfo.name))
+                ns:cprint(GREEN(L.CONGRATULATIONS), string.format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), activeMapInfo.name))
             end
         end
     end
@@ -2197,7 +2131,7 @@ function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
             local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
-            ns:cprint(ORANGE(L.CONGRATULATIONS), format("You have completed %s in %s.", achievementLink, mapInfo.name))
+            ns:cprint(ORANGE(L.CONGRATULATIONS), string.format("You have completed %s in %s.", achievementLink, mapInfo.name))
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
         end
     end
@@ -2213,8 +2147,8 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
-            local criteriaAmount = PARENS_TEMPLATE:format(L.GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
-            ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..HEADER_COLON, achievementLink, criteriaAmount)
+            local criteriaAmount = L.PARENS_TEMPLATE:format(L.GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
+            ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..L.HEADER_COLON, achievementLink, criteriaAmount)
             ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
             -- local numLeft = achievementInfo.numCriteria - achievementInfo.numCompleted
             -- if (numLeft > 0) then
@@ -2497,12 +2431,12 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         end
 
         -- Header: Plugin + zone name
-        local title = node.achievementInfo.isOptionalAchievement and LoremasterPlugin.name..L.TEXT_DELIMITER..L.TEXT_OPTIONAL or LoremasterPlugin.name
+        local title = node.achievementInfo.isOptionalAchievement and LoremasterPlugin.name..L.TEXT_DELIMITER..L.OPTIONAL or LoremasterPlugin.name
         title = node.achievementInfo.isAccountWide and L.ZONE_NAME_ACCOUNT_ACHIEVEMENT_FORMAT:format(title) or title
         LibQTipUtil:SetTitle(self.tooltip, title)
         LibQTipUtil:AddNormalLine(self.tooltip, node.mapInfo.name)
         if debug.isActive then
-            local mapIDstring = format("maps: %d-%d", mapID, node.mapInfo.mapID)
+            local mapIDstring = string.format("maps: %d-%d", mapID, node.mapInfo.mapID)
             LibQTipUtil:AddDisabledLine(self.tooltip, mapIDstring)
         -- else
         --     LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
@@ -2585,7 +2519,7 @@ function Temp_ConvertActiveQuestlineQuests()
             debug:print("Skipped", activeQuestLineInfo.questID, activeQuestLineInfo.questLineID, campaignID, isQuestCompleted)
         end
     end
-    debug:print(format("Converted %d |4entry:entries;", count))
+    debug:print(string.format("Converted %d |4entry:entries;", count))
 end
 
 --@do-not-package@
@@ -2656,7 +2590,7 @@ function Temp_CountOldActiveQuests()
         end
         -- print(questID, isQuestCompleted)
     end
-    debug:print(format("Found %d completed |4quest:quests;.", count))
+    debug:print(string.format("Found %d completed |4quest:quests;.", count))
     return count
 end
 
@@ -2672,7 +2606,7 @@ function Temp_RemoveOldActiveQuests()
         end
         -- print(questID, isQuestCompleted)
     end
-    debug:print(format("Removed %d old completed |4quest:quests;.", count))
+    debug:print(string.format("Removed %d old completed |4quest:quests;.", count))
     return count
 end
 
@@ -2696,7 +2630,7 @@ end
 
 --     for criteriaIndex = 1, numCriteria do
 --         criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible = GetAchievementCriteriaInfo(aID, criteriaIndex)
---         --   print(format(lineIndent.."%2d %d %5d %5d %s %s", criteriaIndex, criteriaType, criteriaID, assetID, completed and "OK" or "--", criteriaString))
+--         --   print(string.format(lineIndent.."%2d %d %5d %5d %s %s", criteriaIndex, criteriaType, criteriaID, assetID, completed and "OK" or "--", criteriaString))
 --         if not tContains(testDB[aID], assetID) then
 --             tInsert(testDB[aID], assetID)
 --             debug:print(DBUtil, "Adding", assetID, criteriaID, criteriaString)

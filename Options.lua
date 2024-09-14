@@ -26,10 +26,9 @@
 --------------------------------------------------------------------------------
 local AddonID, ns = ...
 
-ns.currentLocale = GetLocale()
+local L = ns.L;  --> <locales\L10nUtils.lua>
 
 local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
-local format = string.format
 
 local BRIGHTBLUE_FONT_COLOR = BRIGHTBLUE_FONT_COLOR
 local GRAY_FONT_COLOR = GRAY_FONT_COLOR
@@ -40,34 +39,17 @@ local ORANGE_FONT_COLOR = ORANGE_FONT_COLOR
 local NORMAL_FONT_COLOR_CODE = NORMAL_FONT_COLOR_CODE
 local FONT_COLOR_CODE_CLOSE = FONT_COLOR_CODE_CLOSE
 
-local ADVANCED_OPTIONS = ADVANCED_OPTIONS                                       --> TODO - Move to l10n
-local ADVANCED_OPTIONS_TOOLTIP = ADVANCED_OPTIONS_TOOLTIP
-local DEFAULT = DEFAULT
-local EXAMPLE_TEXT = EXAMPLE_TEXT
-local DESCRIPTION = DESCRIPTION
-local QUEST_CLASSIFICATION_QUESTLINE = QUEST_CLASSIFICATION_QUESTLINE
-
 local LocalOptionUtils = {}
-LocalOptionUtils.newParagraph = "|n|n"
-LocalOptionUtils.newLine = "|n"
-LocalOptionUtils.colon = HEADER_COLON
-LocalOptionUtils.textDelimiter = ITEM_NAME_DESCRIPTION_DELIMITER
-LocalOptionUtils.parensStringFormat = PARENS_TEMPLATE
-LocalOptionUtils.statusStringFormat = SLASH_TEXTTOSPEECH_HELP_FORMATSTRING
-LocalOptionUtils.statusEnabledText = VIDEO_OPTIONS_ENABLED
-LocalOptionUtils.statusDisabledText = VIDEO_OPTIONS_DISABLED
 LocalOptionUtils.tocKeys = {"Author", "X-Email", "X-Website", "X-License"}
-LocalOptionUtils.dashLineStringFormat = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t %s"
-LocalOptionUtils.dashIconString = "|TInterface\\Scenarios\\ScenarioIcon-Dash:16:16:0:-1|t"
 LocalOptionUtils.questTypeIconFormat = "|A:questlog-questtypeicon-%s:16:16:0:-1|a"
-LocalOptionUtils.suffixTextDefault = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(LocalOptionUtils.parensStringFormat:format(DEFAULT))
+LocalOptionUtils.suffixTextDefault = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(L.PARENS_TEMPLATE:format(L.DEFAULT))
 LocalOptionUtils.newFeatureIconString = CreateAtlasMarkup("NewCharacter-Horde", 56, 29, -6)
 
 ns.pluginInfo = {}
 ns.pluginInfo.title = GetAddOnMetadata(AddonID, "Title")
 ns.pluginInfo.icon = GetAddOnMetadata(AddonID, "IconTexture") or GetAddOnMetadata(AddonID, "IconAtlas")
 ns.pluginInfo.version = GetAddOnMetadata(AddonID, "Version")
-ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..ns.currentLocale) or GetAddOnMetadata(AddonID, "Notes")
+ns.pluginInfo.description = GetAddOnMetadata(AddonID, "Notes-"..L.currentLocale) or GetAddOnMetadata(AddonID, "Notes")
 ns.pluginInfo.defaultOptions = {
 	profile = {
         ["*"] = true,
@@ -129,7 +111,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     },
                     description = {
                         type = "description",
-                        name = LocalOptionUtils.newLine..self.description,
+                        name = L.NEW_LINE..self.description,
                         order = 1,
                     },
                     body = {
@@ -141,14 +123,14 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
             },  --> about
             tooltip_details_zone = {
                 type = "group",
-                name = "Tooltip"..LocalOptionUtils.textDelimiter..LocalOptionUtils.parensStringFormat:format(ZONE),
+                name = "Tooltip"..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(ZONE),
                 desc = "Select the tooltip details which should be shown when hovering a quest icon on the World Map.",
                 order = 1,
                 childGroups = "tab",
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the tooltip details which should be shown when hovering a quest icon on the World Map."..LocalOptionUtils.newParagraph,
+                        name = "Select the tooltip details which should be shown when hovering a quest icon on the World Map."..L.NEW_PARAGRAPH,
                         order = 0,
                     },
                     general_details = {
@@ -159,7 +141,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         args = {
                             description = {
                                 type = "description",
-                                name = "The settings in this section apply to all tooltips."..LocalOptionUtils.newParagraph,
+                                name = "The settings in this section apply to all tooltips."..L.NEW_PARAGRAPH,
                                 order = 0,
                             },
                             plugin_name = {
@@ -196,7 +178,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             quest_turn_in = {
                                 type = "toggle",
-                                name = format("Show %s Message", LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(QUEST_WATCH_QUEST_READY)),
+                                name = string.format("Show %s Message", LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(L.QUEST_WATCH_QUEST_READY)),
                                 desc = "Show or hide this message. This option affects active quests only.",
                                 arg = "showQuestTurnIn",
                                 width = "full",
@@ -204,18 +186,18 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             separator_pre_advanced = {
                                 type = "description",
-                                name = LocalOptionUtils.newLine,
+                                name = L.NEW_LINE,
                                 order = 20,
                             },
                             header_advanced = {
                                 type = "header",
-                                name = ADVANCED_OPTIONS,
+                                name = L.ADVANCED_OPTIONS,
                                 width = "half",
                                 order = 21,
                             },
                             separator_post_advanced = {
                                 type = "description",
-                                name = LocalOptionUtils.newLine,
+                                name = L.NEW_LINE,
                                 order = 22,
                             },
                             track_worldquests = {
@@ -328,7 +310,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     },  --> zs_group
                     ql_group = {
                         type = "group",
-                        name = QUEST_CLASSIFICATION_QUESTLINE,
+                        name = L.CATEGORY_NAME_QUESTLINE,
                         desc = "Show or hide storyline details associated with the hovered quest.",
                         inline = false,
                         order = 20,
@@ -345,7 +327,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             quest_type_names = {
                                 type = "toggle",
                                 name = "Quest Type Icons as Text",
-                                desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", WEEKLY, true, true)..LocalOptionUtils.newLine..PET_BATTLE_UI_VS..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "WEEKLY", true, false, true),
+                                desc = "Displays the quest type in quest names as text instead of using icons."..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", L.WEEKLY, true, true)..L.NEW_LINE..PET_BATTLE_UI_VS..LocalOptionUtils:AppendQuestTypeExampleText("Quest Name", "WEEKLY", true, false, true),
                                 arg = "showQuestTypeAsText",
                                 disabled = function() return not ns.settings["showQuestLine"] end,
                                 width = 1.2,
@@ -381,19 +363,19 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             },
                             separator_pre_advanced_ql = {
                                 type = "description",
-                                name = LocalOptionUtils.newLine,
+                                name = L.NEW_LINE,
                                 order = 20,
                             },
                             header_advanced_ql = {
                                 type = "header",
-                                name = ADVANCED_OPTIONS,
-                                desc = ADVANCED_OPTIONS_TOOLTIP,
+                                name = L.ADVANCED_OPTIONS,
+                                desc = L.ADVANCED_OPTIONS_TOOLTIP,
                                 width = "half",
                                 order = 21,
                             },
                             separator_post_advanced_ql = {
                                 type = "description",
-                                name = LocalOptionUtils.newLine,
+                                name = L.NEW_LINE,
                                 order = 22,
                             },
                             tooltip_slider_speed_ql = {
@@ -447,7 +429,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             chapter_description = {
                                 type = "toggle",
                                 name = "Include Chapter Description",
-                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AppendExampleText(DESCRIPTION, 132053),
+                                desc = "Some chapters have a description or an alternative chapter name.|nIf activated, these will be shown below the default chapter name."..LocalOptionUtils:AppendExampleText(L.DESCRIPTION, 132053),
                                 arg = "showCampaignChapterDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -456,7 +438,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             campaign_description = {
                                 type = "toggle",
                                 name = "Show Campaign Description",
-                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AppendExampleText(DESCRIPTION),
+                                desc = "Some campaigns have a description.|nIf activated, it will be shown below the chapter list."..LocalOptionUtils:AppendExampleText(L.DESCRIPTION),
                                 arg = "showCampaignDescription",
                                 disabled = function() return not ns.settings["showCampaign"] end,
                                 width = "double",
@@ -475,7 +457,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                 args = {
                     description = {
                         type = "description",
-                        name = "Select the details for the continent view on the World Map."..LocalOptionUtils.newParagraph,
+                        name = "Select the details for the continent view on the World Map."..L.NEW_PARAGRAPH,
                         order = 0,
                     },
                     show_zone_icons = {
@@ -498,7 +480,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     optional_stories_szc = {
                         type = "toggle",
                         name = "Include Optional Zone Stories",
-                        desc = "Some zones have a story achievement of their own or an additional one which is not part of a Loremaster achievement."..LocalOptionUtils.newParagraph.."These optional achievements will be displayed as yellow icons.",
+                        desc = "Some zones have a story achievement of their own or an additional one which is not part of a Loremaster achievement."..L.NEW_PARAGRAPH.."These optional achievements will be displayed as yellow icons.",
                         set = function(info, value)
                             ns.settings[info.arg] = value
                             LocalOptionUtils:printOption(info.option.name, value)
@@ -542,7 +524,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                         args = {
                             description = {
                                 type = "description",
-                                name = "Select the tooltip details which should be shown when hovering an icon in continent view on the World Map."..LocalOptionUtils.newParagraph,
+                                name = "Select the tooltip details which should be shown when hovering an icon in continent view on the World Map."..L.NEW_PARAGRAPH,
                                 order = 0,
                             },
                             collapse_type_szc = {
@@ -567,15 +549,15 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                     },  --> continent_tooltip_group
                     continent_advanced_group = {
                         type = "group",
-                        name = ADVANCED_OPTIONS,
-                        desc = ADVANCED_OPTIONS_TOOLTIP,
+                        name = L.ADVANCED_OPTIONS,
+                        desc = L.ADVANCED_OPTIONS_TOOLTIP,
                         inline = false,
                         disabled = function() return not ns.settings["showContinentZoneIcons"] end,
                         order = 20,
                         args = {
                             description = {
                                 type = "description",
-                                name = ADVANCED_OPTIONS_TOOLTIP..LocalOptionUtils.newParagraph,
+                                name = L.ADVANCED_OPTIONS_TOOLTIP..L.NEW_PARAGRAPH,
                                 order = 0,
                             },
                             icon_scale_szc = {
@@ -613,7 +595,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                 args = {
                     description = {
                         type = "description",
-                        name = "Choose how or whether you want to be notified of plugin changes."..LocalOptionUtils.newParagraph,
+                        name = "Choose how or whether you want to be notified of plugin changes."..L.NEW_PARAGRAPH,
                         order = 0,
                     },
                     chat_notifications_group = {
@@ -625,7 +607,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                             welcome_msg = {
                                 type = "toggle",
                                 name = "Show Plugin-is-Ready Message",
-                                desc = format("Show or hide the \"%s\" message on startup.", LFG_READY_CHECK_PLAYER_IS_READY:format(self.title)),
+                                desc = string.format("Show or hide the \"%s\" message on startup.", L.OPTION_STATUS_FORMAT_READY:format(self.title)),
                                 arg = "showWelcomeMessage",
                                 width ="double",
                                 order = 1,
@@ -666,53 +648,53 @@ end
 
 LocalOptionUtils.printOption = function(self, text, isEnabled)
     -- Print a user-friendly chat message about the currently selected setting.
-    local msg = isEnabled and self.statusEnabledText or self.statusDisabledText
-    ns:cprintf(self.statusStringFormat, text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
+    local msg = isEnabled and L.OPTION_STATUS_ENABLED or L.OPTION_STATUS_DISABLED
+    ns:cprintf(L.OPTION_STATUS_FORMAT , text or '', NORMAL_FONT_COLOR:WrapTextInColorCode(msg))
 end
 
 LocalOptionUtils.CreateAboutHeadingText = function(self)
     local versionString = GRAY_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.version)
     local pluginName = NORMAL_FONT_COLOR:WrapTextInColorCode(ns.pluginInfo.title)
-    return self.newLine..pluginName..self.textDelimiter..versionString
+    return L.NEW_LINE..pluginName..L.TEXT_DELIMITER..versionString
 end
 
 LocalOptionUtils.CreateAboutBodyText = function(self)
-    local text = self.newParagraph
+    local text = L.NEW_PARAGRAPH
     for i, key in ipairs(self.tocKeys) do
         local keyString = string.gsub(key, "X[-]", '')
         text = text..NORMAL_FONT_COLOR_CODE..keyString..FONT_COLOR_CODE_CLOSE
-        text = text..self.colon..self.textDelimiter..GetAddOnMetadata(AddonID, key)
-        text = text..self.newParagraph
+        text = text..L.HEADER_COLON..L.TEXT_DELIMITER..GetAddOnMetadata(AddonID, key)
+        text = text..L.NEW_PARAGRAPH
     end
-    return text..self.newParagraph
+    return text..L.NEW_PARAGRAPH
 end
 
 LocalOptionUtils.AppendQuestTypeExampleText = function(self, text, tagName, prepend, asText, skipHeader)
-    local exampleText = skipHeader and self.newLine or self.newParagraph..EXAMPLE_TEXT..self.newLine
-    local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(self.parensStringFormat:format(tagName)) or self.questTypeIconFormat:format(tagName)
+    local exampleText = skipHeader and L.NEW_LINE or L.NEW_PARAGRAPH..L.EXAMPLE_TEXT..L.NEW_LINE
+    local tagString = asText and BRIGHTBLUE_FONT_COLOR:WrapTextInColorCode(L.PARENS_TEMPLATE:format(tagName)) or self.questTypeIconFormat:format(tagName)
     if (tagName == "raid") then
-        return exampleText..tagString..self.textDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..tagString..L.TEXT_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
     if prepend then
-        return exampleText..format(self.dashLineStringFormat, tagString)..self.textDelimiter..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
+        return exampleText..string.format(L.DASH_LINE_STRING_FORMAT, tagString)..L.TEXT_DELIMITER..NORMAL_FONT_COLOR:WrapTextInColorCode(text)
     end
-    return exampleText..format(self.dashLineStringFormat, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..self.textDelimiter..tagString
+    return exampleText..string.format(L.DASH_LINE_STRING_FORMAT, NORMAL_FONT_COLOR:WrapTextInColorCode(text))..L.TEXT_DELIMITER..tagString
 end
 
 LocalOptionUtils.AppendExampleText = function(self, text, icon, iconWidth, iconHeight, textColor)
-    local exampleText = self.newParagraph..EXAMPLE_TEXT..self.newLine
+    local exampleText = L.NEW_PARAGRAPH..L.EXAMPLE_TEXT..L.NEW_LINE
     local TextColor = textColor or GRAY_FONT_COLOR
     if not icon then
-        return exampleText..self.dashIconString..self.textDelimiter..TextColor:WrapTextInColorCode(text)
+        return exampleText..L.DASH_ICON_STRING..L.TEXT_DELIMITER..TextColor:WrapTextInColorCode(text)
     end
     local CreateMarkupFunction = type(icon) == "number" and CreateSimpleTextureMarkup or CreateAtlasMarkup
     local width = iconWidth or 16
     local height = iconHeight or 16
-    return exampleText..CreateMarkupFunction(icon, width, height)..self.textDelimiter..TextColor:WrapTextInColorCode(text)
+    return exampleText..CreateMarkupFunction(icon, width, height)..L.TEXT_DELIMITER..TextColor:WrapTextInColorCode(text)
 end
 
 LocalOptionUtils.AppendDefaultValueText = function(self, arg)
-    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon)..self.textDelimiter.."%s"
+    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(L.NEW_PARAGRAPH..L.DEFAULT..L.HEADER_COLON)..L.TEXT_DELIMITER.."%s"
     local valueString = tostring( ns.pluginInfo.defaultOptions.profile[arg] )
     return textTemplate:format(valueString)
 end
@@ -736,7 +718,7 @@ LocalOptionUtils.SetCollapseTypeValues = function(info)
     local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
     local defaultLabel = valueList[defaultKey]
     -- Update/replaces default label
-    valueList[defaultKey] = defaultLabel..self.textDelimiter..self.suffixTextDefault
+    valueList[defaultKey] = defaultLabel..L.TEXT_DELIMITER..self.suffixTextDefault
 
     return valueList
 end
@@ -744,24 +726,24 @@ end
 LocalOptionUtils.CreateCollapseTypeDescriptionText = function(info)
     local self = LocalOptionUtils
     local desc = "Choose how the details in this category should be displayed."
-    desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.auto..self.colon)
-    desc = desc..self.textDelimiter.."Automatically collapse this category's details when completed."
-    desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.hide..self.colon)
-    desc = desc..self.textDelimiter.."Always show category details collapsed."
-    desc = desc..self.newParagraph
-    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.show..self.colon)
-    desc = desc..self.textDelimiter.."Always show full category details."
+    desc = desc..L.NEW_PARAGRAPH
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.auto..L.HEADER_COLON)
+    desc = desc..L.TEXT_DELIMITER.."Automatically collapse this category's details when completed."
+    desc = desc..L.NEW_PARAGRAPH
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.hide..L.HEADER_COLON)
+    desc = desc..L.TEXT_DELIMITER.."Always show category details collapsed."
+    desc = desc..L.NEW_PARAGRAPH
+    desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeValues.show..L.HEADER_COLON)
+    desc = desc..L.TEXT_DELIMITER.."Always show full category details."
     if tContains({"collapseType_zoneStory", "collapseType_zoneStoryContinent"}, info.arg) then
-        desc = desc..self.newParagraph
-        desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeExtraValues.singleLine..self.colon)
-        desc = desc..self.textDelimiter.."Displays each story achievement in a single line instead of multiple lines."
+        desc = desc..L.NEW_PARAGRAPH
+        desc = desc..NORMAL_FONT_COLOR:WrapTextInColorCode(self.collapseTypeExtraValues.singleLine..L.HEADER_COLON)
+        desc = desc..L.TEXT_DELIMITER.."Displays each story achievement in a single line instead of multiple lines."
     end
     -- Append default value text
     local defaultKey = ns.pluginInfo.defaultOptions.profile[info.arg]
     local defaultLabel = self.collapseTypeValues[defaultKey] or self.collapseTypeExtraValues[defaultKey]
-    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(self.newParagraph..DEFAULT..self.colon)..self.textDelimiter.."%s"
+    local textTemplate = LIGHTGRAY_FONT_COLOR:WrapTextInColorCode(L.NEW_PARAGRAPH..L.DEFAULT..L.HEADER_COLON)..L.TEXT_DELIMITER.."%s"
     desc = desc..textTemplate:format(defaultLabel)
 
     return desc
