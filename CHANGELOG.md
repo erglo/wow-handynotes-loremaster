@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 * Tooltip: refined zone story indication.
-* Tooltip: refined zone story and campaign identification.
+* Tooltip: refined zone story, questline and campaign identification.
 * Tooltip: updated storyline quest counter to support Warband vs. individual progress.
 * Tooltip: updated color theme for storyline quests (`green` - Warband completed quest, `dark green` - quest completed by current char + Warband, `yellow` - current available quest, `lighter yellow` - ongoing/in-progress quest, `white` - available not yet completed quest, `orange` - story/lore quest.
 * Tooltip: updated counter and visual indication of in-progress storyline quests.
