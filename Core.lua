@@ -1618,7 +1618,7 @@ local function ShouldShowQuestType(pin)
 end
 
 local function ShouldShowReadyForTurnInMessage(pin)
-    return pin.questInfo.isOnQuest and ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn
+    return LocalUtils:IsPinActiveQuest(pin) and pin.questInfo.isOnQuest and ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
@@ -1767,11 +1767,9 @@ local function AddTooltipContent(contentTooltip, pin)
     end
 
     -- Turn-in message
-    if (LocalUtils:IsPinActiveQuest(pin) and ShouldShowReadyForTurnInMessage(pin)) then
-        if not ns.settings.showPluginName then
-            LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
-        end
+    if ShouldShowReadyForTurnInMessage(pin) then
         LibQTipUtil:AddInstructionLine(contentTooltip, L.QUEST_WATCH_QUEST_READY)
+        LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
     end
 
     -- Quest type tags
