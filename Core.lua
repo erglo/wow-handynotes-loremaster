@@ -309,8 +309,14 @@ local function GetCollapseTypeModifier(isComplete, varName)
 end
 
 function LibQTipUtil:AddPluginNameLine(tooltip)
-    local lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
-    tooltip:SetCell(lineIndex, 1, LoremasterPlugin.name, nil, "RIGHT")  -- replaces line above with the new adjustments
+    if ns.settings.showPluginName then
+        local lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
+        tooltip:SetCell(lineIndex, 1, LoremasterPlugin.name, nil, "RIGHT")  -- replaces line above with the new adjustments
+
+    elseif ns.settings.showQuestTitle then
+        LibQTipUtil:AddBlankLineToTooltip(tooltip)
+
+    end
 end
 
 function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
@@ -1756,7 +1762,7 @@ local function AddTooltipContent(contentTooltip, pin)
     end
 
     -- Plugin name
-    if ( ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) ) then
+    if LocalUtils:HasBasicTooltipContent(pin) then
         LibQTipUtil:AddPluginNameLine(contentTooltip)
     end
 
