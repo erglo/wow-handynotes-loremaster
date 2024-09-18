@@ -106,9 +106,10 @@ L.HINT_SET_WAYPOINT = "<Alt-click to create waypoint>";
 
 L.QUESTLINE_NAME_FORMAT = "|TInterface\\Icons\\INV_Misc_Book_07:16:16:0:-1|t %s";
 L.QUESTLINE_CHAPTER_NAME_FORMAT = "|A:Campaign-QuestLog-LoreBook-Back:16:16:0:0|a %s";
-L.QUESTLINE_PROGRESS_FORMAT = QUESTS_COLON..L.TEXT_DELIMITER..HIGHLIGHT(L.GENERIC_FRACTION_STRING);
+L.QUESTLINE_PROGRESS_FORMAT = QUESTS_COLON..L.TEXT_DELIMITER..HIGHLIGHT(L.GENERIC_FRACTION_STRING).."|A:common-icon-checkmark-yellow:12:12:2:0|a";
 L.QUESTLINE_WARBAND_PROGRESS_FORMAT = L.GENERIC_FRACTION_STRING.."|A:questlog-questtypeicon-account:14:14:1:0|a";
-L.QUESTLINE_NUM_INPROGRESS_FORMAT = LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode("%s").."|A:SideInProgressquesticon:14:14:1:0|a";
+L.QUESTLINE_NUM_INPROGRESS_FORMAT = LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode("+%d").."|A:WrapperInProgressquesticon:14:14:1:0|a";
+L.QUESTLINE_NUM_TURNINREADY_FORMAT = LIGHTYELLOW_FONT_COLOR:WrapTextInColorCode("+%d").."|A:QuestTurnin:13:13:-1:0|a";
 L.QUESTLINE_NUM_RECURRING_FORMAT = TUTORIAL_BLUE_FONT_COLOR:WrapTextInColorCode("+%d").."|A:Recurringavailablequesticon:12:12:1:0|a";
 
 L.CAMPAIGN_NAME_FORMAT_COMPLETE = "|A:Campaign-QuestLog-LoreBook:16:16:0:0|a %s  |A:achievementcompare-YellowCheckmark:0:0|a";

@@ -1224,6 +1224,7 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
     filteredQuestInfos.numAccountCompleted = 0
     filteredQuestInfos.numRepeatable = 0
     filteredQuestInfos.numInProgress = 0
+    filteredQuestInfos.numReadyForTurnIn = 0
 
     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
         local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
@@ -1231,6 +1232,9 @@ function LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
         if LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo) then
             if questInfo.isOnQuest then
                 filteredQuestInfos.numInProgress = filteredQuestInfos.numInProgress + 1
+            end
+            if questInfo.isReadyForTurnIn then
+                filteredQuestInfos.numReadyForTurnIn = filteredQuestInfos.numReadyForTurnIn + 1
             end
             if not (questInfo.isDaily or questInfo.isWeekly) then
                 if C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID) then
@@ -1337,16 +1341,16 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     -- Questline quests progress
     local questLineCountLine = L.QUESTLINE_PROGRESS_FORMAT:format(filteredQuestInfos.numCompleted, filteredQuestInfos.numTotal)
     if filteredQuestInfos.numAccountCompleted > 0 then
-        -- Append Warband quest progress
         questLineCountLine = questLineCountLine..L.TEXT_DELIMITER_2X..L.QUESTLINE_WARBAND_PROGRESS_FORMAT:format(filteredQuestInfos.numAccountCompleted, filteredQuestInfos.numTotal)
     end
-    if (filteredQuestInfos.numInProgress > 0) then
-        -- Append in-progress quest type count
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..L.QUESTLINE_NUM_INPROGRESS_FORMAT:format(filteredQuestInfos.numInProgress)
+    if (filteredQuestInfos.numInProgress > 0 and filteredQuestInfos.numInProgress ~= filteredQuestInfos.numReadyForTurnIn) then
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER_2X..L.QUESTLINE_NUM_INPROGRESS_FORMAT:format(filteredQuestInfos.numInProgress - filteredQuestInfos.numReadyForTurnIn)
+    end
+    if (filteredQuestInfos.numReadyForTurnIn > 0) then
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER_2X..L.QUESTLINE_NUM_TURNINREADY_FORMAT:format(filteredQuestInfos.numReadyForTurnIn)
     end
     if (filteredQuestInfos.numRepeatable > 0) then
-        -- Append recurring quest type count
-        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER..L.QUESTLINE_NUM_RECURRING_FORMAT:format(filteredQuestInfos.numRepeatable)
+        questLineCountLine = questLineCountLine..L.TEXT_DELIMITER_2X..L.QUESTLINE_NUM_RECURRING_FORMAT:format(filteredQuestInfos.numRepeatable)
     end
     local lineIndex = LibQTipUtil:AddNormalLine(tooltip, questLineCountLine)
     tooltip:SetCell(lineIndex, 1, questLineCountLine, nil, "LEFT", nil, nil, nil, nil, GameTooltip:GetWidth(), GameTooltip:GetWidth()-20)
