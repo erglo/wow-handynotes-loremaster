@@ -2216,6 +2216,8 @@ local zoneOffsetInfo = {  --> Some nodes are overlapping with something else on 
     [LocalMapUtils.TIRAGARDE_SOUND_MAP_ID] = { x = 0.08, y = -0.04 },
     [LocalMapUtils.VALSHARAH_MAP_ID] = { x = 0, y = -0.01 },
     [LocalMapUtils.ZARALEK_CAVERN_MAP_ID] = { x = -0.025, y = -0.01 },
+    [LocalMapUtils.HALLOWFALL_MAP_ID] = { x = 0.02, y = -0.02 },
+    [LocalMapUtils.RINGING_DEEPS_MAP_ID] = { x = 0.03, y = -0.02 },
 }
 
 -- Convert an atlas file to a texture table with coordinates suitable for
