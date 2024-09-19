@@ -159,15 +159,6 @@ function debug:CreateDebugQuestInfoTooltip(pin)
         debug.tooltip:SetCellTextColor(lineIndex, 1, Column1Color:GetRGBA())
         debug.tooltip:SetCellTextColor(lineIndex, 2, Column2Color:GetRGBA())
     end
-    local tagData = LocalQuestTagUtil:GetAllQuestTags(pin.questID, 20, 20)
-    if tagData then
-        for tagLabel, tagAtlasMarkup in pairs(tagData) do
-            local text = string.format("%s %s", tagAtlasMarkup, tagLabel)
-            local tagID = pin.questInfo.questTagInfo and pin.questInfo.questTagInfo.tagID or (pin.questInfo.questClassification or (pin.questType and pin.questType or "??"))
-            lineIndex = debug.tooltip:AddLine(text, tostring(tagID))
-        end
-    end
-    debug.tooltip:AddLine('New:')  --> blank line
     local tagInfoList = LocalQuestTagUtil:GetQuestTagInfoList(pin.questID, pin.questInfo)
     if (#tagInfoList > 0) then
         for _, tagInfo in ipairs(tagInfoList) do
