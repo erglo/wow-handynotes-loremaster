@@ -144,19 +144,19 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "The settings in this section apply to all tooltips."..L.NEW_PARAGRAPH,
                                 order = 0,
                             },
-                            plugin_name = {
-                                type = "toggle",
-                                name = "Show Plugin Name",
-                                desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
-                                arg = "showPluginName",
-                                width = "full",
-                                order = 1,
-                            },                                                  --> TODO - Show quest ID, trivial quests ???
                             show_quest_title = {
                                 type = "toggle",
                                 name = "Show Quest Title"..LocalOptionUtils.newFeatureIconString,
                                 desc = "Show or hide the title in the Loremaster tooltip.",
                                 arg = "showQuestTitle",
+                                width = "full",
+                                order = 1,
+                            },
+                            plugin_name = {
+                                type = "toggle",
+                                name = "Show Plugin Name",
+                                desc = "The plugin name indicates that everything below it is content created by this plugin. Deactivate to hide the name.",
+                                arg = "showPluginName",
                                 width = "full",
                                 order = 2,
                             },

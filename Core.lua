@@ -117,7 +117,7 @@ debug.print = function(self, ...)
     if type(...) == "table" then
         local t = ...
         if t.debug then
-            print(YELLOW(prefix.." "..t.debug_prefix), select(2, ...))
+            print(YELLOW(prefix..L.TEXT_DELIMITER..t.debug_prefix), select(2, ...))
         end
     elseif self.isActive then
         print(YELLOW(prefix..":"), ...)
@@ -265,14 +265,6 @@ function LoremasterPlugin:ProcessSlashCommands(msg)
                    string.format(" '/%s <%s>'", self.slash_commands[2], YELLOW("arg"))
         )
 
-        -- local arg_list = {
-        --     version = "Display addon version",
-        --     config = "Display settings",
-        -- }
-        -- for arg_name, arg_description in pairs(arg_list) do
-        --     self:Print(" ", L.OBJECTIVE_FORMAT:format(YELLOW(arg_name..":")), arg_description)
-        -- end
-
     elseif (input == "version") then
         self:Print(ns.pluginInfo.version)
 
@@ -301,14 +293,8 @@ local function GetCollapseTypeModifier(isComplete, varName)
 end
 
 function LibQTipUtil:AddPluginNameLine(tooltip)
-    if ns.settings.showPluginName then
-        local lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
-        tooltip:SetCell(lineIndex, 1, LoremasterPlugin.name, nil, "RIGHT")  -- replaces line above with the new adjustments
-
-    elseif ns.settings.showQuestTitle then
-        LibQTipUtil:AddBlankLineToTooltip(tooltip)
-
-    end
+    local lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
+    tooltip:SetCell(lineIndex, 1, LoremasterPlugin.name, nil, "RIGHT")  -- replaces line above with the new adjustments
 end
 
 function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
@@ -322,10 +308,7 @@ function LibQTipUtil:AddCategoryNameLine(tooltip, name, categoryNameOnly)
         local categoryName = ns.settings.showCategoryNames and name or ''
         lineText = pluginName .. delimiter .. categoryName
     end
-    if ( tooltip == ContentTooltip and L:StringIsEmpty(lineText) ) then
-        -- Need an empty line in this case
-        lineText = L.TEXT_DELIMITER
-    end
+
     lineIndex = LibQTipUtil:AddColoredLine(tooltip, CATEGORY_NAME_COLOR, '')
     tooltip:SetCell(lineIndex, 1, lineText, nil, "RIGHT")  -- replaces line above with the new adjustments
 end
@@ -521,8 +504,12 @@ function ZoneStoryUtils:AddZoneStoryDetailsToTooltip(tooltip, pin)
 
     -- Plugin / category name
     if not (is2nd or pin.pinTemplate == LocalUtils.HandyNotesPinTemplate) then
-        local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin))
-        LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_ZONE_STORY, categoryNameOnly)
+        if tooltip == ContentTooltip and LocalUtils:CategoryNeedsExtraSpacing(pin) then
+            LibQTipUtil:AddBlankLineToTooltip(tooltip)
+        else
+            local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin))
+            LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_ZONE_STORY, categoryNameOnly)
+        end
 
         debug:AddDebugLineToLibQTooltip(tooltip,  {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     end
@@ -1301,8 +1288,12 @@ LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, 
     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
 
     -- Plugin / category name
-    local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
-    LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_QUESTLINE, categoryNameOnly)
+    if LocalUtils:CategoryNeedsExtraSpacing(pin) then
+        LibQTipUtil:AddBlankLineToTooltip(tooltip)
+    else
+        local categoryNameOnly = ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin))
+        LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_QUESTLINE, categoryNameOnly)
+    end
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> L:%d \"%s\" #%d Quests", questLineInfo.questLineID, questLineInfo.questLineName, filteredQuestInfos.numTotalUnfiltered)})
@@ -1420,8 +1411,12 @@ function CampaignUtils:AddCampaignDetailsTooltip(tooltip, pin, questLineTooltip)
     end
 
     -- Plugin / category name
-    local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or LocalUtils:ShouldShowZoneStoryDetails(pin) or LocalUtils:ShouldShowQuestLineDetails(pin))
-    LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_CAMPAIGN, categoryNameOnly)
+    if tooltip == ContentTooltip and LocalUtils:CategoryNeedsExtraSpacing(pin) and LocalUtils:ShouldShowQuestLineDetails(pin) then
+        LibQTipUtil:AddBlankLineToTooltip(tooltip)
+    else
+        local categoryNameOnly = tooltip == ContentTooltip and (ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) or (not ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin)) or LocalUtils:ShouldShowQuestLineDetails(pin))
+        LibQTipUtil:AddCategoryNameLine(tooltip, L.CATEGORY_NAME_CAMPAIGN, categoryNameOnly)
+    end
 
     debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> Q:%d - %s - %s_%s_%s", pin.questID, pin.pinTemplate, tostring(pin.questType), tostring(pin.questInfo.questType), pin.questInfo.isTrivial and "isTrivial" or pin.questInfo.isCampaign and "isCampaign" or "noHiddenType")})
     debug:AddDebugLineToLibQTooltip(tooltip, {text=string.format("> C:%d, isWarCampaign: %d, currentChapterID: %d", campaignID, campaignInfo.isWarCampaign, campaignInfo.currentChapterID)})
@@ -1544,8 +1539,10 @@ local function ShowAllTooltips()
         ContentTooltip:UpdateScrolling()
         ContentTooltip:SetScrollStep(IsShiftKeyDown() and scrollStep*1.5 or scrollStep)
     end
-    ContentTooltip:SetClampedToScreen(true)
-    ContentTooltip:Show()
+    if ContentTooltip:GetLineCount() > 0 then
+        ContentTooltip:SetClampedToScreen(true)
+        ContentTooltip:Show()
+    end
 
     if ZoneStoryTooltip then
         if ns.isWorldMapMaximized and (ZoneStoryTooltip:GetRight() * uiScale > ContentTooltip:GetLeft() * uiScale) then
@@ -1579,7 +1576,7 @@ local function ShouldShowQuestType(pin)
 end
 
 local function ShouldShowReadyForTurnInMessage(pin)
-    return LocalUtils:IsPinActiveQuest(pin) and pin.questInfo.isOnQuest and ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn
+    return LocalUtils:IsPinActiveQuest(pin) and ns.settings.showQuestTurnIn and pin.questInfo.isReadyForTurnIn
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
@@ -1607,6 +1604,10 @@ end
 
 function LocalUtils:HasBasicTooltipContent(pin)
     return ShouldShowQuestType(pin) or ShouldShowReadyForTurnInMessage(pin)
+end
+
+function LocalUtils:CategoryNeedsExtraSpacing(pin)
+    return not ns.settings.showCategoryNames and (LocalUtils:HasBasicTooltipContent(pin) or (not LocalUtils:HasBasicTooltipContent(pin) and ns.settings.showQuestTitle))
 end
 
 function LocalUtils:IsPinTaskQuest(pin)
@@ -1693,7 +1694,6 @@ local function CreateCustomTooltips(pin)
     -- Game tooltip: reposition the World Map pin's default tooltip
     GameTooltip:ClearAllPoints()
     GameTooltip:SetPoint("BOTTOMRIGHT", ContentTooltip, "TOPRIGHT")
-    -- -- print("GameTooltip2:", GameTooltip:GetAnchorType(), GameTooltip:NumLines())
 
     -- Zone story tooltip
     if (ns.settings.showZoneStorySeparately and LocalUtils:ShouldShowZoneStoryDetails(pin)) then
@@ -1723,19 +1723,21 @@ local function AddTooltipContent(contentTooltip, pin)
     end
 
     -- Plugin name
-    if LocalUtils:HasBasicTooltipContent(pin) then
+    if ns.settings.showPluginName and LocalUtils:HasBasicTooltipContent(pin) then
         LibQTipUtil:AddPluginNameLine(contentTooltip)
     end
 
     -- Turn-in message
     if ShouldShowReadyForTurnInMessage(pin) then
+        if (not ns.settings.showPluginName and ns.settings.showQuestTitle) then
+            LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
+        end
         LibQTipUtil:AddInstructionLine(contentTooltip, L.QUEST_WATCH_QUEST_READY)
-        LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
     end
 
     -- Quest type tags
     if ShouldShowQuestType(pin) then
-        if not ns.settings.showPluginName or (LocalUtils:IsPinActiveQuest(pin) and ShouldShowReadyForTurnInMessage(pin)) then
+        if (not ns.settings.showPluginName and ns.settings.showQuestTitle) or ShouldShowReadyForTurnInMessage(pin) then
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questInfo)
@@ -1773,6 +1775,7 @@ local function AddTooltipContent(contentTooltip, pin)
         LibQTipUtil:AddInstructionLine(contentTooltip, L.HINT_SET_WAYPOINT)
     end
 end
+
 ----------
 
 local function IsRelevantQuest(questInfo)
@@ -2422,8 +2425,6 @@ function LoremasterPlugin:OnEnter(mapID, coord)
         if debug.isActive then
             local mapIDstring = string.format("maps: %d-%d", mapID, node.mapInfo.mapID)
             LibQTipUtil:AddDisabledLine(self.tooltip, mapIDstring)
-        -- else
-        --     LibQTipUtil:AddBlankLineToTooltip(self.tooltip)
         end
 
          -- Zone Story details

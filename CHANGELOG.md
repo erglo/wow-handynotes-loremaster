@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-* Tooltip: after deactivating the questline tags in settings, superfluous spacing appeared.
+* Tooltip: due to the many changes recently, when deactivating one or more content categories in settings superfluous spacing appeared.
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
 * Notifications: when earning an achievement criteria the counter was off by 1 since the achievement cache wasn't reset.
 * Notifications: due to faulty campaign identification, when accepting a quest the notification message did not appear.

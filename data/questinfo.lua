@@ -169,7 +169,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     local classificationID = pin.questClassification or self:GetQuestClassificationID(questInfo.questID);
     local tagInfo = self:GetQuestTagInfo(questInfo.questID);
     --> Note: Don't use `pin.questLineID`, yet. Currently NOT reliable! (11.0.2)
-    questInfo.hasQuestLineInfo = (pin.questLineID and pin.questLineID > 0) or (classificationID and classificationID == Enum.QuestClassification.Questline) or self:HasQuestLineInfo(questInfo.questID);
+    questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline) or self:HasQuestLineInfo(questInfo.questID);
     questInfo.isAccountQuest = (tagInfo and tagInfo.tagID == Enum.QuestTag.Account) or C_QuestLog.IsAccountQuest(questInfo.questID);
     questInfo.isActive = C_TaskQuest.IsActive(questInfo.questID);
     questInfo.isBonusObjective = pin.isBonusObjective or (classificationID and classificationID == Enum.QuestClassification.BonusObjective or QuestUtils_IsQuestBonusObjective(questInfo.questID));
