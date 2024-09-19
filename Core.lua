@@ -61,6 +61,7 @@ local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
 
 local DBUtil = ns.DatabaseUtil  --> <data\database.lua>
+local LocalFactionInfo = ns.FactionInfo;  --> <data\faction.lua>
 local LocalQuestCache = ns.QuestCacheUtil  --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
 local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
@@ -630,14 +631,6 @@ end
 
 ----- Faction Group Labels ----------
 
-local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
-
-local QuestNameFactionGroupTemplate = {
-    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
-    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
-    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
-}
-
 LocalUtils.QuestTag = {}
 LocalUtils.QuestTag.Class = 21
 LocalUtils.QuestTag.Escort = 84
@@ -698,7 +691,7 @@ local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.Que
 function LocalQuestUtils:FormatQuestName(questInfo)
     local iconString, atlasName;
     local isReady = questInfo.isReadyForTurnIn
-    local questTitle = QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
+    local questTitle = LocalFactionInfo.QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not L:StringIsEmpty(questInfo.questName) then
         if ( isReady and not (questInfo.isDaily or questInfo.isWeekly) ) then
@@ -803,7 +796,7 @@ end
 function LocalQuestUtils:FormatAchievementQuestName(questInfo, fallbackName)
     if not L:StringIsEmpty(questInfo.questName) then
         local iconString = CreateAtlasMarkup("SmallQuestBang", 16, 16, 1, -1)
-        local questTitle = iconString..QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
+        local questTitle = iconString..LocalFactionInfo.QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
         if (questInfo.questType ~= 0) then
             iconString = (questInfo.questType == LocalUtils.QuestTag.Escort) and CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 14, 16, 2) or CreateAtlasMarkup(QUEST_TAG_ATLAS[questInfo.questType], 16, 16, 2, -1)
             questTitle = questTitle..iconString
@@ -862,7 +855,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
         local tagID = tagInfo.tagID
         local tagName = tagInfo.tagName
         -- Account-wide quest types are usually only shown in the questlog
-        if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+        if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= LocalFactionInfo.QuestFactionGroupID.Neutral) then
             local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
             tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
             tagName = tagName..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(factionString)
@@ -943,7 +936,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
     --     local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
     --     LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, MAP_LEGEND_BONUSOBJECTIVE))
     -- end
-    if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral) then
+    if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= LocalFactionInfo.QuestFactionGroupID.Neutral) then
         -- Show faction group icon only when no tagInfo provided or not an account quest
         local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
         local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
@@ -1053,7 +1046,7 @@ function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
         --                                           questInfo.isDaily, questInfo.isWeekly, questInfo.isLegendary,
         --                                           -- questInfo.isBreadcrumbQuest, questInfo.isSequenced,
         --                                           questInfo.isImportant, questInfo.isAccountQuest,
-        --                                           questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
+        --                                           questInfo.questFactionGroup ~= LocalFactionInfo.QuestFactionGroupID.Neutral,
         --                                           questInfo.questClassification ~= Enum.QuestClassification.Normal,
         --                                           }, true)
 

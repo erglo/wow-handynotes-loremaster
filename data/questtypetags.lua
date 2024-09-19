@@ -34,29 +34,23 @@
 --
 --------------------------------------------------------------------------------
 
-local AddonID, ns = ...
+local AddonID, ns = ...;
 
 local L = ns.L;  --> <locales\L10nUtils.lua>
 
-local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
-local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
-
-local QuestNameFactionGroupTemplate = {
-    [QuestFactionGroupID.Alliance] = L.QUEST_NAME_FORMAT_ALLIANCE,
-    [QuestFactionGroupID.Horde] = L.QUEST_NAME_FORMAT_HORDE,
-    [QuestFactionGroupID.Neutral] = L.QUEST_NAME_FORMAT_NEUTRAL,
-};
+local QuestFactionGroupID = ns.FactionInfo.QuestFactionGroupID;  --> <data\faction.lua>
+local LocalQuestInfo = ns.QuestInfo;  --> <data\questinfo.lua>
 
 --------------------------------------------------------------------------------
 
-local LocalQuestTagUtil = {}
-ns.QuestTagUtil = LocalQuestTagUtil
+local LocalQuestTagUtil = {};
+ns.QuestTagUtil = LocalQuestTagUtil;
 
 ----- Constants -----
 
 -- Upvalues + Wrapper
-local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS
-local QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestTagAtlas
+local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS;
+local QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestTagAtlas;
 local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest;
 local QuestUtils_IsQuestWorldQuest = QuestUtils_IsQuestWorldQuest;
 

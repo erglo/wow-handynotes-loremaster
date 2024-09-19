@@ -44,9 +44,10 @@ local C_QuestLog = C_QuestLog;
 local C_QuestInfoSystem = C_QuestInfoSystem;
 local C_CampaignInfo = C_CampaignInfo;
 
-local QuestFactionGroupID = ns.QuestFactionGroupID;  --> <Data.lua>
 local LocalQuestCache = ns.QuestCacheUtil; --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter;  --> <data\questfilter.lua>
+
+local QuestFactionGroupID = ns.FactionInfo.QuestFactionGroupID  --> <data\faction.lua>
 
 --------------------------------------------------------------------------------
 

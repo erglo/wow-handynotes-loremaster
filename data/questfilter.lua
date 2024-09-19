@@ -88,6 +88,7 @@ end
 -- All quests of these questlines are weekly quests.
 LocalQuestFilter.weeklyQuestLines = {
     1416,  -- Dragonflight, Valdrakken, "Bonus Event Holiday Quests"
+    -- 5514,  -- Dragonflight, Azerothian Archives - Repeatable WQs (10.2.5)
 }
 
 -- All quests in this table are daily quests of different questlines.
@@ -211,12 +212,7 @@ end
 
 ----- Faction Groups ----------
 
--- local playerFactionGroup = UnitFactionGroup("player")
-
--- -- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
--- local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
-
-local QuestFactionGroupID = ns.QuestFactionGroupID  --> <Data.lua>
+local QuestFactionGroupID = ns.FactionInfo.QuestFactionGroupID  --> <data\faction.lua>
 
 -- Sometimes `GetQuestFactionGroup()` does not return the correct faction group ID, eg. Neutral instead of Horde.
 local correctFactionGroupQuests = {

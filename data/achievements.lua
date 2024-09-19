@@ -25,6 +25,10 @@ local AddonID, ns = ...
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
+local QuestFactionGroupID = ns.FactionInfo.QuestFactionGroupID  --> <data\faction.lua>
+
+--------------------------------------------------------------------------------
+
 local THE_LOREMASTER_ID = 7520  -- "The Loremaster" (category "Quests")
 local LOREMASTER_OF_THE_DRAGON_ISLES_ID = 16585  -- (still optional in 11.0.2)
 local LOREMASTER_OF_KHAZ_ALGAR_ID = 20596  -- (still optional in 11.0.2)
@@ -79,14 +83,6 @@ local function IsAccountWideAchievement(achievementFlags)
     if not achievementFlags then return end
     return bit.band(BIT_FLAG_ACCOUNT_WIDE_ACHIEVEMENT, achievementFlags) ~= 0
 end
-
------ Faction Groups -----------------------------------------------------------
-
--- Quest faction groups: {Alliance=1, Horde=2, Neutral=3}
-local QuestFactionGroupID = EnumUtil.MakeEnum(PLAYER_FACTION_GROUP[1], PLAYER_FACTION_GROUP[0], "Neutral")
-QuestFactionGroupID["Player"] = QuestFactionGroupID[ UnitFactionGroup("player") ]
-
-ns.QuestFactionGroupID = QuestFactionGroupID
 
 --------------------------------------------------------------------------------
 
