@@ -1882,6 +1882,9 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     --> REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
     assert(ticker == nil)
 	ticker = C_Timer.NewTicker(0.3, function() WorldMapPin_RefreshAllData(pin) end)
+
+    -- Now that the info has been displayed, reset quest type tag cache
+    wipe(LocalQuestTagUtil.cache);
 end
 
 ----------

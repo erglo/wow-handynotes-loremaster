@@ -134,18 +134,22 @@ local function FormatTagName(tagName, questInfo)
 end
 
 function LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo)
-    if not questInfo.questTagInfo then return true; end
-
     local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID);
     local shouldIgnoreShownTag = questInfo.isOnQuest and isKnownQuestTypeTag;
 
     return shouldIgnoreShownTag;
 end
 
+LocalQuestTagUtil.cache = {};
 LocalQuestTagUtil.defaultIconWidth = 20;
 LocalQuestTagUtil.defaultIconHeight = 20;
 
 function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
+    local questIDstring = tostring(questID);
+    if self.cache[questIDstring] then
+        return SafeUnpack(self.cache[questIDstring]);
+    end
+
     local questInfo = baseQuestInfo or LocalQuestInfo:GetCustomQuestInfo(questID);
     local width = self.defaultIconWidth;
     local height = self.defaultIconHeight;
@@ -331,6 +335,10 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
             ["tagID"] = factionTagID,
             ["ranking"] = 5,
         });
+    end
+
+    if not self.cache[questIDstring] then
+        self.cache[questIDstring] = {tagInfoList, questInfo};
     end
 
     return tagInfoList, questInfo;
