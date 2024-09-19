@@ -10,8 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-* Tooltip: refined zone story indication.
-* Tooltip: refined zone story, questline and campaign identification.
+* Tooltip: refined zone story, questline and campaign identification and indication.
 * Tooltip: updated storyline quest counter to support Warband vs. individual progress.
 * Tooltip: updated counter and visual indication of in-progress and ready-for-turn-in storyline quests.
 * Tooltip: updated color theme for storyline quests (`green` - Warband completed quest, `dark green` - quest completed by current char + Warband, `yellow` - current available quest, `lighter yellow` - ongoing/in-progress quest, `white` - available not yet completed quest, `orange` - story/lore quest.
@@ -20,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+* Tooltip: after deactivating the questline tags in settings, superfluous spacing appeared.
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
 * Notifications: when earning an achievement criteria the counter was off by 1 since the achievement cache wasn't reset.
 * Notifications: due to faulty campaign identification, when accepting a quest the notification message did not appear.

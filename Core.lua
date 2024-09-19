@@ -827,16 +827,6 @@ LocalQuestUtils.GetQuestName = function(self, questID)
     return QuestUtils_GetQuestName(questID)   -- QuestCache:Get(questID).title
 end
 
-local function ShouldIgnoreQuestTypeTag(questInfo)
-    if not questInfo.questTagInfo then return true end
-
-    local isKnownQuestTypeTag = QuestUtils_IsQuestDungeonQuest(questInfo.questID)
-    local shouldIgnore = (questInfo.isOnQuest or questInfo.questTagInfo and questInfo.questTagInfo.worldQuestType) and isKnownQuestTypeTag
-    if shouldIgnore then debug:print("Ignoring questTypeTag:", questInfo.questTagInfo.tagID, questInfo.questTagInfo.tagName) end
-
-    return shouldIgnore
-end
-
 local classificationIgnoreTable = {
 	Enum.QuestClassification.Legendary,
 	Enum.QuestClassification.Campaign,
@@ -868,7 +858,7 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          
 
     -- Blizzard's default tags
     local tagInfo = questInfo.questTagInfo
-    if (tagInfo and not ShouldIgnoreQuestTypeTag(questInfo)) then
+    if (tagInfo and not LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo)) then
         local tagID = tagInfo.tagID
         local tagName = tagInfo.tagName
         -- Account-wide quest types are usually only shown in the questlog
@@ -1599,26 +1589,9 @@ local function ShowAllTooltips()
 end
 
 local function ShouldShowQuestType(pin)
-    -- These are types which are not displayed as tags by Blizzard
-    local hasHiddenQuestType = tContains({
-        -- pin.questInfo.questClassification ~= Enum.QuestClassification.Normal,
-        pin.questInfo.isAccountQuest,
-        pin.questInfo.isBonusObjective,
-        pin.questInfo.isDaily,
-        pin.questInfo.isStory,
-        pin.questInfo.isRepeatable,
-        pin.questInfo.isTrivial,
-        pin.questInfo.isWeekly,
-        pin.questInfo.questFactionGroup ~= QuestFactionGroupID.Neutral,
-    }, true)
-    -- pin.questInfo.isBreadcrumbQuest,
-    -- pin.questInfo.isCampaign,
-    -- pin.questInfo.isImportant, 
-    -- pin.questInfo.isLegendary,
-    -- pin.questInfo.isSequenced,
-    local hasTagsToShow = hasHiddenQuestType or not ShouldIgnoreQuestTypeTag(pin.questInfo)
+    if not ns.settings.showQuestType then return; end
 
-    return ns.settings.showQuestType and hasTagsToShow
+    return (#LocalQuestTagUtil:GetQuestTagInfoList(pin.questID, pin.questInfo) > 0)
 end
 
 local function ShouldShowReadyForTurnInMessage(pin)
@@ -1821,7 +1794,6 @@ end
 local function IsRelevantQuest(questInfo)
     return (questInfo.isCampaign or questInfo.isStory or questInfo.hasQuestLineInfo or questInfo.isBonusObjective or
             not LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo))
-            -- (questInfo.questTagInfo ~= nil and not ShouldIgnoreQuestTypeTag(questInfo))
 end
 
 -- Extend and update quest meta data
@@ -1868,6 +1840,9 @@ local function WorldMapPin_RefreshAllData(pin)
     AddTooltipContent(contentTooltip, pin)
 
     ShowAllTooltips()
+
+    -- Now that the info has been displayed, reset quest type tag cache
+    wipe(LocalQuestTagUtil.cache)
 end
 
 ----------
@@ -1882,9 +1857,6 @@ local function Hook_StorylineQuestPin_OnEnter(pin)
     --> REF.: [WorldQuestDataProvider.lua](https://www.townlong-yak.com/framexml/live/Blizzard_SharedMapDataProviders/WorldQuestDataProvider.lua)
     assert(ticker == nil)
 	ticker = C_Timer.NewTicker(0.3, function() WorldMapPin_RefreshAllData(pin) end)
-
-    -- Now that the info has been displayed, reset quest type tag cache
-    wipe(LocalQuestTagUtil.cache);
 end
 
 ----------
