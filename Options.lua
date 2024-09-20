@@ -64,7 +64,7 @@ ns.pluginInfo.defaultOptions = {
         ["continentIconScale"] = 1.5,
         ["continentIconAlpha"] = 0.75,
         ["hideZoneStoryInCompletedZones"] = false,
-        ["showTagQuestline"] = false,
+        -- ["showTagQuestline"] = false,
 	},
 }
 ns.pluginInfo.needWorldMapRefresh = {
@@ -205,7 +205,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Track World Quests",
                                 desc = "Show additional details for World Quests in a separate tooltip below the quest tooltip.",
                                 arg = "trackWorldQuests",
-                                width = 1.2,
+                                width = 1.15,
                                 order = 30,
                             },
                             track_threatquests = {
@@ -213,7 +213,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Track Threat Objectives",
                                 desc = "Show additional details for Threat Objectives in a separate tooltip below the quest tooltip.",
                                 arg = "trackThreatObjectives",
-                                width = 1.2,
+                                width = 1.15,
                                 order = 31,
                             },
                             track_bonusquests = {
@@ -221,7 +221,7 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Track Bonus Objectives",
                                 desc = "Show additional details for Bonus Objectives in a separate tooltip below the quest tooltip.",
                                 arg = "trackBonusObjectives",
-                                width = 1.2,
+                                width = 1.15,
                                 order = 32,
                             },
                             --> TODO - Track active quests / ready-for-turnin quests
@@ -231,16 +231,25 @@ ns.pluginInfo.InitializeOptions = function(self, LoremasterPlugin)
                                 name = "Quest Tag Transparency",
                                 desc = "Display quest tag lines of lower level quests semi-transparent.",
                                 arg = "showTagTransparency",
-                                width = 1.2,
+                                width = 1.15,
                                 order = 35,
                             },
                             quest_tag_questline = {
                                 type = "toggle",
                                 name = "Show Storyline Tag",
-                                desc = "Display a quest tag line for quests with a storyline.",
+                                desc = "Show or hide a quest tag line for quests with a storyline.",
                                 arg = "showTagQuestline",
-                                width = 1.2,
+                                width = 1.15,
                                 order = 36,
+                            },
+                            quest_tag_repeatableWQ = {
+                                type = "toggle",
+                                name = "Show Repeatable WQ Tag"..LocalOptionUtils.newFeatureIconString,
+                                desc = "Show or hide the repeatable quest tag line for World Quests (only).",
+                                arg = "showTagRepeatableWQ",
+                                -- width = 1.2,
+                                width = "double",
+                                order = 37,
                             },
                         },
                     },  --> general_details

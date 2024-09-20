@@ -2697,7 +2697,7 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 -- end
 
 
--- function TestAdd(questID)
+-- function TestEventAdd(questID)
 --     local questInfo = LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
 --     print("Quest accepted:", questID, questInfo.questName)
 --     print("> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
@@ -2706,6 +2706,23 @@ L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
 --     print("--> QL, CP:", questLineID, campaignID)
 -- end
 -- -- TestAdd(79336)
+
+-- function TestQL(questID, mapID)
+--     local questLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
+--     local filteredQuestInfos = LocalQuestLineUtils:FilterQuestLineQuests(questLineInfo)
+
+--     for i, questInfo in ipairs(filteredQuestInfos.quests) do
+--         print(i, questInfo.questID, questInfo.questName)
+--     end
+--     print("- - - - -")
+--     for i, questID in ipairs(filteredQuestInfos.unfilteredQuests) do
+--         local isFactionGroupMatch = tContains({LocalFactionInfo.QuestFactionGroupID.Player, LocalFactionInfo.QuestFactionGroupID.Neutral}, LocalQuestInfo:GetQuestFactionGroup(questID))
+--         local questInfo = LocalQuestInfo:GetCustomQuestInfo(questID)
+--         print(i, questID, LocalQuestUtils:GetQuestName(questID), "-", LocalQuestFilter:PlayerMatchesQuestRequirements(questInfo))
+--         print("-->", LocalQuestFilter:IsObsolete(questID), LocalQuestFilter:ShouldShowRaceQuest(questID), LocalQuestFilter:ShouldShowClassQuest(questID), isFactionGroupMatch)
+--     end
+-- end
+-- -- TestQL(76587, 2023)
 
 --------------------------------------------------------------------------------
 --@end-do-not-package@

@@ -181,7 +181,7 @@ function LocalQuestInfo:GetQuestInfoForPin(pin)
     questInfo.isLegendary = pin.isLegendary or (classificationID and classificationID == Enum.QuestClassification.Legendary) or C_QuestLog.IsLegendaryQuest(questInfo.questID);
     questInfo.isOnQuest = pin.inProgress or C_QuestLog.IsOnQuest(questInfo.questID);
     questInfo.isReadyForTurnIn = self:ReadyForTurnIn(questInfo.questID);
-    questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
+    questInfo.isRepeatable = (pin.IsRepeatableQuest and pin:IsRepeatableQuest()) or C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
     questInfo.isStory = questInfo.isStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isThreat = (classificationID and classificationID == Enum.QuestClassification.Threat) or (tagInfo and tagInfo.tagID == Enum.QuestTagType.Threat);
     questInfo.isTrivial = pin.isHidden or questInfo.isHidden or C_QuestLog.IsQuestTrivial(questInfo.questID);

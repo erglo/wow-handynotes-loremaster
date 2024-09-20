@@ -215,8 +215,8 @@ function LocalQuestTagUtil:GetQuestTagInfoList(questID, baseQuestInfo)
             ["ranking"] = 3,
         });
     end
-    -- if (questInfo.isRepeatable and not isRecurring and not (questInfo.isDaily or questInfo.isWeekly) and not questInfo.isWorldQuest) then
-    if (questInfo.isRepeatable and not isRecurring and not questInfo.isWorldQuest) then
+    if (questInfo.isRepeatable and not isRecurring and not questInfo.isWorldQuest) or
+       (questInfo.isRepeatable and questInfo.isWorldQuest and ns.settings.showTagRepeatableWQ) then
         local atlas = questInfo.isReadyForTurnIn and "RecurringActiveQuestIcon" or "RecurringAvailableQuestIcon"
         tinsert(tagInfoList, {  -- "quest-recurring-turnin" or "quest-recurring-available"
             ["atlasMarkup"] = CreateAtlasMarkup(atlas, width, height),

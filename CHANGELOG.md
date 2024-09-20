@@ -8,13 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ⚠️ **Note:** _This is a pre-release version and still in development._ ⚠️
 
+### Added
+
+* Settings: added option to toggle the repeatable tag line for world quest.
+* Settings: added option to toggle quest titles in the Loremaster tooltip.
+
 ### Changed
 
+* Quest Type Tags: loosened filter to allow the repeatable tag line for world quests.
 * Tooltip: refined zone story, questline and campaign identification and indication.
 * Tooltip: updated storyline quest counter to support Warband vs. individual progress.
 * Tooltip: updated counter and visual indication of in-progress and ready-for-turn-in storyline quests.
 * Tooltip: updated color theme for storyline quests (`green` - Warband completed quest, `dark green` - quest completed by current char + Warband, `yellow` - current available quest, `lighter yellow` - ongoing/in-progress quest, `white` - available not yet completed quest, `orange` - story/lore quest.
-* Tooltip: quest titles in the Loremaster tooltip can now optionally be hidden.
 * Tooltip: adjusted quest tooltip width - tooltips with shorter content will now be stretched to fit the game's default tooltip.
 
 ### Fixed
