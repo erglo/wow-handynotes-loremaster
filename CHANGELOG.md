@@ -4,9 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-⚠️ **Note:** _This is a pre-release version and still in development._ ⚠️
+## [0.10.0-beta+110002] - 2024-09-20
 
 ### Added
 
@@ -24,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-* Tooltip: due to the many changes recently, when deactivating one or more content categories in settings superfluous spacing appeared.
+* Tooltip: due to the many changes recently, when deactivating one or more content categories in settings superfluous spacing appeared in the main tooltip.
 * Quest Type Tags: important quests showed both old- and new-style tags in the tooltip.
 * Notifications: when earning an achievement criteria the counter was off by 1 since the achievement cache wasn't reset.
 * Notifications: due to faulty campaign identification, when accepting a quest the notification message did not appear.
@@ -250,6 +248,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * Basic file structure for a HandyNotes plugin using Ace3.
 
 <!-- [Unreleased]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.6.0-beta...development -->
+[0.10.0-beta+110002]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.9.0-beta...v0.10.0-beta
 [0.9.0-beta+110002]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.8.0-beta...v0.9.0-beta
 [0.8.0-beta+110000]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.7.1-beta...v0.8.0-beta
 [0.7.1-beta+100206]: https://github.com/erglo/wow-handynotes-loremaster/compare/v0.7.0-beta...v0.7.1-beta
