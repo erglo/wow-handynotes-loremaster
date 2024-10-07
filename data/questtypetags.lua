@@ -38,6 +38,10 @@ local AddonID, ns = ...;
 
 local L = ns.L;  --> <locales\L10nUtils.lua>
 
+local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS;
+local QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestTagAtlas;
+local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest;
+
 local QuestFactionGroupID = ns.FactionInfo.QuestFactionGroupID;  --> <data\faction.lua>
 local LocalQuestInfo = ns.QuestInfo;  --> <data\questinfo.lua>
 
@@ -47,12 +51,6 @@ local LocalQuestTagUtil = {};
 ns.QuestTagUtil = LocalQuestTagUtil;
 
 ----- Constants -----
-
--- Upvalues + Wrapper
-local QUEST_TAG_ATLAS = QUEST_TAG_ATLAS;
-local QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestTagAtlas;
-local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest;
-local QuestUtils_IsQuestWorldQuest = QuestUtils_IsQuestWorldQuest;
 
 -- Quest tag IDs, additional to `Enum.QuestTag` and `Enum.QuestTagType`
 --> REF.: [Enum.QuestTag](https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestLogDocumentation.lua)

@@ -39,10 +39,10 @@
 
 local AddonID, ns = ...;
 
--- Upvalues
 local C_QuestLog = C_QuestLog;
 local C_QuestInfoSystem = C_QuestInfoSystem;
 local C_CampaignInfo = C_CampaignInfo;
+local QuestUtils_IsQuestWorldQuest = QuestUtils_IsQuestWorldQuest;
 
 local LocalQuestCache = ns.QuestCacheUtil; --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter;  --> <data\questfilter.lua>
@@ -316,7 +316,6 @@ end
 --> TODO
 --[[
 
-QuestUtils_IsQuestDungeonQuest(questID)
 QuestUtils_GetQuestName(questID)  --> (needed ??)
 QuestUtils_GetCurrentQuestLineQuest(questLineID)
 QuestUtils_IsQuestWatched(questID)
