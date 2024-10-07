@@ -672,7 +672,7 @@ function LocalQuestUtils:FormatQuestName(questInfo)
     local questTitle = LocalFactionInfo.QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
     if not L:StringIsEmpty(questInfo.questName) then
-        if ( isReady and not (questInfo.isDaily or questInfo.isWeekly) ) then
+        if ( isReady and not (questInfo.isDaily or questInfo.isWeekly or questInfo.isLegendary) ) then
             if ns.settings.showQuestTypeAsText then
                 questTitle = BLUE(L.PARENS_TEMPLATE:format(QuestTagNames["COMPLETED"]))..L.TEXT_DELIMITER..questTitle
             else
