@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+* Notifications: when aborting a questline or campaign quest the completion message appeared.
 * Tooltip: a legendary ready-for-turn-in quest showed two "complete" icons, the regular one and the legendary one.
 
 ## [0.10.0-beta+110002] - 2024-09-20

@@ -2107,7 +2107,9 @@ function LoremasterPlugin:QUEST_REMOVED(eventName, ...)
 
     if DBUtil:IsQuestActiveLoreQuest(questID) then
         local questLineID, campaignID = DBUtil:RemoveActiveLoreQuest(questID)
-        PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
+        if questInfo.isFlaggedCompleted then
+            PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
+        end
     end
 end
 

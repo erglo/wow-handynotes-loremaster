@@ -300,10 +300,11 @@ function LocalQuestInfo:GetQuestInfoForQuestEvents(questID)
     questInfo.questID = questID;
     questInfo.questName = questInfo.title or QuestUtils_GetQuestName(questInfo.questID);
 
-    local classificationID = questInfo.questClassification or LocalQuestInfo:GetQuestClassificationID(questInfo.questID);
+    local classificationID = questInfo.questClassification or self:GetQuestClassificationID(questInfo.questID);
     questInfo.hasQuestLineInfo = (classificationID and classificationID == Enum.QuestClassification.Questline) or LocalQuestInfo:HasQuestLineInfo(questInfo.questID);
     questInfo.isCampaign = (questInfo.campaignID and questInfo.campaignID > 0) or (classificationID and classificationID == Enum.QuestClassification.Campaign) or C_CampaignInfo.IsCampaignQuest(questInfo.questID);
     questInfo.isDaily = LocalQuestFilter:IsDaily(questInfo.questID, questInfo);
+    questInfo.isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(questInfo.questID);
     questInfo.isRepeatable = C_QuestLog.IsRepeatableQuest(questInfo.questID) or C_QuestLog.IsQuestRepeatableType(questInfo.questID);
     questInfo.isStory = questInfo.isStory or LocalQuestFilter:IsStory(questInfo.questID, questInfo);
     questInfo.isWeekly = LocalQuestFilter:IsWeekly(questInfo.questID, questInfo);
