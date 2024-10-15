@@ -3,7 +3,7 @@
 --
 -- by erglo <erglo.coder+HNLM@gmail.com>
 --
--- Copyright (C) 2023  Erwin D. Glockner (aka erglo)
+-- Copyright (C) 2023  Erwin D. Glockner (aka erglo, ergloCoder)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -55,13 +55,13 @@ local LibQTipUtil = ns.utils.libqtip
 local LocalAchievementUtil = ns.utils.achieve
 local LocalMapUtils = ns.utils.worldmap
 
-local L = ns.L;  --> <locales\L10nUtils.lua>
+local L = ns.L  --> <locales\L10nUtils.lua>
 
 local LoreUtil = ns.lore  --> <Data.lua>
 LoreUtil.storyQuests = {}
 
 local DBUtil = ns.DatabaseUtil  --> <data\database.lua>
-local LocalFactionInfo = ns.FactionInfo;  --> <data\faction.lua>
+local LocalFactionInfo = ns.FactionInfo  --> <data\faction.lua>
 local LocalQuestCache = ns.QuestCacheUtil  --> <data\questcache.lua>
 local LocalQuestFilter = ns.QuestFilter  --> <data\questfilter.lua>
 local LocalQuestInfo = ns.QuestInfo  --> <data\questinfo.lua>
@@ -73,12 +73,11 @@ local tContains, tInsert = tContains, table.insert
 local C_QuestLog, C_QuestLine, C_CampaignInfo = C_QuestLog, C_QuestLine, C_CampaignInfo
 local QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas = QuestUtils_GetQuestName, QuestUtils_GetQuestTagAtlas
 local QuestUtils_IsQuestBonusObjective = QuestUtils_IsQuestBonusObjective
--- local QuestUtils_IsQuestDungeonQuest = QuestUtils_IsQuestDungeonQuest
 local QuestUtil = QuestUtil
 local GetQuestUiMapID, QuestHasPOIInfo = GetQuestUiMapID, QuestHasPOIInfo
 local IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest = IsBreadcrumbQuest, IsQuestSequenced, IsStoryQuest
 local GetQuestExpansion, UnitFactionGroup = GetQuestExpansion, UnitFactionGroup
-local C_Map = C_Map  -- C_TaskQuest
+local C_Map = C_Map
 local C_QuestInfoSystem = C_QuestInfoSystem
 local CreateAtlasMarkup = CreateAtlasMarkup
 
@@ -408,17 +407,7 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         for criteriaIndex=1, achievementInfo.numCriteria do
             local criteriaInfo = LocalAchievementUtil.GetWrappedAchievementCriteriaInfo(achievementID, criteriaIndex)
             if criteriaInfo then
-                -- -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
-                -- if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
-                --     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-                --         criteriaInfo.completed = LocalQuestUtils:IsQuestCompletedByAnyone(criteriaInfo.assetID)
-                --     end
-                --     -- if C_AchievementInfo.IsValidAchievement(criteriaInfo.assetID) then
-                --     --     local criteriaAchievementInfo = LocalAchievementUtil.GetWrappedAchievementInfo(criteriaInfo.assetID)
-                --     --     criteriaInfo.completed = criteriaAchievementInfo.completed -- and WasEarnedByMe(achievementInfo)
-                --     --     -- criteriaInfo.completed = WasEarnedByMe(criteriaAchievementInfo)
-                --     -- end
-                -- end
+                -- Note: Currently (WoW 11.0.0) many char-specific achievements became Account or Warband achievements.
                 if criteriaInfo.completed then
                     achievementInfo.numCompleted = achievementInfo.numCompleted + 1
                 end
@@ -432,7 +421,6 @@ function ZoneStoryUtils:GetAchievementInfo(achievementID)
         if LoreUtil:IsHiddenCharSpecificAchievement(achievementID) then
             achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
         end
-        -- achievementInfo.completed = (achievementInfo.numCompleted == achievementInfo.numCriteria)
 
         -- Add some additional values
         achievementInfo.isOptionalAchievement = LoreUtil:IsOptionalAchievement(achievementID)
@@ -448,26 +436,26 @@ end
 
 function ZoneStoryUtils:IsZoneStoryActive(pin, criteriaInfo)
     if (criteriaInfo.criteriaType == LocalUtils.CriteriaType.Quest) then
-        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID;
+        local questID = criteriaInfo.assetID and criteriaInfo.assetID or criteriaInfo.criteriaID
 
         if (questID == pin.questID) then
-            return true;
+            return true
         end
 
-        local storyQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID);
-        local pinQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(pin.questID);
+        local storyQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(questID)
+        local pinQuestLineInfo = LocalQuestLineUtils:GetCachedQuestLineInfo(pin.questID)
         if (storyQuestLineInfo and pinQuestLineInfo and storyQuestLineInfo.questLineID == pinQuestLineInfo.questLineID) then
-            return true;
+            return true
         end
     end
 
     if pin.questInfo and pin.questInfo.hasQuestLineInfo then
         if (pin.questInfo.currentQuestLineName == criteriaInfo.criteriaString) then
-            return true;
+            return true
         end
     end
 
-    return false;
+    return false
 end
 
 -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_AchievementUI/Blizzard_AchievementUI.lua> (see "AchievementShield_OnEnter")
@@ -668,7 +656,7 @@ local leftSidedTags = {Enum.QuestTag.Dungeon, Enum.QuestTag.Raid, LocalUtils.Que
 
 -- Add quest type tags (text or icon) to a quest name.
 function LocalQuestUtils:FormatQuestName(questInfo)
-    local iconString, atlasName;
+    local iconString, atlasName
     local isReady = questInfo.isReadyForTurnIn
     local questTitle = LocalFactionInfo.QuestNameFactionGroupTemplate[questInfo.questFactionGroup]:format(questInfo.questName)
 
@@ -824,105 +812,6 @@ function LocalQuestUtils:AddQuestTagLinesToTooltip_New(tooltip, baseQuestInfo)
     end
 end
 
--- Add daily and weekly quests to known quest types.
-function LocalQuestUtils:AddQuestTagLinesToTooltip(tooltip, questInfo)          --> TODO - Clean this up
-    local LineColor = questInfo.isOnQuest and TOOLTIP_DEFAULT_COLOR or NORMAL_FONT_COLOR
-
-    -- Blizzard's default tags
-    local tagInfo = questInfo.questTagInfo
-    if (tagInfo and not LocalQuestTagUtil:ShouldIgnoreQuestTypeTag(questInfo)) then
-        local tagID = tagInfo.tagID
-        local tagName = tagInfo.tagName
-        -- Account-wide quest types are usually only shown in the questlog
-        if (tagInfo.tagID == Enum.QuestTag.Account and questInfo.questFactionGroup ~= LocalFactionInfo.QuestFactionGroupID.Neutral) then
-            local factionString = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and FACTION_HORDE or FACTION_ALLIANCE
-            tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-            tagName = tagName..L.TEXT_DELIMITER..L.PARENS_TEMPLATE:format(factionString)
-        end
-        if (tagInfo.worldQuestType ~= nil) then                                 --> TODO - Add to '<utils\libqtip.lua>'
-            local atlas, width, height = QuestUtil.GetWorldQuestAtlasInfo(questInfo.questID, tagInfo, questInfo.isActive)
-            local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-            LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
-        end
-        if (tagInfo.tagID == Enum.QuestTagType.Threat or questInfo.isThreat) then
-            local atlas = QuestUtil.GetThreatPOIIcon(questInfo.questID)
-            local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-            LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, tagInfo.tagName))
-        end
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, tagInfo.worldQuestType, LineColor)
-    end
-
-    -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_APIDocumentationGenerated/QuestInfoSystemDocumentation.lua>
-    -- REF.: <https://www.townlong-yak.com/framexml/live/Blizzard_FrameXMLUtil/QuestUtils.lua>
-    -- local classificationInfo = C_QuestInfoSystem.GetQuestClassification(questInfo.questID);
-    -- local classificationString = QuestUtil.GetQuestClassificationString(questInfo.questID)
-    local classificationID, classificationText, classificationAtlas, clSize = QuestUtil.GetQuestClassificationDetails(questInfo.questID)
-
-    -- Custom tags
-    if questInfo.isDaily then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, L.DAILY, "DAILY", nil, LineColor)
-        -- if questInfo.isCampaign then
-        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
-        -- else
-        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "DAILY"
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, DAILY, tagName, nil, LineColor)
-        -- end
-    end
-    if questInfo.isWeekly then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, L.WEEKLY, "WEEKLY", nil, LineColor)
-        -- if questInfo.isCampaign then
-        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_DAILY_CAMPAIGN" or "DAILY_CAMPAIGN"
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
-        -- else
-        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_REPEATABLE" or "WEEKLY"
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, WEEKLY, tagName, nil, LineColor)
-        -- end
-    end
-    if (classificationID and not tContains(classificationIgnoreTable, classificationID)) then
-        local atlasMarkup = CreateAtlasMarkup(classificationAtlas, 20, 20)
-        LibQTipUtil:AddNormalLine(tooltip, LineColor:WrapTextInColorCode(string.format("%s %s", atlasMarkup, classificationText)))
-    end
-    if questInfo.isTrivial then
-        if questInfo.isLegendary then
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_LEGENDARY"], "TRIVIAL_LEGENDARY", nil, LineColor)
-        -- elseif questInfo.isImportant then
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_IMPORTANT"], "TRIVIAL_IMPORTANT", nil, LineColor)
-        elseif questInfo.isCampaign then
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL_CAMPAIGN"], "TRIVIAL_CAMPAIGN", nil, LineColor)
-        else
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["TRIVIAL"], "TRIVIAL", nil, LineColor)
-        end
-    else
-        if questInfo.isLegendary then
-            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_LEGENDARY" or Enum.QuestTag.Legendary
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["LEGENDARY"], tagName, nil, LineColor)
-        end
-        -- if questInfo.isImportant then
-        --     local tagName = questInfo.isReadyForTurnIn and "COMPLETED_IMPORTANT" or "IMPORTANT"
-        --     LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["IMPORTANT"], RED(tagName), nil, LineColor)
-        -- end
-        if questInfo.isCampaign then -- and not questInfo.isDaily and not questInfo.isWeekly) then
-            local tagName = questInfo.isReadyForTurnIn and "COMPLETED_CAMPAIGN" or "CAMPAIGN"
-            LibQTipUtil:AddQuestTagTooltipLine(tooltip, QuestTagNames["CAMPAIGN"], tagName, nil, LineColor)
-        end
-    end
-    if questInfo.isStory then
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, STORY_PROGRESS, "STORY", nil, LineColor)
-    end
-    -- if questInfo.isBonusObjective then
-    --     local atlas = "questbonusobjective"
-    --     local atlasMarkup = CreateAtlasMarkup(atlas, 20, 20)
-    --     LibQTipUtil:AddNormalLine(tooltip, string.format("%s %s", atlasMarkup, MAP_LEGEND_BONUSOBJECTIVE))
-    -- end
-    if (not tagInfo or tagInfo.tagID ~= Enum.QuestTag.Account) and (questInfo.questFactionGroup ~= LocalFactionInfo.QuestFactionGroupID.Neutral) then
-        -- Show faction group icon only when no tagInfo provided or not an account quest
-        local tagName = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and ITEM_REQ_HORDE or ITEM_REQ_ALLIANCE
-        local tagID = questInfo.questFactionGroup == LE_QUEST_FACTION_HORDE and "HORDE" or "ALLIANCE"
-        LibQTipUtil:AddQuestTagTooltipLine(tooltip, tagName, tagID, nil, LineColor)
-    end
-end
-
 -- Retrieve different quest details.
 --
 function LocalQuestUtils:GetQuestInfo(questID, targetType, pinMapID)
@@ -1073,7 +962,7 @@ function LocalQuestUtils:GetCreateQuestLink(questInfo)
     local questLink = GetQuestLink(questInfo.questID)
     if not L:StringIsEmpty(questLink) then return questLink end
 
-    -- Create manually; need at least questID, questLevel, questName
+    -- Create manually, need at least questID, questLevel, questName
     local templateString = "|cff808080|Hquest:%d:%d|h[%s]|h|r"
     return templateString:format(questInfo.questID, questInfo.questLevel, questInfo.questName)
 end
@@ -1245,7 +1134,7 @@ function LocalQuestLineUtils:GetCachedQuestLineInfo(questID, mapID)
         questLineInfo.questID = questID
         return questLineInfo
     else
-        -- Might have slipped through caching (???); try API function
+        -- Might have slipped through caching (???). Try API function
         debug:print(self, questID, "QL quest NOT cached, using API call for map", mapID)
         local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, mapID)
         if questLineInfo then
@@ -1266,7 +1155,7 @@ LocalQuestLineUtils.GetQuestLineInfoByPin = function(self, pin)
 end
 
 LocalQuestLineUtils.AddQuestLineDetailsToTooltip = function(self, tooltip, pin, campaignChapterID)
-    local questLineInfo;
+    local questLineInfo
     if campaignChapterID then
         local chapterInfo = C_CampaignInfo.GetCampaignChapterInfo(campaignChapterID)
         local chapterName = chapterInfo and chapterInfo.name or RED(RETRIEVING_DATA)
@@ -1571,7 +1460,7 @@ local function ShowAllTooltips()
 end
 
 local function ShouldShowQuestType(pin)
-    if not ns.settings.showQuestType then return; end
+    if not ns.settings.showQuestType then return end
 
     return (#LocalQuestTagUtil:GetQuestTagInfoList(pin.questID, pin.questInfo) > 0)
 end
@@ -1581,18 +1470,18 @@ local function ShouldShowReadyForTurnInMessage(pin)
 end
 
 function LocalUtils:ShouldShowZoneStoryDetails(pin)
-    if not ns.settings.showZoneStory then return; end
-    if not ZoneStoryUtils:HasZoneStoryInfo(pin.mapID) then return; end
+    if not ns.settings.showZoneStory then return end
+    if not ZoneStoryUtils:HasZoneStoryInfo(pin.mapID) then return end
 
     local achievementID, achievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(pin.mapID)
     if (ns.settings.hideZoneStoryInCompletedZones and LocalAchievementUtil.IsAchievementCompleted(achievementID)) then
-        return;
+        return
     end
     if (not ns.settings.showOptionalZoneStories and LoreUtil:IsOptionalAchievement(achievementID)) then
-        return;
+        return
     end
 
-    return true;
+    return true
 end
 
 function LocalUtils:ShouldShowQuestLineDetails(pin)
@@ -1630,7 +1519,7 @@ function LocalUtils:IsPinActiveQuest(pin)
 end
 
 local function GetWorldQuestQualityColor(questTagInfo)
-    if not questTagInfo then return NORMAL_FONT_COLOR; end
+    if not questTagInfo then return NORMAL_FONT_COLOR end
 
     local quality = questTagInfo.quality or Enum.WorldQuestQuality.Common
     return WORLD_QUEST_QUALITY_COLORS[quality].color
@@ -1742,10 +1631,6 @@ local function AddTooltipContent(contentTooltip, pin)
             LibQTipUtil:AddBlankLineToTooltip(contentTooltip)
         end
         LocalQuestUtils:AddQuestTagLinesToTooltip_New(contentTooltip, pin.questInfo)
-        if debug.isActive then
-            LibQTipUtil:AddDisabledLine(contentTooltip, "Older style tags")
-            LocalQuestUtils:AddQuestTagLinesToTooltip(contentTooltip, pin.questInfo)
-        end
     end
 
     -- Zone story
@@ -1969,7 +1854,7 @@ end
 
 ----- Ace3 event handler
 
--- Inform user; print user-visible chat message
+-- Inform user, print user-visible chat message
 ---@param questID number
 ---@param questLineID number|nil
 ---@param campaignID number|nil
@@ -2058,7 +1943,7 @@ local function PrintQuestAddedMessage(questInfo)
         end
     end
 
-    -- Note: Sometimes campaign chapter IDs and questline IDs ar *not* identical; prefer questline ID if available.
+    -- Note: Sometimes campaign chapter IDs and questline IDs ar *not* identical, prefer questline ID if available.
     return questLineID or currentChapterID, campaignID
 end
 
@@ -2070,7 +1955,7 @@ function LoremasterPlugin:QUEST_ACCEPTED(eventName, ...)
     debug:print(LocalQuestFilter, "> isWeekly-isDaily:", questInfo.isWeekly, questInfo.isDaily)
     debug:print(LocalQuestFilter, "> isStory-isCampaign-isQuestLine:", questInfo.isStory, questInfo.isCampaign, questInfo.hasQuestLineInfo)
 
-    if tContains({questInfo.isWeekly, questInfo.isDaily}, true) then return end  -- Not lore relevant; do nothing.
+    if tContains({questInfo.isWeekly, questInfo.isDaily}, true) then return end  -- Not lore relevant, do nothing.
 
     if (questInfo.isCampaign or questInfo.hasQuestLineInfo) then
         local questLineID, campaignID = PrintQuestAddedMessage(questInfo)
@@ -2616,7 +2501,7 @@ end
 --         testDB[aID] = {}
 --     end
 --     local numCriteria = GetAchievementNumCriteria(aID)
---     local criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible; -- duration, elapsed;
+--     local criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible -- duration, elapsed
 
 --     for criteriaIndex = 1, numCriteria do
 --         criteriaString, criteriaType, completed, quantity, reqQuantity, charName, flags, assetID, quantityString, criteriaID, eligible = GetAchievementCriteriaInfo(aID, criteriaIndex)
@@ -2630,8 +2515,8 @@ end
 
 -----
 
--- local percent = math.floor((numFulfilled/numRequired) * 100);                --> TODO - Add progress percentage ???
--- GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent));
+-- local percent = math.floor((numFulfilled/numRequired) * 100)                --> TODO - Add progress percentage ???
+-- GameTooltip_ShowProgressBar(GameTooltip, 0, numRequired, numFulfilled, PERCENTAGE_STRING:format(percent))
 
 C_QuestLog.GetQuestsOnMap(uiMapID) : quests
 
@@ -2655,31 +2540,31 @@ C_Minimap.IsTrackingHiddenQuests()
 -- end
 
 -- REQ_ACHIEVEMENT = ITEM_REQ_PURCHASE_ACHIEVEMENT,
--- ITEM_REQ_REPUTATION = "Requires %s - %s";
--- ITEM_REQ_SKILL = "Requires %s";
--- ITEM_REQ_SPECIALIZATION = "Requires: %s";
--- ITEM_REQ_ALLIANCE = "Alliance Only";
--- ITEM_REQ_HORDE = "Horde Only";
--- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen";
--- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig";
-ACHIEVEMENTS = "Erfolge";
-ACHIEVEMENT_BUTTON = "Erfolge";
--- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
-OBJECTIVES_VIEW_ACHIEVEMENT = "Erfolg öffnen";
--- ACHIEVEMENT_UNLOCKED = "Erfolg errungen";
--- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick";
--- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg";
--- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen.";
--- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)";
--- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt";
+-- ITEM_REQ_REPUTATION = "Requires %s - %s"
+-- ITEM_REQ_SKILL = "Requires %s"
+-- ITEM_REQ_SPECIALIZATION = "Requires: %s"
+-- ITEM_REQ_ALLIANCE = "Alliance Only"
+-- ITEM_REQ_HORDE = "Horde Only"
+-- ACHIEVEMENT_STATUS_COMPLETED = ACHIEVEMENTFRAME_FILTER_COMPLETED,  -- "Errungen"
+-- ACHIEVEMENT_STATUS_INCOMPLETE = ACHIEVEMENTFRAME_FILTER_INCOMPLETE, -- "Unvollständig"
+ACHIEVEMENTS = "Erfolge"
+ACHIEVEMENT_BUTTON = "Erfolge"
+-- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen"
+OBJECTIVES_VIEW_ACHIEVEMENT = "Erfolg öffnen"
+-- ACHIEVEMENT_UNLOCKED = "Erfolg errungen"
+-- ACHIEVEMENT_CATEGORY_PROGRESS = "Fortschrittsüberblick"
+-- ACHIEVEMENT_COMPARISON_NO_PROGRESS = "Noch kein Fortschritt für diesen Erfolg"
+-- ACHIEVEMENT_META_COMPLETED_DATE = "%s abgeschlossen."
+-- ARTIFACT_HIDDEN_ACHIEVEMENT_PROGRESS_FORMAT = "%s (%d / %d)"
+-- CONTENT_TRACKING_CHECKMARK_TOOLTIP_TITLE = "Zurzeit verfolgt"
 L.OBJECTIVE_FORMAT = CONTENT_TRACKING_OBJECTIVE_FORMAT  -- "- %s"
--- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen.";
--- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen";
--- CONTINENT = "Kontinent";
--- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen";
+-- ERR_ACHIEVEMENT_WATCH_COMPLETED = "Dieser Erfolg wurde bereits abgeschlossen."
+-- GUILD_NEWS_VIEW_ACHIEVEMENT = "Erfolg anzeigen"
+-- CONTINENT = "Kontinent"
+-- ACHIEVEMENT_NOT_COMPLETED = ACHIEVEMENT_COMPARISON_NOT_COMPLETED,  -- "Erfolg nicht abgeschlossen"
 
--- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r";
--- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r";
+-- MAJOR_FACTION_RENOWN_CURRENT_PROGRESS = "Aktueller Fortschritt: |cffffffff%d/%d|r"
+-- QUEST_LOG_COUNT_TEMPLATE = "Quests: %s%d|r|cffffffff/%d|r"
 
 -- QuestMapLog_ShowStoryTooltip(QuestMapFrame)
 
