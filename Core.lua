@@ -359,26 +359,27 @@ function ZoneStoryUtils:GetZoneStoryInfo(mapID, prepareCache)
 end
 
 function ZoneStoryUtils:HasZoneStoryInfo(mapID)
-    if self.storiesOnMap[mapID] then
-        return true;
-    end
-
-    return C_QuestLog.GetZoneStoryInfo(mapID) ~= nil;
+    return self:HasCachedZoneStoryInfo(mapID) or C_QuestLog.GetZoneStoryInfo(mapID) ~= nil
 end
 
--- function ZoneStoryUtils:HasParentZoneStoryInfo(mapID)
---     local mapInfo = LocalMapUtils:GetMapInfo(mapID);
+function ZoneStoryUtils:HasCachedZoneStoryInfo(mapID)
+    return self.storiesOnMap[mapID] ~= nil
+end
 
---     return self:HasZoneStoryInfo(mapInfo.parentMapID);
--- end
+function ZoneStoryUtils:ClearStoryCacheByAchievement(achievementID)
+    if self.achievements[achievementID] then
+        self.achievements[achievementID] = nil
+    end
+end
 
--- local function WasEarnedByMe(achievementInfo)
---     -- local isAccountWideAchievement = LoreUtil:IsAccountWideAchievement(achievementInfo.flags)
---     -- local earnedBy = achievementInfo.earnedBy
---     -- local wasEarnedByMe = achievementInfo.earnedBy == playerName
---     print(achievementInfo.achievementID, achievementInfo.earnedBy, playerName, achievementInfo.earnedBy == playerName)
---     return achievementInfo.earnedBy == playerName
--- end
+function ZoneStoryUtils:ClearStoryCacheByZone(mapID)
+    -- Clear story cache for current zone
+    if self:HasCachedZoneStoryInfo(mapID) then
+        local achievementID, storyAchievementID2, mapInfo = SafeUnpack(self.storiesOnMap[ns.activeZoneMapInfo.mapID])
+        self:ClearStoryCacheByAchievement(achievementID)
+        self:ClearStoryCacheByAchievement(storyAchievementID2)
+    end
+end
 
 -- Check if your current char or someone of your War Band has completed the given quest.
 ---@param questInfo QuestInfo|table
@@ -1977,6 +1978,7 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
     local isQuestCompleted = LocalQuestUtils:IsQuestCompletedByAnyone(nil, questID)
     local numThreshold = not isQuestCompleted and 1 or 0
     local activeMapInfo = LocalUtils:GetActiveMapInfo()
+
     if (campaignID and ns.settings.showCampaignQuestProgressMessage) then
         local campaignInfo = CampaignUtils:GetCampaignInfo(campaignID)
         if campaignInfo then
@@ -2005,6 +2007,8 @@ local function PrintLoreQuestRemovedMessage(questID, questLineID, campaignID)
             )
             if (filteredQuestInfos.numCompleted + numThreshold == filteredQuestInfos.numTotal) then
                 ns:cprint(GREEN(L.CONGRATULATIONS), string.format("You have completed all %s quests in %s.", QUESTLINE_HEADER_COLOR:WrapTextInColorCode(questLineInfo.questLineName), activeMapInfo.name))
+                -- Clear story cache to refresh data
+                ZoneStoryUtils:ClearStoryCacheByZone(activeMapInfo.mapID)
             end
         end
     end
@@ -2111,15 +2115,16 @@ function LoremasterPlugin:ACHIEVEMENT_EARNED(eventName, ...)
     if not ns.settings.showCriteriaEarnedMessage then return end
 
     local achievementID, alreadyEarned = ...
-    local playerMapID = LocalMapUtils:GetBestMapForPlayer()
-    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(playerMapID)
+    ZoneStoryUtils:ClearStoryCacheByAchievement(achievementID)  -- Clear story cache first to refresh data
+
+    local activeMapInfo = LocalUtils:GetActiveMapInfo()
+    local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(activeMapInfo.mapID)
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
-            local mapInfo = LocalMapUtils:GetMapInfo(playerMapID)
+            local mapInfo = LocalMapUtils:GetMapInfo(activeMapInfo.mapID)
             ns:cprint(ORANGE(L.CONGRATULATIONS), string.format("You have completed %s in %s.", achievementLink, mapInfo.name))
-            ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
         end
     end
 end
@@ -2129,18 +2134,16 @@ function LoremasterPlugin:CRITERIA_EARNED(eventName, ...)
 
     local achievementID, description = ...
     local activeMapInfo = LocalUtils:GetActiveMapInfo()
-
-    ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
-
     local storyAchievementID, storyAchievementID2, storyMapInfo = ZoneStoryUtils:GetZoneStoryInfo(activeMapInfo.mapID)
+
     if tContains({storyAchievementID, storyAchievementID2}, achievementID) then
         local achievementInfo = ZoneStoryUtils:GetAchievementInfo(achievementID)
         if achievementInfo then
             local achievementLink = LocalAchievementUtil.GetAchievementLinkWithIcon(achievementInfo)
             local criteriaAmount = L.PARENS_TEMPLATE:format(L.GENERIC_FRACTION_STRING:format(achievementInfo.numCompleted, achievementInfo.numCriteria))
             ns:cprint(YELLOW(ACHIEVEMENT_PROGRESSED)..L.HEADER_COLON, achievementLink, criteriaAmount)
-            -- ZoneStoryUtils.achievements[achievementID] = nil  --> reset cache for this achievement or details won't update
         end
+        ZoneStoryUtils:ClearStoryCacheByAchievement(achievementID)  --> reset cache for this achievement or details won't update
     end
 end
 -- Test_Achievement = function() LoremasterPlugin:ACHIEVEMENT_EARNED(nil, 1195, false) end
